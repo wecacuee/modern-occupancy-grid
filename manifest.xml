@@ -1,0 +1,25 @@
+<package>
+  <description brief="KinectInterface">
+
+     KinectInterface
+
+  </description>
+  <author>Brian</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/KinectInterface</url>
+  <depend package="sensor_msgs"/>
+  <depend package="rospy"/>
+  <depend package="roscpp"/>
+  <depend package="opencv2"/>
+  <depend package="cv_bridge" />
+  <depend package="tf"/>
+  <depend package="geometry_msgs"/>
+  <depend package="visualization_msgs"/>
+  <depend package="pcl" />
+  <depend package="pcl_ros" />
+  <rosdep name="opencv2"/>
+</package>
+
+
+
