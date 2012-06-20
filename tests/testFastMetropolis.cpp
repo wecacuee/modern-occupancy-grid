@@ -45,24 +45,21 @@ int main(int argc, char *argv[]){
 				fscanf(fptr, "%lf", &range);	//load range
 				if(range < max_dist){
 					occupancyGrid.addLaser(Pose2(pose[it].y()/1000.0, pose[it].x()/1000.0, theta), range); //add laser to grid
-					break;
 				}
 				theta += step;	//increment angle for next laser
 			}
 			it++;
-			break;
 		}
-
 
 		fclose(fptr);
 
 		occupancyGrid.saveLaser("Data/lasers.lsr");
 
 	//run metropolis
-	OccupancyGrid::Marginals occupancyMarginals = runSlowMetropolis(occupancyGrid, 10000);
+	OccupancyGrid::Marginals occupancyMarginals = FastMetropolis(occupancyGrid, 1000000);
 
 	char marginalsOutput[1000];
-			sprintf(marginalsOutput, "Data/Metropolis_Marginals.txt");
+			sprintf(marginalsOutput, "Data/FastMetropolis_Marginals.txt");
 	fptr = fopen(marginalsOutput, "w");
 	fprintf(fptr, "%d %d\n", occupancyGrid.width(), occupancyGrid.height());
 
