@@ -16,7 +16,7 @@
 #include <CppUnitLite/TestHarness.h>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
-#include "/home/brian/Libraries/OccupancyGrid/OccupancyGrid/include/LaserFactor.h"
+#include "LaserFactor.h"
 
 #include <vector>
 #include <stdlib.h>
