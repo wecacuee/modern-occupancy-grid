@@ -47,7 +47,7 @@ OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t it
 
 	for(size_t it = 0; it < iterations; it++){
 		energy.push_back(Px);
-		printf("%lf\n", (double)it/(double)iterations);
+		if (it%100==0) printf("%lf\n", (double)it/(double)iterations);
 		//choose a random cell
 		Index j = random_cell(rng);
 
