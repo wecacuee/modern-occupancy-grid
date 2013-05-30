@@ -18,8 +18,8 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid, s
 	size_t size = occupancyGrid.cellCount();
 	OccupancyGrid::Marginals marginals(size);
 
-	boost::random::mt19937 rng;
-	boost::random::uniform_int_distribution<Index> random_cell(0,size-1);
+	boost::mt19937 rng;
+	boost::uniform_int<Index> random_cell(0,size-1);
 
 
 	// run Metropolis for the requested number of operations

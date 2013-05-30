@@ -30,8 +30,8 @@ OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t it
 		size_t size = occupancyGrid.cellCount();
 		OccupancyGrid::Marginals marginals(size);
 
-		boost::random::mt19937 rng;
-		boost::random::uniform_int_distribution<Index> random_cell(0,cdf);
+		boost::mt19937 rng;
+		boost::uniform_int<Index> random_cell(0,cdf);
 
 
 	// run Metropolis for the requested number of operations

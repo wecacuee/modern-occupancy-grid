@@ -5,7 +5,7 @@
 #include <gtsam/geometry/Pose2.h>
 #include <CppUnitLite/TestHarness.h>
 #include <boost/random/mersenne_twister.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/uniform_int.hpp>
 
 using namespace std;
 using namespace gtsam;
@@ -35,6 +35,10 @@ public:
 	virtual operator DecisionTreeFactor() const{
 		throw runtime_error("operator DecisionTreeFactor not implemented");
 	}
+
+  virtual DecisionTreeFactor toDecisionTreeFactor() const {
+		throw runtime_error("toDecisionTreeFactor not implemented");
+  }
 };
 
 

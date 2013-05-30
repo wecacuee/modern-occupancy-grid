@@ -9,6 +9,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 include_directories(../gtsam/gtsam)
 link_directories(../gtsam/build/gtsam)
 
+include_directories(OccupancyGrid/include)
 add_executable(SICKSlowMetropolis
 			OccupancyGrid/src/OccupancyGrid.cpp
 			OccupancyGrid/src/LaserFactor.cpp
@@ -24,3 +25,61 @@ add_executable(SICK_DDMCMC
 			tests/testSICKDDMCMC.cpp
 			)
 target_link_libraries (SICK_DDMCMC gtsam)
+
+
+#for merali13icra implementation
+
+find_package(Threads REQUIRED)
+
+find_package( Boost 1.40 COMPONENTS date_time serialization-mt filesystem
+	system REQUIRED)
+include_directories( ${Boost_INCLUDE_DIR} )
+
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIR})
+
+find_package( OpenCV REQUIRED )
+include_directories(${OpenCV_INCLUDE_DIR})
+
+add_library(merali13icra SHARED
+	OccupancyGrid/src/forward_sensor_model.cpp
+	OccupancyGrid/src/cvmat_serialization.cpp)
+target_link_libraries(merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES}
+	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
+
+add_executable(test_occgrid 
+	OccupancyGrid/include/occgrid.hpp
+	OccupancyGrid/src/forward_sensor_model.cpp
+	tests/test_occgrid.cpp)
+target_link_libraries(test_occgrid  merali13icra
+	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
+
+add_executable(inference_gibbs_sampling 
+	OccupancyGrid/src/inference_gibbs_sampling.cpp)
+target_link_libraries(inference_gibbs_sampling merali13icra ${OpenCV_LIBS})
+
+add_executable(visualize_ground_truth 
+	OccupancyGrid/src/visualize_ground_truth.cpp)
+target_link_libraries(visualize_ground_truth merali13icra ${OpenCV_LIBS})
+
+add_executable(two_assumption_alg 
+	OccupancyGrid/src/two_assumption_alg.cpp)
+target_link_libraries(two_assumption_alg merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES})
+
+# find pkgconfig modules
+include(FindPkgConfig)
+pkg_search_module( PLAYER playerc++>=2.1.0 ) 
+IF( PLAYER_FOUND )
+  MESSAGE( STATUS ${INDENT} "Player version ${PLAYER_VERSION} detected at ${PLAYER_LIBRARIES}" )
+  link_directories( ${PLAYER_LIBRARY_DIRS} )
+  include_directories( ${PLAYER_INCLUDE_DIRS} )
+  add_executable(captureplayerdata
+	  OccupancyGrid/src/captureplayerdata.cpp 
+	  OccupancyGrid/src/cvmat_serialization.cpp)
+  target_link_libraries(captureplayerdata ${OpenCV_LIBS} ${PLAYER_LIBRARIES}
+	  ${Boost_LIBRARIES})
+ELSE( PLAYER_FOUND )
+  MESSAGE( ${INDENT} "Player not detected. If Player is installed but not detected, check your PKG_CONFIG_PATH." )
+ENDIF( PLAYER_FOUND )
+
+

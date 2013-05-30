@@ -64,7 +64,7 @@ int main(int argc, char *argv[]){
 	char marginalsOutput[1000];
 			sprintf(marginalsOutput, "Data/Metropolis_Marginals.txt");
 	fptr = fopen(marginalsOutput, "w");
-	fprintf(fptr, "%d %d\n", occupancyGrid.width(), occupancyGrid.height());
+	fprintf(fptr, "%lu %lu\n", occupancyGrid.width(), occupancyGrid.height());
 
 	for(int i = 0; i < occupancyMarginals.size(); i++){
 		fprintf(fptr, "%lf ", occupancyMarginals[i]);
