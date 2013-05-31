@@ -5,10 +5,15 @@ cmake_policy(SET CMP0015 NEW)
 #set the default path for built executables to the "bin" directory
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
-#definitions for gtsam
-include_directories(../gtsam/gtsam)
-link_directories(../gtsam/build/gtsam)
+###################################################################################
+# Find dependencies via installed packages
+find_package(GTSAM REQUIRED NO_MODULE) 
+include_directories(${GTSAM_INCLUDE_DIR})
 
+###################################################################################
+# Brian's code
+# run in toplevel dir, for example "bin/SICKSlowMetropolis 50 50 1"
+# after that, DisplayMarginals should display ?? But source is missing
 include_directories(OccupancyGrid/include)
 add_executable(SICKSlowMetropolis
 			OccupancyGrid/src/OccupancyGrid.cpp
@@ -16,7 +21,7 @@ add_executable(SICKSlowMetropolis
 			OccupancyGrid/src/MCMC/Metropolis.cpp
 			tests/testSICKSlowMetropolis.cpp
 			)
-target_link_libraries (SICKSlowMetropolis gtsam)
+target_link_libraries (SICKSlowMetropolis gtsam-shared)
 
 add_executable(SICK_DDMCMC
 			OccupancyGrid/src/OccupancyGrid.cpp
@@ -24,10 +29,13 @@ add_executable(SICK_DDMCMC
 			OccupancyGrid/src/MCMC/DDMCMC.cpp
 			tests/testSICKDDMCMC.cpp
 			)
-target_link_libraries (SICK_DDMCMC gtsam)
+target_link_libraries (SICK_DDMCMC gtsam-shared)
 
-
-#for merali13icra implementation
+###################################################################################
+# Vikas' code with merali13icra implementation
+# run anywhere, for example in Data/player_sim dir:
+# ../../bin/inference_gibbs_sampling laser_pose_all.bin laser_range_all.bin scan_angles_all.bin
+# ../../bin/two_assumption_alg laser_pose_all.bin laser_range_all.bin scan_angles_all.bin
 
 find_package(Threads REQUIRED)
 
