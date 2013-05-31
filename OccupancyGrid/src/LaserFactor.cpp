@@ -11,6 +11,9 @@
 #include <stdlib.h>
 #include <math.h>
 
+using namespace std;
+using namespace gtsam;
+
 /**
  * Find value for given assignment of values to variables
  * return 1000 if any of the non-last cell is occupied and 1 otherwise

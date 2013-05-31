@@ -7,13 +7,16 @@
 
 #include "../../include/OccupancyGrid.h"
 
+using namespace std;
+using namespace gtsam;
+
 /**
  * @brief Run a metropolis sampler.
  * @param iterations defines the number of iterations to run.
  * @return  vector of marginal probabilities.
  */
 OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid, size_t iterations){
-	OccupancyGrid::Occupancy occupancy = occupancyGrid.emptyOccupancy();
+	LaserFactor::Occupancy occupancy = occupancyGrid.emptyOccupancy();
 
 	size_t size = occupancyGrid.cellCount();
 	OccupancyGrid::Marginals marginals(size);

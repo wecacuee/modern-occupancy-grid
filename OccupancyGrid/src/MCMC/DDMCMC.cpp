@@ -13,7 +13,7 @@
  * @return  vector of marginal probabilities.
  */
 OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t iterations){
-	OccupancyGrid::Occupancy occupancy = occupancyGrid.emptyOccupancy();
+	LaserFactor::Occupancy occupancy = occupancyGrid.emptyOccupancy();
 	OccupancyGrid::HeatMap heatMap = occupancyGrid.heatMap();
 
 	//create a pdf map to sample from
