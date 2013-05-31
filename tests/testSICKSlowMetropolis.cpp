@@ -55,6 +55,7 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < n_readings && !feof(fptr); i++) {
       fscanf(fptr, "%lf", &range); //load range
       if (range < max_dist) {
+        // this is where factors are added into the factor graph
         occupancyGrid.addLaser(
             Pose2(pose[it].y() / 1000.0, pose[it].x() / 1000.0, theta), range); //add laser to grid
         break;
@@ -73,6 +74,7 @@ int main(int argc, char *argv[]) {
   OccupancyGrid::Marginals occupancyMarginals = runSlowMetropolis(occupancyGrid,
       10000);
 
+  // write the result
   char marginalsOutput[1000];
   sprintf(marginalsOutput, "Data/Metropolis_Marginals.txt");
   fptr = fopen(marginalsOutput, "w");

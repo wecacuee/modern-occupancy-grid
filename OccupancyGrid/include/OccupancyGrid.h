@@ -67,18 +67,18 @@ public:
 	/// Returns a heat map
 	HeatMap heatMap() const { return heat_map_; }
 
-	///add a prior
+	/// Add a prior
 	void addPrior(gtsam::Index cell, double prior);
 
-	///add a laser measurement
+	/// Add a laser measurement
 	void addLaser(const gtsam::Pose2 &pose, double range);
 
-	/// returns the number of cells in the grid
+	/// Returns the number of cells in the grid
 	inline size_t cellCount() const {
 		return width_*height_;
 	}
 
-	/// returns the key of the cell in which point (x,y) lies.
+	/// Returns the key of the cell in which point (x,y) lies.
 	gtsam::Index keyLookup(double x, double y) const;
 
 	/**

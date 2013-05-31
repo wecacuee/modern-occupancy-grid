@@ -10,8 +10,7 @@
 using namespace std;
 using namespace gtsam;
 
-///constructor
-///Creates a 2d grid of cells with the origin in the center of the grid
+/*****************************************************************************/
 OccupancyGrid::OccupancyGrid(double width, double height, double resolution) {
   width_ = width / resolution;
   height_ = height / resolution;
@@ -23,7 +22,7 @@ OccupancyGrid::OccupancyGrid(double width, double height, double resolution) {
   }
 }
 
-/// Returns an empty occupancy grid of size width_ x height_
+/*****************************************************************************/
 LaserFactor::Occupancy OccupancyGrid::emptyOccupancy() const {
   LaserFactor::Occupancy occupancy; //mapping from Index to value (0 or 1)
   for (size_t i = 0; i < cellCount(); i++)
@@ -32,7 +31,7 @@ LaserFactor::Occupancy OccupancyGrid::emptyOccupancy() const {
   return occupancy;
 }
 
-///add a prior
+/*****************************************************************************/
 void OccupancyGrid::addPrior(Index cell, double prior) {
   size_t numStates = 2;
   DiscreteKey key(cell, numStates);
@@ -44,9 +43,9 @@ void OccupancyGrid::addPrior(Index cell, double prior) {
   add(key, table);
 }
 
-///add a laser measurement
+/*****************************************************************************/
 void OccupancyGrid::addLaser(const Pose2 &pose, double range) {
-  // ray trace from pose to range t//a >= 1 accept new stateo find all cells the laser passes through
+  // ray trace from pose to range t//a >= 1 accept new state find all cells the laser passes through
   double x = pose.x(); //start position of the laser
   double y = pose.y();
   double step = res_ / 8.0; //amount to step in each iteration of laser traversal
@@ -60,8 +59,7 @@ void OccupancyGrid::addLaser(const Pose2 &pose, double range) {
     x = pose.x() + i * cos(pose.theta());
     y = pose.y() + i * sin(pose.theta());
 
-    //printf("%lf %lf\n", x, y);
-    //get the key of the cell that holds point (x,y)
+    // Get the key of the cell that holds point (x,y)
     key = keyLookup(x, y);
 
     // add cell to list of cells if it is new
@@ -85,7 +83,8 @@ void OccupancyGrid::addLaser(const Pose2 &pose, double range) {
   }
 
 }
-/// returns the key of the cell in which point (x,y) lies.
+
+/*****************************************************************************/
 Index OccupancyGrid::keyLookup(double x, double y) const {
   //move (x,y) to the nearest resolution
   x *= (1.0 / res_);
@@ -106,27 +105,18 @@ Index OccupancyGrid::keyLookup(double x, double y) const {
   return cells_[index];
 }
 
-/**
- * @brief Computes the value of a laser factor
- * @param index defines which laser is to be used
- * @param occupancy defines the grid which the laser will be evaulated with
- * @ret a double value that is the value of the specified laser factor for the grid
- */
-
-/// returns the sum of the laser factors for the current state of the grid
+/*****************************************************************************/
 double OccupancyGrid::operator()(const LaserFactor::Occupancy &occupancy) const {
   double value = 0;
 
   // loop over all laser factors in the graph
-  //printf("%ld\n", (*this).size());
-
-  for (Index i = 0; i < laser_indices_.size(); i++) {
+  for (Index i = 0; i < laser_indices_.size(); i++)
     value += laserFactorValue(i, occupancy);
-  }
 
   return value;
 }
 
+/*****************************************************************************/
 void OccupancyGrid::saveLaser(const char *fname) const {
   FILE *fptr = fopen(fname, "w");
   LaserFactor::Occupancy occupancy;
@@ -137,6 +127,7 @@ void OccupancyGrid::saveLaser(const char *fname) const {
   fclose(fptr);
 }
 
+/*****************************************************************************/
 void OccupancyGrid::saveHeatMap(const char *fname) const {
   FILE *fptr = fopen(fname, "wb");
   fprintf(fptr, "P3 %d %d 255\n", (int) width_, (int) height_);
