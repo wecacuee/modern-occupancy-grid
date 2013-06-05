@@ -19,8 +19,11 @@
 #include <boost/random/uniform_int.hpp>
 
 #include <vector>
-#include <stdlib.h>
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
+#include <cassert>
+
+#define DEBUG 1
 
 /**
  * OccupancyGrid Class
@@ -88,6 +91,12 @@ public:
 	 * @ret a double value that is the value of the specified laser factor for the grid
 	 */
 	double laserFactorValue(gtsam::Index index, const LaserFactor::Occupancy &occupancy) const{
+#ifdef DEBUG
+    if (factors_[ laser_indices_[index] ] == 0) {
+      printf("Invalid index=%lu laser_indices_[index]=%lu\n", index, laser_indices_[index]);
+      assert(false);
+    }
+#endif
 		return (*factors_[ laser_indices_[index] ])(occupancy);
 	}
 

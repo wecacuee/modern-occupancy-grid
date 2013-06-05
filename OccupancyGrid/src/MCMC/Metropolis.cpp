@@ -6,9 +6,32 @@
  */
 
 #include "../../include/OccupancyGrid.h"
+#include <opencv2/opencv.hpp>
 
 using namespace std;
 using namespace gtsam;
+
+cv::Mat occ2mat(
+    const LaserFactor::Occupancy& occ,
+    const size_t nrows,
+    const size_t ncols) 
+{
+  cv::Mat_<uint8_t> img(nrows, ncols);
+  for (size_t i = 0; i < nrows; i++) {
+    for (size_t j = 0; j < ncols; j++) {
+      img.at<uint8_t>(i, j) = (occ.at(i*ncols + j) != 0) ? 0 : 255;
+    }
+  }
+  return img;
+}
+
+void show_occupancy(const LaserFactor::Occupancy& occ, 
+    const size_t height,
+    const size_t width)
+{
+  cv::imshow("c", occ2mat(occ, height, width));
+  cv::waitKey(1);
+}
 
 /**
  * @brief Run a metropolis sampler.
@@ -30,9 +53,17 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
   boost::uniform_int < Index > random_cell(0, size - 1);
 
 
+  double dsize   = static_cast<double>(size);
+  double dheight = floor(sqrt(dsize));
+  size_t height  = static_cast<size_t>(dheight);
+  size_t width   = static_cast<size_t>(floor(dsize/dheight));
+
+
   // Create empty occupancy as initial state and
   // compute initial neg log-probability of occupancy grid, - log P(x_t)
   LaserFactor::Occupancy occupancy = occupancyGrid.emptyOccupancy();
+  show_occupancy(occupancy, height, width);
+
   double Ex = occupancyGrid(occupancy);
 
   // for logging
@@ -45,6 +76,8 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
     energy.push_back(Ex);
     if (it % 100 == 0)
       printf("%lf\n", (double) it / (double) iterations);
+
+    show_occupancy(occupancy, height, width);
 
     // Choose a random cell
     Index x = random_cell(rng);
@@ -63,7 +96,12 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
     double a = exp(Ex - Ex_prime);
 
     // If a <= 1 otherwise accept with probability a
-    bool accept = (a>=1) ? true : (false /* TODO: flip a biased coin */ );
+    double rn = static_cast<double>(std::rand()) / (RAND_MAX);
+    bool accept = (a>=1) ? true // definitely accept
+      : (a >= rn) ?  true       // accept with probability a
+      : false;
+
+    printf("%lu : %d\n", it, accept);
     if (accept)
       Ex = Ex_prime;
     else

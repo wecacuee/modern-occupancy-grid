@@ -7,6 +7,9 @@
 
 #include "../../include/OccupancyGrid.h"
 
+using namespace std;
+using namespace gtsam;
+
 /**
  * @brief Run a metropolis sampler.
  * @param iterations defines the number of iterations to run.

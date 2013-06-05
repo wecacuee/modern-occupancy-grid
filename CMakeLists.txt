@@ -4,11 +4,15 @@ cmake_policy(SET CMP0015 NEW)
 
 #set the default path for built executables to the "bin" directory
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+set(CMAKE_BUILD_TYPE Debug)
 
 ###################################################################################
 # Find dependencies via installed packages
 find_package(GTSAM REQUIRED NO_MODULE) 
 include_directories(${GTSAM_INCLUDE_DIR})
+
+find_package( OpenCV REQUIRED )
+include_directories(${OpenCV_INCLUDE_DIR})
 
 ###################################################################################
 # Brian's code
@@ -19,9 +23,11 @@ add_executable(SICKSlowMetropolis
 			OccupancyGrid/src/OccupancyGrid.cpp
 			OccupancyGrid/src/LaserFactor.cpp
 			OccupancyGrid/src/MCMC/Metropolis.cpp
+			OccupancyGrid/src/cvmat_serialization.cpp
 			tests/testSICKSlowMetropolis.cpp
 			)
-target_link_libraries (SICKSlowMetropolis gtsam-shared)
+target_link_libraries (SICKSlowMetropolis gtsam-shared
+			${OpenCV_LIBS})
 
 add_executable(SICK_DDMCMC
 			OccupancyGrid/src/OccupancyGrid.cpp
@@ -45,9 +51,6 @@ include_directories( ${Boost_INCLUDE_DIR} )
 
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIR})
-
-find_package( OpenCV REQUIRED )
-include_directories(${OpenCV_INCLUDE_DIR})
 
 add_library(merali13icra SHARED
 	OccupancyGrid/src/forward_sensor_model.cpp

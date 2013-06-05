@@ -5,28 +5,20 @@
  */
 #include "../OccupancyGrid/include/OccupancyGrid.h"
 #include "../OccupancyGrid/include/MCMC.h"
+#include "../OccupancyGrid/include/cvmat_serialization.h"
 
 using namespace std;
 using namespace gtsam;
 
-/// Main
-int main(int argc, char *argv[]) {
-
-  // parse arguments
-  if (argc != 4) {
-    printf("ERROR [USAGE]: executable width height resolution");
-    exit(1);
-  }
-  double width = atof(argv[1]); //meters
-  double height = atof(argv[2]); //meters
-  double resolution = atof(argv[3]); //meters
-
-  // Create the occupancy grid data structure
-  OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
-
+void loadDataFromTxt(const std::string& odometry_fname,
+    const std::string& snapshot_fname,
+    vector<Pose2>& allposes,
+    vector<double>& ranges,
+    double& max_dist)
+{
   //======== load odometry ==========//
   vector<Pose2> pose;
-  FILE *fptr = fopen("Data/SICK_Odometry.txt", "r");
+  FILE *fptr = fopen(odometry_fname.c_str(), "r");
   while (!feof(fptr)) {
     double x, y, theta;
     fscanf(fptr, "%lf %lf %lf", &x, &y, &theta);
@@ -36,14 +28,14 @@ int main(int argc, char *argv[]) {
   fclose(fptr);
 
   //======= load laser scans ===============//
-  fptr = fopen("Data/SICK_Snapshot.txt", "r");
+  fptr = fopen(snapshot_fname.c_str(), "r");
   if (fptr == NULL) {
     printf("Cannot open file...exiting\n");
     exit(1);
   }
 
   double min_angle, max_angle, step;
-  double max_dist, min_dist;
+  double min_dist;
   int n_readings;
 
   fscanf(fptr, "%lf %lf %lf %lf %lf %d", &min_angle, &max_angle, &step,
@@ -53,22 +45,91 @@ int main(int argc, char *argv[]) {
   while (!feof(fptr)) {
     double theta = 3.14159 / 2 + pose[it].theta() + min_angle; //compute angle of first laser
     for (int i = 0; i < n_readings && !feof(fptr); i++) {
+      Pose2 p(pose[it].y() / 100, pose[it].x(), theta);
+      allposes.push_back(p);
       fscanf(fptr, "%lf", &range); //load range
-      if (range < max_dist) {
-        // this is where factors are added into the factor graph
-        occupancyGrid.addLaser(
-            Pose2(pose[it].y() / 1000.0, pose[it].x() / 1000.0, theta), range); //add laser to grid
-        break;
-      }
+      ranges.push_back(range);
       theta += step; //increment angle for next laser
     }
     it++;
-    break;
   }
-
   fclose(fptr);
-  occupancyGrid.saveLaser("Data/lasers.lsr");
   //======= end load laser scans ============//
+}
+
+void cvMatToData(const cv::Mat& laser_pose,
+    const cv::Mat& laser_range,
+    const cv::Mat& scan_angles,
+    vector<Pose2>& allposes,
+    vector<double>& allranges,
+    double& max_dist) 
+{
+  max_dist = 8; // constant, not good
+  for (int i = 0; i < laser_range.rows; i ++) {
+    const double* pose = laser_pose.ptr<double>(i);
+    const double* ranges = laser_range.ptr<double>(i);
+    const double* scan_angles = laser_range.ptr<double>(i);
+    for (int j = 0; j < laser_range.cols; j++) {
+      double theta = pose[2] + scan_angles[j];
+      Pose2 p(pose[0], pose[1], theta);
+      allposes.push_back(p);
+      allranges.push_back(ranges[j]);
+    }
+  }
+}
+
+void loadPlayerSim(const string& laser_pose_file,
+    const string& laser_range_file,
+    const string& scan_angles_file,
+    vector<Pose2>& allposes,
+    vector<double>& allranges,
+    double& max_dist) 
+{
+  cv::Mat laser_pose, laser_range, scan_angles;
+  loadMat(laser_pose, laser_pose_file);
+  loadMat(laser_range, laser_range_file);
+  loadMat(scan_angles, scan_angles_file);
+  cvMatToData(
+      laser_pose, laser_range, scan_angles, 
+      allposes, allranges, max_dist);
+}
+
+/// Main
+int main(int argc, char *argv[]) {
+
+  cv::namedWindow("c", CV_WINDOW_NORMAL);
+  // parse arguments
+  if (argc != 4) {
+    printf("ERROR [USAGE]: executable <width (in m)> <height (in m)> <resolution (in m)>");
+    exit(1);
+  }
+  double width = atof(argv[1]); //meters
+  double height = atof(argv[2]); //meters
+  double resolution = atof(argv[3]); //meters
+
+  // Create the occupancy grid data structure
+  OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
+  vector<Pose2> allposes;
+  vector<double> allranges;
+  double max_dist;
+  // loadDataFromTxt(
+  //     "Data/SICK_Odometry.txt",
+  //     "Data/SICK_Snapshot.txt",
+  //     allposes, allranges,
+  //     max_dist);
+  loadPlayerSim(
+      "Data/player_sim/laser_pose_all.bin",
+      "Data/player_sim/laser_range_all.bin",
+      "Data/player_sim/scan_angles_all.bin",
+      allposes, allranges, max_dist);
+
+  for (int i = 0; i < allranges.size(); i++) {
+    const Pose2& pose = allposes[i];
+    const double range = allranges[i];
+    // this is where factors are added into the factor graph
+    occupancyGrid.addLaser(pose, range); //add laser to grid
+  }
+  occupancyGrid.saveLaser("Data/lasers.lsr");
 
   //run metropolis
   OccupancyGrid::Marginals occupancyMarginals = runSlowMetropolis(occupancyGrid,
@@ -77,7 +138,7 @@ int main(int argc, char *argv[]) {
   // write the result
   char marginalsOutput[1000];
   sprintf(marginalsOutput, "Data/Metropolis_Marginals.txt");
-  fptr = fopen(marginalsOutput, "w");
+  FILE* fptr = fopen(marginalsOutput, "w");
   fprintf(fptr, "%lu %lu\n", occupancyGrid.width(), occupancyGrid.height());
 
   for (int i = 0; i < occupancyMarginals.size(); i++) {

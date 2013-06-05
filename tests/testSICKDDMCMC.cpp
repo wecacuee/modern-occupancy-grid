@@ -1,6 +1,8 @@
 #include "../OccupancyGrid/include/OccupancyGrid.h"
 #include "../OccupancyGrid/include/MCMC.h"
 
+using namespace std;
+using namespace gtsam;
 
 int main(int argc, char *argv[]){
 

@@ -74,12 +74,12 @@ void OccupancyGrid::addLaser(const Pose2 &pose, double range) {
 
   // add a factor that connects all those cells (if there are any)
   if (cells.size() > 0) {
-    push_back(boost::make_shared < LaserFactor > (cells));
-
     // also, store some book-keeping info in this class
     laser_indices_.push_back(factors_.size());
+
     pose_.push_back(pose);
     range_.push_back(range);
+    push_back(boost::make_shared< LaserFactor > (cells));
   }
 
 }
