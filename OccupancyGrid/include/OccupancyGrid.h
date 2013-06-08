@@ -32,6 +32,7 @@
  * Measurements will create factors, as well as the prior.
  */
 class OccupancyGrid : public gtsam::DiscreteFactorGraph {
+  friend class OccupancyGridCache;
 
 private:
 
@@ -39,13 +40,21 @@ private:
 	size_t			height_; ///< number of cells tall the grid is
 	double			res_;    ///< the resolution at which the grid is created
 
-	std::vector<gtsam::Index> cells_;         ///< list of keys of all cells in the grid
 	std::vector<gtsam::Index> laser_indices_; ///< indices of the laser factor in factors_
 	std::vector<gtsam::Index>	heat_map_;      ///< heat map of the occupancy grid
 
 	std::vector<gtsam::Pose2>	pose_; ///< list of poses of the added lasers
 	std::vector<double>	range_;      ///< list of ranges of the added lasers
 
+  /// Ray trace and return the cells traversed and key of last cell
+  void rayTrace(const gtsam::Pose2 &pose, const double range,
+    std::vector<gtsam::Index>& cells,
+    gtsam::Index& key);
+
+  /// add laser and return the index of new factor and the cells traversed
+  void addLaserReturn(const gtsam::Pose2 &pose, double range,
+      gtsam::Index& factor_index,
+      std::vector<gtsam::Index>& cells);
 public:
 
 	size_t width() const {
@@ -74,7 +83,7 @@ public:
 	void addPrior(gtsam::Index cell, double prior);
 
 	/// Add a laser measurement
-	void addLaser(const gtsam::Pose2 &pose, double range);
+	virtual void addLaser(const gtsam::Pose2 &pose, double range);
 
 	/// Returns the number of cells in the grid
 	inline size_t cellCount() const {
@@ -91,17 +100,12 @@ public:
 	 * @ret a double value that is the value of the specified laser factor for the grid
 	 */
 	double laserFactorValue(gtsam::Index index, const LaserFactor::Occupancy &occupancy) const{
-#ifdef DEBUG
-    if (factors_[ laser_indices_[index] ] == 0) {
-      printf("Invalid index=%lu laser_indices_[index]=%lu\n", index, laser_indices_[index]);
-      assert(false);
-    }
-#endif
-		return (*factors_[ laser_indices_[index] ])(occupancy);
+
+		return (*factors_[ index ])(occupancy);
 	}
 
 	/// returns the sum of the laser factors for the current state of the grid
-	double operator()(const LaserFactor::Occupancy &occupancy) const;
+	virtual double operator()(const LaserFactor::Occupancy &occupancy) const;
 
 	/// run a metropolis sampler
 	Marginals runMetropolis(size_t iterations);

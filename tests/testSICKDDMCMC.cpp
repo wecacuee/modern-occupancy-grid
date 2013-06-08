@@ -1,8 +1,10 @@
-#include "../OccupancyGrid/include/OccupancyGrid.h"
+#include "../OccupancyGrid/include/OccupancyGridCache.h"
 #include "../OccupancyGrid/include/MCMC.h"
+#include "../OccupancyGrid/include/visualiser.h"
 
 using namespace std;
 using namespace gtsam;
+Visualiser global_vis_;
 
 int main(int argc, char *argv[]){
 
@@ -13,7 +15,7 @@ int main(int argc, char *argv[]){
 	double width 		=	atof(argv[1]); 		//meters
 	double height 		= 	atof(argv[2]); 		//meters
 	double resolution 	= 	atof(argv[3]); 	//meters
-	OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
+	OccupancyGridCache occupancyGrid(width, height, resolution); //default center to middle
 
 	//======== load odometry ==========//
 		vector<Pose2> pose;

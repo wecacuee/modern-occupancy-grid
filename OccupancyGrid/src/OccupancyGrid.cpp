@@ -6,20 +6,19 @@
  */
 
 #include "../include/OccupancyGrid.h"
+#include <cassert>
 
 using namespace std;
 using namespace gtsam;
 
 /*****************************************************************************/
-OccupancyGrid::OccupancyGrid(double width, double height, double resolution) {
-  width_ = width / resolution;
-  height_ = height / resolution;
-  res_ = resolution;
+OccupancyGrid::OccupancyGrid(double width, double height, double resolution) :
+  width_( width / resolution),
+  height_(height / resolution),
+  res_(resolution),
+  heat_map_(cellCount(), 1)
+{
 
-  for (Index i = 0; i < cellCount(); i++) {
-    cells_.push_back(i);
-    heat_map_.push_back(1);
-  }
 }
 
 /*****************************************************************************/
@@ -43,15 +42,14 @@ void OccupancyGrid::addPrior(Index cell, double prior) {
   add(key, table);
 }
 
-/*****************************************************************************/
-void OccupancyGrid::addLaser(const Pose2 &pose, double range) {
+void OccupancyGrid::rayTrace(const gtsam::Pose2 &pose, const double range,
+    vector<gtsam::Index>& cells,
+    gtsam::Index& key) {
   // ray trace from pose to range t//a >= 1 accept new state find all cells the laser passes through
   double x = pose.x(); //start position of the laser
   double y = pose.y();
   double step = res_ / 8.0; //amount to step in each iteration of laser traversal
 
-  Index key;
-  vector<Index> cells; // list of keys of cells hit by the laser
 
   // traverse laser to find all the cells
   for (double i = 0; i < range; i += step) {
@@ -63,25 +61,46 @@ void OccupancyGrid::addLaser(const Pose2 &pose, double range) {
     key = keyLookup(x, y);
 
     // add cell to list of cells if it is new
-    if ((i == 0 || key != cells[cells.size() - 1]) && key < cells_.size() - 1) {
+    if ((i == 0 || (key != cells[cells.size() - 1]) && key < (cellCount() - 1))) {
+      if (!(key < width_ * height_))  {
+        printf("key:%lu\n", key);
+        assert(false);
+      }
       cells.push_back(key);
     }
   }
+}
+
+void OccupancyGrid::addLaserReturn(const Pose2 &pose, double range,
+    Index& factor_index,
+    vector<Index>& cells)
+{
+  Index key;
+  rayTrace(pose, range, cells, key);
 
   // last cell hit by laser has higher probability to be flipped
-  if (key < cells_.size() - 1)
+  if (key < (cellCount() - 1))
     heat_map_[key] = 4;
 
   // add a factor that connects all those cells (if there are any)
   if (cells.size() > 0) {
     // also, store some book-keeping info in this class
-    laser_indices_.push_back(factors_.size());
+    factor_index = factors_.size();
 
     pose_.push_back(pose);
     range_.push_back(range);
-    push_back(boost::make_shared< LaserFactor > (cells));
+    boost::shared_ptr<LaserFactor> lfptr(new LaserFactor(cells));
+    push_back(lfptr);
   }
 
+}
+
+/*****************************************************************************/
+void OccupancyGrid::addLaser(const Pose2 &pose, double range) {
+  // also, store some book-keeping info in this class
+  gtsam::Index factor_index = factors_.size();
+  vector<Index> cells; // list of keys of cells hit by the laser
+  addLaserReturn(pose, range, factor_index, cells);
 }
 
 /*****************************************************************************/
@@ -100,19 +119,16 @@ Index OccupancyGrid::keyLookup(double x, double y) const {
 
   //bounds checking
   size_t index = y * width_ + x;
-  index = index >= width_ * height_ ? -1 : index;
-
-  return cells_[index];
+  return (index >= width_ * height_) ? -1 : index;
 }
 
 /*****************************************************************************/
 double OccupancyGrid::operator()(const LaserFactor::Occupancy &occupancy) const {
+  cout << "Parent called" << endl;
   double value = 0;
-
   // loop over all laser factors in the graph
-  for (Index i = 0; i < laser_indices_.size(); i++)
+  for (Index i = 0; i < factors_.size(); i++)
     value += laserFactorValue(i, occupancy);
-
   return value;
 }
 

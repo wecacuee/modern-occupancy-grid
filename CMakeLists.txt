@@ -21,6 +21,7 @@ include_directories(${OpenCV_INCLUDE_DIR})
 include_directories(OccupancyGrid/include)
 add_executable(SICKSlowMetropolis
 			OccupancyGrid/src/OccupancyGrid.cpp
+			OccupancyGrid/src/OccupancyGridCache.cpp
 			OccupancyGrid/src/LaserFactor.cpp
 			OccupancyGrid/src/MCMC/Metropolis.cpp
 			OccupancyGrid/src/cvmat_serialization.cpp
@@ -31,11 +32,13 @@ target_link_libraries (SICKSlowMetropolis gtsam-shared
 
 add_executable(SICK_DDMCMC
 			OccupancyGrid/src/OccupancyGrid.cpp
+			OccupancyGrid/src/OccupancyGridCache.cpp
 			OccupancyGrid/src/LaserFactor.cpp
 			OccupancyGrid/src/MCMC/DDMCMC.cpp
 			tests/testSICKDDMCMC.cpp
 			)
-target_link_libraries (SICK_DDMCMC gtsam-shared)
+target_link_libraries (SICK_DDMCMC gtsam-shared
+			${OpenCV_LIBS})
 
 ###################################################################################
 # Vikas' code with merali13icra implementation
@@ -76,6 +79,10 @@ target_link_libraries(visualize_ground_truth merali13icra ${OpenCV_LIBS})
 add_executable(two_assumption_alg 
 	OccupancyGrid/src/two_assumption_alg.cpp)
 target_link_libraries(two_assumption_alg merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES})
+
+add_executable(displayMarginals
+	OccupancyGrid/src/displayMarginals.cpp)
+target_link_libraries(displayMarginals ${OpenCV_LIBS})
 
 # find pkgconfig modules
 include(FindPkgConfig)

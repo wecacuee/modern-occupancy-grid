@@ -3,12 +3,15 @@
  * @author Brian Peasley
  * @date   ?
  */
-#include "../OccupancyGrid/include/OccupancyGrid.h"
+#include "../OccupancyGrid/include/OccupancyGridCache.h"
 #include "../OccupancyGrid/include/MCMC.h"
 #include "../OccupancyGrid/include/cvmat_serialization.h"
+#include "../OccupancyGrid/include/visualiser.h"
 
 using namespace std;
 using namespace gtsam;
+
+Visualiser global_vis_;
 
 void loadDataFromTxt(const std::string& odometry_fname,
     const std::string& snapshot_fname,
@@ -68,9 +71,9 @@ void cvMatToData(const cv::Mat& laser_pose,
   for (int i = 0; i < laser_range.rows; i ++) {
     const double* pose = laser_pose.ptr<double>(i);
     const double* ranges = laser_range.ptr<double>(i);
-    const double* scan_angles = laser_range.ptr<double>(i);
+    const double* angles = scan_angles.ptr<double>(i);
     for (int j = 0; j < laser_range.cols; j++) {
-      double theta = pose[2] + scan_angles[j];
+      double theta = pose[2] + angles[j];
       Pose2 p(pose[0], pose[1], theta);
       allposes.push_back(p);
       allranges.push_back(ranges[j]);
@@ -108,7 +111,8 @@ int main(int argc, char *argv[]) {
   double resolution = atof(argv[3]); //meters
 
   // Create the occupancy grid data structure
-  OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
+  OccupancyGridCache occupancyGrid(width, height, resolution); //default center to middle
+  global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
   vector<Pose2> allposes;
   vector<double> allranges;
   double max_dist;
