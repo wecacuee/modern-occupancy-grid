@@ -4,7 +4,10 @@
 using namespace std;
 
 int main(int argc, const char *argv[]) {
-  ifstream fptr("Data/Metropolis_Marginals.txt");
+  string fname("Data/Metropolis_Marginals.txt");
+  if (argc == 2)
+    fname = argv[1];
+  ifstream fptr(fname.c_str());
   string line;
   getline(fptr, line);
   istringstream liness(line);
@@ -23,6 +26,7 @@ int main(int argc, const char *argv[]) {
   img = 255 - img * 255;
   img.convertTo(img, CV_8U);
   cv::namedWindow("c", CV_WINDOW_NORMAL);
+  cv::imwrite("out.png", img);
   cv::imshow("c", img);
   cv::waitKey(-1);
   return 0;

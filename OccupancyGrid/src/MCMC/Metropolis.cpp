@@ -7,6 +7,8 @@
 
 #include "../../include/OccupancyGrid.h"
 #include "../../include/visualiser.h"
+#include <boost/random.hpp>
+#include <boost/random/normal_distribution.hpp>
 
 using namespace std;
 using namespace gtsam;
@@ -27,8 +29,15 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
     marginals[it] = 0;
 
   // Initialize randum number generator
+  size_t nrows = occupancyGrid.height();
+  size_t ncols = occupancyGrid.width();
   boost::mt19937 rng;
   boost::uniform_int < Index > random_cell(0, size - 1);
+  double sigma = 0.05 * nrows ; // next sample point will be within 2*5 cells (95% of the times)
+
+  boost::normal_distribution< double > normal_dist(0, sigma);
+  boost::variate_generator<boost::mt19937&,
+    boost::normal_distribution< double > > var_nor(rng, normal_dist);
 
   double dsize   = static_cast<double>(size);
   double dheight = floor(sqrt(dsize));
@@ -40,11 +49,14 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
   LaserFactor::Occupancy occupancy = occupancyGrid.emptyOccupancy();
 
   double Ex = occupancyGrid(occupancy);
-  global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
-  global_vis_.enable_show();
+  // global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
+  // global_vis_.enable_show();
 
   // for logging
   vector<double> energy;
+
+  // Choose a random cell
+  Index x = random_cell(rng);
 
   // run Metropolis for the requested number of operations
   for (size_t it = 0; it < iterations; it++) {
@@ -54,20 +66,35 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
     if (it % 100 == 0) {
       printf("%lf\n", (double) it / (double) iterations);
 
-      global_vis_.reset();
-      global_vis_.setOccupancy(occupancy);
-      global_vis_.show();
+      // global_vis_.reset();
+      // global_vis_.setOccupancy(occupancy);
+      // global_vis_.show();
     }
 
-    // Choose a random cell
-    Index x = random_cell(rng);
+    // Sample a point close to the previous point with gaussian probability
+    // This is a heuristic strategy that high occupancy regions (high
+    // probability) are going to be few but close together in space. This is
+    // not same as the choosing the proposal distribution for metropolis
+    // algorithm as the space we are working is a 100x100 dimensional space
+    // rather than a 2D space. But some of the properties of this 2D space can
+    // be made use of. This idea is similar to that of a heat map.
+    double col = x % ncols;
+    double row = x / ncols;
+    row += var_nor();
+    col += var_nor();
+    Index row_lu = (row < 0) ? 0
+      : (row >= nrows) ? nrows
+      : static_cast<Index>(row);
+    Index col_lu = (col < 0) ? 0
+      : (col >= ncols) ? ncols
+      : static_cast<Index>(col);
+    Index x_prime = row_lu * occupancyGrid.width() + col_lu;
 
-    // Flip the state of a random cell, x
-    occupancy[x] = 1 - occupancy[x];
+    // Flip the state of a random cell, x_prime
+    occupancy[x_prime] = 1 - occupancy[x_prime];
 
     // Compute neg log-probability of new occupancy grid, -log P(x')
     // by summing over all LaserFactor::operator()
-    // TODO: this is just as inefficient as Vikas' choice to loop over ALL rays !!!
     double Ex_prime = occupancyGrid(occupancy);
 
     // Calculate acceptance ratio, a
@@ -81,12 +108,15 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
       : (a >= rn) ?  true       // accept with probability a
       : false;
 
-    printf("%lu : %d\n", it, accept);
-    if (accept)
+    //printf("%lu : %lu; accepted: %d\n", x_prime, occupancy.at(x_prime), accept);
+    if (accept) {
       Ex = Ex_prime;
-    else
+      x = x_prime;
+    } else {
       // we don't accept: flip it back !
-      occupancy[x] = 1 - occupancy[x];
+      occupancy[x_prime] = 1 - occupancy[x_prime];
+      x = random_cell(rng);
+    }
 
     //increment the number of iterations each cell has been on
     for (size_t i = 0; i < size; i++) {

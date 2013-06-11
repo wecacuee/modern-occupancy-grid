@@ -39,13 +39,13 @@ double probabability_occupied_to_free(
 
         // 2nd term of Eq (3) merali13icra
         double lodds_occupied = 
-          log_odds_observation_given_map_and_all_poses( observations, map);
+          log_odds_observation_given_map_and_all_poses(observations, map);
 
         // what if the cell is unoccpuied
         // 3rd term of Eq (3) merali13icra
         map.set(k,  map.FREE);
         double lodds_free = 
-          log_odds_observation_given_map_and_all_poses( observations, map);
+          log_odds_observation_given_map_and_all_poses(observations, map);
 
       //}
     // reset the original value

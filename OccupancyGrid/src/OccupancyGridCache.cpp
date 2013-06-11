@@ -1,7 +1,7 @@
 #include "../include/OccupancyGridCache.h"
 #include "../include/visualiser.h"
 
-#undef DEBUG
+#define OCC_GRID_DEBUG 0
 
 using namespace gtsam;
 using namespace std;
@@ -15,40 +15,41 @@ double OccupancyGridCache::operator()(
     lastEnergy_.resize(factors_.size());
     for (Index i = 0; i < factors_.size(); i++)
       lastEnergy_[i] = laserFactorValue(i, occupancy);
-
+    lastOccupancy_ = occupancy; // creates a copy of the occupancy 
   } else {
 
     // We already have computed all the factors.
     // Only recompute the factors that have their cells changed.
     // loop over all the cells
-    std::vector<bool> recompute_factors(factors_.size(), false);
-    size_t factors_to_recompute = 0;
+    std::set<Index> recompute_factors;
     for (Index i = 0; i < cell2factors_.size(); i++) {
       // check if the celll has changed
       if (lastOccupancy_.at(i) != occupancy.at(i)) {
+        lastOccupancy_.at(i) = occupancy.at(i);
         // get the related factors that need to be recomputed
         std::vector<gtsam::Index> cellfactors = cell2factors_[i];
-#ifdef DEBUG
+#if OCC_GRID_DEBUG
         std::cout << "Occupancy at " << i << " changed" << endl;
         std::cout << "Cell at " << i << " has " << cellfactors.size() << " factors" << endl;
-#endif // DEBUG
+#endif // OCC_GRID_DEBUG
         for (Index j = 0; j < cellfactors.size(); j++) {
           gtsam::Index factoridx = cellfactors[j];
-          recompute_factors[factoridx] = true;
-          factors_to_recompute ++;
+          recompute_factors.insert(factoridx);
         }
       }
     }
-#ifdef DEBUG
-    std::cout << "Recomputing " << factors_to_recompute << " factors" << endl;
-#endif // DEBUG
+#if OCC_GRID_DEBUG
+    std::cout << "Recomputing " << recompute_factors.size() << " factors" << endl;
+#endif // OCC_GRID_DEBUG
 
     // Recompute the factors that need to be recomputed
     
+#define OCC_GRID_USE_VECTOR 0 // use std::vector for recompute_factors ?
+#if OCC_GRID_USE_VECTOR // too slow, use a std::set instead
     for (Index i = 0; i < factors_.size(); i++) {
       if (recompute_factors[i]) {
         lastEnergy_[i] = laserFactorValue(i, occupancy);
-#ifdef DEBUG
+#if OCC_GRID_DEBUG
       } else {
         // Energy should remain same for all other factors.
         if ( lastEnergy_[i] != laserFactorValue(i, occupancy) ) {
@@ -67,9 +68,17 @@ double OccupancyGridCache::operator()(
           cout << "Occupancies are all the same" << endl;
           assert(false);
         }
-#endif // DEBUG
+#endif // OCC_GRID_DEBUG
       }
     }
+#else //  should be significantly faster than other technique especially when
+    // the number of factors is too large.
+    for (std::set< Index >::iterator it = recompute_factors.begin();
+        it != recompute_factors.end(); it++) 
+    {
+      lastEnergy_[*it] = laserFactorValue(*it, occupancy);
+    }
+#endif // 0
   }
 
   // sum up the energies and return
@@ -78,7 +87,6 @@ double OccupancyGridCache::operator()(
     sum += lastEnergy_[i];
   }
 
-  lastOccupancy_ = occupancy; // creates a copy of the occupancy 
   return sum;
 }
 
@@ -87,7 +95,8 @@ void OccupancyGridCache::addLaser(const gtsam::Pose2 &pose, double range) {
   gtsam::Index factoridx;
   vector<Index> fcells; // list of keys of cells hit by the laser
   OccupancyGrid::addLaserReturn(pose, range, factoridx, fcells);
-#ifdef DEBUG_INPUT
+#define OCC_GRID_DEBUG_INPUT 0
+#if OCC_GRID_DEBUG_INPUT
   cout << "Laser " << factoridx << " passed through " << fcells.size() << " cells" << endl;
   global_vis_.highlightCells(fcells);
   global_vis_.enable_show();

@@ -20,17 +20,6 @@
 // me
 #include <forward_sensor_model.h>
 
-#define CELL_SIZE 0.5 // meters
-
-// from stage/examples/ctrl/lasernoise.cc
-#define SIGMA 0.05 // ratio to range
-
-// from stage/libstage/model_laser.cc
-#define MAX_RANGE 8.0 // in meters
-
-// should be much much smaller than SIGMA
-#define SENSOR_LEAST_COUNT 0.002 
-
 namespace bconst = boost::math::constants;
 namespace brand = boost::random;
 
@@ -63,20 +52,19 @@ double log_odds_observation_given_map_and_pose(
     assert(! std::isnan(direction(0)));
     cv::Vec2d final_pos;
     expected_range = map.ray_trace(observation.px, observation.py,
-        observation.ptheta, MAX_RANGE, final_pos);
-    //if (expected_range == MAX_RANGE) {
+        observation.ptheta, LASER_MAX_RANGE, final_pos);
+    //if (expected_range == LASER_MAX_RANGE) {
         // laser didn't strike any wall
         // but that doesn't matter, because our input observations also
         // contain saturated readings instead of providing some special value.
     //}
-    double sigma = SIGMA * expected_range; // noise increases with distance
+    double sigma = NOISE_VARIANCE * expected_range; // noise increases with distance
 #ifdef DEBUG
       printf("Sigma:%f\n", sigma);
       printf("Expected range:%f\n", expected_range);
       printf("Observed range:%f\n", observation.range);
 #endif
     double gaussian_lodds = log_gaussian1d(observation.range, expected_range, sigma);
-    //return gaussian_prob * SENSOR_LEAST_COUNT;
     return gaussian_lodds;
 }
 
@@ -89,10 +77,10 @@ class ForwardSensorModelTest : public ::testing::Test {
     double range_observation; 
 
     ForwardSensorModelTest():
-      map(-2.5, -1.5, CELL_SIZE, CELL_SIZE, 12, 6),
+      map(-2.5, -1.5, 0.5, 0.5, 12, 6),
       gen(),
       range_observation(sqrt(2.5*2.5 + 0.5*0.5)),
-      norm_dist(0, SIGMA * range_observation),
+      norm_dist(0, NOISE_VARIANCE * range_observation),
       norm_rand(gen, norm_dist)
     { }
 
@@ -122,9 +110,9 @@ TEST_F(ForwardSensorModelTest, test1) {
           exp_range);
 
     ASSERT_NEAR(
-        log_gaussian1d(noise, 0, SIGMA * range_observation),
+        log_gaussian1d(noise, 0, NOISE_VARIANCE * range_observation),
         lodds, 
-        SENSOR_LEAST_COUNT);
+        0.002);
 }
 
 //double probability_observation_given_map_and_all_poses(

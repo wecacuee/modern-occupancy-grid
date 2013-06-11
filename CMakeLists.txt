@@ -4,7 +4,6 @@ cmake_policy(SET CMP0015 NEW)
 
 #set the default path for built executables to the "bin" directory
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-set(CMAKE_BUILD_TYPE Debug)
 
 ###################################################################################
 # Find dependencies via installed packages
@@ -16,7 +15,7 @@ include_directories(${OpenCV_INCLUDE_DIR})
 
 ###################################################################################
 # Brian's code
-# run in toplevel dir, for example "bin/SICKSlowMetropolis 50 50 1"
+# run in toplevel dir, for example "bin/SICKSlowMetropolis 18 18 0.18"
 # after that, DisplayMarginals should display ?? But source is missing
 include_directories(OccupancyGrid/include)
 add_executable(SICKSlowMetropolis
@@ -25,6 +24,7 @@ add_executable(SICKSlowMetropolis
 			OccupancyGrid/src/LaserFactor.cpp
 			OccupancyGrid/src/MCMC/Metropolis.cpp
 			OccupancyGrid/src/cvmat_serialization.cpp
+			OccupancyGrid/src/loadData.cpp
 			tests/testSICKSlowMetropolis.cpp
 			)
 target_link_libraries (SICKSlowMetropolis gtsam-shared
@@ -35,6 +35,8 @@ add_executable(SICK_DDMCMC
 			OccupancyGrid/src/OccupancyGridCache.cpp
 			OccupancyGrid/src/LaserFactor.cpp
 			OccupancyGrid/src/MCMC/DDMCMC.cpp
+			OccupancyGrid/src/cvmat_serialization.cpp
+			OccupancyGrid/src/loadData.cpp
 			tests/testSICKDDMCMC.cpp
 			)
 target_link_libraries (SICK_DDMCMC gtsam-shared
