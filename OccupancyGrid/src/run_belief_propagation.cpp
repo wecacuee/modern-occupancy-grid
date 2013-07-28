@@ -55,16 +55,17 @@ struct display_peridically_visitor
     ++count_;
   }
   void display(const FactorGraph& fg) {
+    /// Very very slow
     typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
     typedef typename boost::property_traits<MessageValues>::value_type value_type;
-    std::vector<value_type> marginals(num_variables(fg));
+    std::vector<value_type> margs(num_variables(fg));
     size_t count = 0;
     BOOST_FOREACH(vertex_descriptor u, variables(fg)) {
       value_type prod_0(marginal(fg, msgs_, u, 0));
       value_type prod_1(marginal(fg, msgs_, u, 1));
-      marginals[count ++] = prod_1 / (prod_0 + prod_1);
+      margs[count ++] = prod_1 / (prod_0 + prod_1);
     }
-    fg.display(global_vis_, marginals);
+    fg.display(global_vis_, margs);
   }
   private:
   const MessageValues& msgs_;
