@@ -1,12 +1,13 @@
 /**
  * @file: visualiser.h
- * @data: June 7, 2013
+ * @date: June 7, 2013
  * @author: Vikas Dhiman
  */
 #pragma once
 #include <opencv2/opencv.hpp>
 #include <boost/format.hpp>
 #include "LaserFactor.h"
+#include "utility.hpp"
 
 static const cv::Vec3f GREEN(0, 255, 0);
 static const cv::Vec3f WHITE(255, 255, 255);
@@ -45,11 +46,13 @@ public:
         vis_.at<cv::Vec3b>(i, j) = (occ.at(i*vis_.cols + j) != 0) ? BLACK : WHITE;
   }
 
-  inline void setMarginals(const std::vector<double>& marg) {
-    double max_ele = *std::max_element(marg.begin(), marg.end());
+  template <typename T>
+  inline void setMarginals(const std::vector<T>& marg) {
+    T max_ele = *std::max_element(marg.begin(), marg.end());
     for (int i = 0; i < vis_.rows; i++) {
       for (int j = 0; j < vis_.cols; j++) {
-        uint8_t val = (max_ele - marg.at(i*vis_.cols + j)) * 255 / max_ele;
+        uint8_t val = occgrid::todouble(marg[i*vis_.cols + j] / max_ele) * 255;
+        val = 255 - val;
         vis_.at<cv::Vec3b>(i, j) = cv::Vec3b(val, val, val);
       }
     }

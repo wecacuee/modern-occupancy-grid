@@ -76,11 +76,11 @@ namespace occgrid {
   struct factor_map_t { 
     typedef boost::vertex_property_tag kind;
   };
-  template <typename gtsamGraph, typename Factor>
+  template <typename gtsamGraph, typename Factor, typename belief_type>
   class G {
-    private:
-      const gtsamGraph& g_;
     public:
+    const gtsamGraph& g_;
+    typedef belief_type factor_return_type;
     typedef typename Factor::argument_type::mapped_type sample_space_type;
     typedef gtsam::Index vertex_descriptor;
     typedef std::pair<gtsam::Index, gtsam::Index> edge_descriptor;
@@ -105,6 +105,7 @@ namespace occgrid {
     typedef boost::function< std::pair<vertex_descriptor, vertex_descriptor> (vertex_descriptor) > Function;
     typedef typename boost::transform_iterator<Function, adjacency_iterator> out_edge_iterator;
     typedef boost::counting_iterator<vertex_descriptor> vertex_iterator;
+    typedef boost::counting_iterator<vertex_descriptor> variable_iterator;
     // I don't know why we need them?
     typedef size_t edges_size_type;
     typedef typename std::vector<edge_descriptor>::iterator in_edge_iterator;
@@ -142,14 +143,40 @@ namespace occgrid {
         return g_.cellCount() + g_.factorCount();
       }
 
+    vertices_size_type
+    num_variables() const {
+      return g_.cellCount();
+    }
+
+    vertices_size_type
+      num_factors() const {
+        return g_.factorCount();
+      }
+
     bool is_factor(vertex_descriptor v) const {
       return g_.is_factor(v);
     }
 
-    inline boost::function<logdouble (typename Factor::argument_type)>
+    template <typename MessageValues>
+    belief_type compute_belief(
+        vertex_descriptor node_idx,
+        vertex_descriptor cell,
+        const typename Factor::argument_type::mapped_type& cell_value,
+        MessageValues& msgs
+        ) const {
+      return g_.factorFromNodeId(node_idx)->belief(cell, cell_value, msgs);
+    }
+
+    template <typename Visualizer, typename MessageValues>
+      void display(Visualizer& vis, const MessageValues& msgs) const {
+        vis.setMarginals(msgs);
+        vis.show();
+      }
+
+    inline boost::function<belief_type (typename Factor::argument_type)>
       factorFromNodeId(gtsam::Index node_idx) const {
         BOOST_AUTO_TPL(factor, *(g_.factorFromNodeId(node_idx)));
-        return boost::bind(toprobability<logdouble>, boost::bind(factor, _1));
+        return boost::bind(toprobability<belief_type>, boost::bind(factor, _1));
       }
 
     struct SampleSpaceMap {
@@ -168,6 +195,8 @@ namespace occgrid {
         const static vector_type binary_vector(binary, binary + 2);
         return std::make_pair(binary_vector.begin(), binary_vector.end());
       }
+
+      static size_t size() { return 2; }
     };
 
     class IsFactorMap {
@@ -188,7 +217,7 @@ namespace occgrid {
       private:
         const G& g_;
       public:
-      typedef boost::function<logdouble (typename Factor::argument_type)> value_type;
+      typedef boost::function<belief_type (typename Factor::argument_type)> value_type;
       typedef const value_type reference;
       typedef vertex_descriptor key_type;
       typedef boost::readable_property_map_tag category;
@@ -202,15 +231,24 @@ namespace occgrid {
     struct MessageTypes {
       typedef typename G::sample_space_type sample_space_type;
       typedef typename G::vertex_descriptor vertex_descriptor;
+      typedef typename G::factor_return_type belief_type;
       struct key_type :
         public std::pair< std::pair<vertex_descriptor, vertex_descriptor>, sample_space_type> {
         explicit key_type(vertex_descriptor u, vertex_descriptor v, sample_space_type ss) : 
           std::pair< std::pair<vertex_descriptor, vertex_descriptor>, sample_space_type>(
               std::pair<vertex_descriptor, vertex_descriptor>(u, v), ss) {};
       };
-      typedef boost::unordered_map<key_type, logdouble> base_type;
-      typedef boost::associative_property_map<base_type>
-        property_map_type;
+      /// provides default value for a message.
+      struct base_type 
+        : public boost::unordered_map<key_type, belief_type> {
+          belief_type& operator[](const key_type& k) const {
+            belief_type default_msg(1. / G::SampleSpaceMap::size());
+            if (this->find(k) == this->end())
+              (const_cast<base_type*>(this))->boost::unordered_map<key_type, belief_type>::operator[](k) = default_msg;
+            return (const_cast<base_type*>(this))->boost::unordered_map<key_type, belief_type>::operator[](k);
+          }
+      };
+      typedef boost::associative_property_map<base_type> property_map_type;
     };
 
   template <typename G>
@@ -241,10 +279,25 @@ namespace occgrid {
     }
 
   template <typename G>
+    typename G::vertices_size_type
+    num_variables(const G& g) {
+      return g.num_variables();
+    }
+
+  template <typename G>
     std::pair<typename G::vertex_iterator, typename G::vertex_iterator>
     vertices(const G& g) {
       typedef typename G::vertices_size_type vertices_size_type;
       vertices_size_type n(num_vertices(g));
+      return std::make_pair(boost::counting_iterator<vertices_size_type>(0),
+                            boost::counting_iterator<vertices_size_type>(n));
+    }
+
+  template <typename G>
+    std::pair<typename G::variable_iterator, typename G::variable_iterator>
+    variables(const G& g) {
+      typedef typename G::vertices_size_type vertices_size_type;
+      vertices_size_type n(num_variables(g));
       return std::make_pair(boost::counting_iterator<vertices_size_type>(0),
                             boost::counting_iterator<vertices_size_type>(n));
     }
@@ -281,5 +334,6 @@ namespace occgrid {
     typename PropertyMap::reference get(PropertyMap& pm, typename PropertyMap::key_type v) {
       return pm.get(v);
     }
+
 
 } // namespace occgrid

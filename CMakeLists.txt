@@ -69,6 +69,13 @@ add_executable(run_belief_propagation
 	OccupancyGrid/src/run_belief_propagation.cpp)
 target_link_libraries(run_belief_propagation occupancy_grid_graph ${Boost_LIBRARIES} ${OpenCV_LIBS})
 
+add_executable(test_utility
+	OccupancyGrid/src/utility.cpp
+	tests/test_utility.cpp)
+target_link_libraries(test_utility 
+	${Boost_LIBRARIES}
+	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
+
 add_executable(test_sumproduct
 	OccupancyGrid/src/utility.cpp
 	tests/test_sumproduct.cpp)

@@ -20,6 +20,7 @@
 #include <boost/typeof/typeof.hpp>
 
 #include "utility.hpp"
+#include <iostream>
 
 
 /**
@@ -88,7 +89,7 @@ public:
   typename MessageValues::value_type // can be of type logdouble/double
   belief(
       gtsam::Index cell,
-      typename Occupancy::mapped_type cell_value,
+      const typename Occupancy::mapped_type &cell_value,
       MessageValues msgs) const 
   {
     typedef typename MessageValues::key_type msg_key_type;
@@ -105,7 +106,7 @@ public:
     // this cell has deterministic probability
     value_type w0_prob(0);
     if (w0_assignment(cell) == cell_value) {
-      w0_prob = 1;
+      w0_prob = value_type(1);
       for (BOOST_AUTO(it, fi_begin);it != fi_end; ++it)
         w0_prob *= msgs[msg_key_type(*it, factor_index_, w0_assignment(*it))];
     }
@@ -113,17 +114,25 @@ public:
     // Case 2
     value_type w1_prob(0);
     if (w1_assignment(cell) == cell_value) {
-      w1_prob = 1;
+      w1_prob = value_type(1);
       for (BOOST_AUTO(it, fi_begin);it != fi_end; ++it)
         w1_prob *= msgs[msg_key_type(*it, factor_index_, w1_assignment(*it))];
     }
-
   
     value_type sum(0);
     using occgrid::toprobability;
-    sum += toprobability<value_type>(w0_) * w0_prob; // case 1
-    sum += toprobability<value_type>(-w1_) * w1_prob; // case 2
-    sum += toprobability<value_type>(-w_otherwise_) * (1 - w0_prob - w1_prob); // otherwise
+    value_type w0_vt(toprobability<value_type>(w0_));
+    value_type w1_vt( toprobability<value_type>(w1_));
+    value_type w_otherwise_vt(toprobability<value_type>(w_otherwise_));
+    //std::cout << "Going to print something" << std::endl;
+    sum += w0_vt * w0_prob; // case 1
+    //std::cout << sum << "+= " << w0_vt << " * " << w0_prob << std::endl;
+    sum += w1_vt * w1_prob; // case 2
+    //std::cout << sum << "+= " << w1_vt << " * " << w1_prob << std::endl;
+    value_type one(1);
+    sum += w_otherwise_vt * (one - w0_prob - w1_prob); // otherwise
+    //std::cout << sum << "+= " << w_otherwise_vt << " * " << "(1 - " << w0_prob << " - " << w1_prob << ")" << std::endl;
+    //std::cout << "w0_prob:" << w0_prob << "; w1_prob:" << w1_prob << "; w_otherwise_:" << (one - w0_prob - w1_prob) << "; sum:" << sum << std::endl;
     return sum;
   }
 

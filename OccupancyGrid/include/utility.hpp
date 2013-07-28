@@ -4,6 +4,7 @@
 #include <boost/operators.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/utility/result_of.hpp>
+#include <boost/assert.hpp>
 
 #include <cmath>
 
@@ -29,33 +30,80 @@ namespace occgrid {
         >(it, fun);
   };
 
-class logdouble {
-  double neglog_;
+class logdouble : 
+  boost::multipliable<logdouble>,
+  boost::addable<logdouble>,
+  boost::subtractable<logdouble>,
+  boost::dividable<logdouble>,
+  boost::less_than_comparable<logdouble>,
+  boost::equality_comparable<logdouble>
+  {
+    private:
+    double neglog_;
+    static double fromdouble(double d) {
+      return -std::log(d);
+    }
   public:
+  bool operator<(const logdouble& ld) const {
+    return ! (neglog_ < ld.neglog_);
+  }
+  bool operator==(const logdouble& ld) {
+    return (neglog_ == ld.neglog_);
+  }
+
   logdouble operator*=(const logdouble& ld) {
-    return neglog_ += ld.neglog_;
+    neglog_ += ld.neglog_;
+    return *this;
   }
+
   logdouble operator+=(const logdouble& ld) {
-    using std::min;
-    return min(neglog_, ld.neglog_);
+    double minlog = (neglog_ < ld.neglog_) ? neglog_ : ld.neglog_;
+    if (abs(neglog_ - ld.neglog_) < 10) {
+      double d1 = std::exp(-(neglog_ - minlog));
+      double d2 = std::exp(-(ld.neglog_ - minlog));
+      neglog_ = fromdouble(d1 + d2) + minlog;
+    } else
+      neglog_ = minlog;
+    return *this;
   }
+
   logdouble operator-=(const logdouble& ld) {
-    using std::min;
-    return min(neglog_, ld.neglog_);
+    //BOOST_ASSERT(neglog_ <= ld.neglog_);
+    if (neglog_ > ld.neglog_) {
+      std::cout << neglog_ << " > " << ld.neglog_ << std::endl;
+      BOOST_ASSERT(false);
+    }
+    double minlog = neglog_;
+    if (abs(neglog_ - ld.neglog_) < 10) {
+      double d1 = std::exp(-(neglog_ - minlog));
+      double d2 = std::exp(-(ld.neglog_ - minlog));
+      neglog_ = fromdouble(d1 - d2) + minlog;
+    } else
+      neglog_ = minlog;
+    return *this;
   }
+
   logdouble operator/=(const logdouble& ld) {
-    return neglog_ -= ld.neglog_;
+    neglog_ -= ld.neglog_;
+    return *this;
   }
-  logdouble operator=(const double d) {
-    return neglog_ = - std::log(d);
-  }
+  // logdouble operator=(const double d) {
+  //   BOOST_ASSERT(d >= 0);
+  //   neglog_ = - std::log(d);
+  //   return *this;
+  // }
   friend std::ostream& operator << (std::ostream& os, const logdouble& r);
-  logdouble() : neglog_(0) {};
-  logdouble(double d) : neglog_(- std::log(d)) {};
+  explicit logdouble() : neglog_(0) {};
+  explicit logdouble(double d) : neglog_(fromdouble(d)) {
+    BOOST_ASSERT(d >= 0); 
+  };
   static logdouble from_energy(double w) {
     logdouble ld;
     ld.neglog_ = w;
     return ld;
+  }
+  double todouble() const {
+    return std::exp( - neglog_);
   }
 };
 
@@ -63,6 +111,15 @@ template<typename T>
 T toprobability(double w) {
   return std::exp(-w);
 }
+template <>
+logdouble toprobability<logdouble>(double w);
+template <typename T>
+double todouble(T t) {
+  return static_cast<double>(t);
+}
+template <>
+double todouble<logdouble>(logdouble t);
+
 
 class SymReal {
 private:

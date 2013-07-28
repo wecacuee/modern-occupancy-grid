@@ -1,3 +1,4 @@
+#pragma once
 #include "cartesian_product.hpp"
 #include <boost/graph/graph_utility.hpp>
 #include <boost/graph/graph_traits.hpp>
@@ -13,11 +14,9 @@
 #include <boost/typeof/typeof.hpp>
 #include <sstream>
 #include "utility.hpp"
+#include "sumproduct_traits.hpp"
 
 namespace occgrid {
-
-struct v2f_edge_tag {};
-struct f2v_edge_tag {};
 
 /**
  * \brief normalizes values in `map` over InputIterator to sum up to one
@@ -26,7 +25,7 @@ struct f2v_edge_tag {};
 template<typename InputIterator, typename PropertyMap>
 void normalize(InputIterator first, InputIterator last, PropertyMap& map) {
   typedef typename boost::property_traits<PropertyMap>::value_type value_type;
-  value_type normalizer = 0;
+  value_type normalizer(0);
   for (;first != last; ++first) 
     normalizer += map[*first];
 
@@ -51,7 +50,7 @@ namespace detail {
     vertex_descriptor var = source(e, fg), factor = target(e, fg);
     typename boost::graph_traits<FactorGraph>::out_edge_iterator e_it, e_end;
     boost::tie(e_it, e_end) = out_edges(var, fg);
-    Real prod = 1;
+    Real prod (1);
     for (; e_it != e_end; ++e_it) {
       using boost::opposite;
       vertex_descriptor opp = opposite(*e_it, var, fg);
@@ -238,8 +237,14 @@ namespace detail {
 
     using boost::random_vertex;
     vertex_descriptor v = random_vertex(g, gen);
+    BOOST_AUTO(od, out_degree(v, g));
+    // keep trying unless we get a vertex with neigbours
+    while (od <= 1) {
+      v = random_vertex(g, gen);
+      od = out_degree(v, g);
+    }
 
-    boost::uniform_int<> distrib(0, out_degree(v, g) - 1);
+    boost::uniform_int<> distrib(0,  od - 1);
     boost::variate_generator<RandomNumGen&, boost::uniform_int<> > rand_gen(gen, distrib);
     degree_size_type n = rand_gen();
 
@@ -262,17 +267,17 @@ random_edge(G& g, RandomNumGen& gen) {
 }
 
 /** \brief Single i algoirthm traversal for sum product algorithm over trees */
-template<typename FactorGraph, typename Visitor>
-void random_edge_traversal(FactorGraph g, Visitor visitor, std::size_t max_iter) {
+template<typename FactorGraph, typename Visitors>
+void random_edge_traversal(const FactorGraph& g, Visitors& visitor, std::size_t max_iter) {
   boost::mt19937 gen;
   //std::cout << "n:" << n << std::endl;
   for (std::size_t i = 0; i < max_iter; ++i)
-    visitor(random_edge(g, gen), g);
+    invoke_visitors(visitor, occgrid::random_edge(g, gen), g, boost::on_examine_edge());
 }
 
 /** \brief Single i algoirthm traversal for sum product algorithm over trees */
-template<typename FactorGraph, typename Visitor>
-void single_i_algorithm_traversal(FactorGraph g, Visitor visitor) {
+template<typename FactorGraph, typename Visitors>
+void single_i_algorithm_traversal(const FactorGraph& g, Visitors& visitor) {
   typedef typename boost::graph_traits<FactorGraph>::adjacency_iterator adjacency_iterator;
   typedef typename boost::graph_traits<FactorGraph>::vertex_iterator vertex_iterator;
   typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
@@ -353,12 +358,12 @@ void single_i_algorithm_traversal(FactorGraph g, Visitor visitor) {
             degree_one_or_less_vertices_new.push_back(t);
 
           // Actually send message
-          visitor(*chosen_edge, g); // outgoing edge
+          // visitor(*chosen_edge, g); // outgoing edge
+          invoke_visitors(visitor, *chosen_edge, g, boost::on_examine_edge());
       }
     }
     swap(degree_one_or_less_vertices_new, degree_one_or_less_vertices);
   }
 }
-
 
 } // namespace occgrid

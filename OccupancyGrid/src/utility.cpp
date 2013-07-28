@@ -2,7 +2,8 @@
 
 namespace occgrid {
 std::ostream& operator << (std::ostream& os, const logdouble& r) {
-   return os << "exp(-" << r.neglog_ << ")";
+   os << "exp(" << -r.neglog_ << ")";
+   return os;
 }
 // template struct addable<logdouble>;
 // template struct subtractable<logdouble>;
@@ -12,6 +13,10 @@ std::ostream& operator << (std::ostream& os, const logdouble& r) {
 template<>
 logdouble toprobability<logdouble>(double w) {
   return logdouble::from_energy(w);
+}
+template <>
+double todouble<logdouble>(logdouble t) {
+  return t.todouble();
 }
 
 
