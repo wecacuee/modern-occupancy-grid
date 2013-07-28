@@ -9,7 +9,11 @@
 #include <boost/function.hpp>
 #include <boost/iterator/filter_iterator.hpp>
 #include <boost/type_traits.hpp>
+#include <boost/utility/result_of.hpp>
 #include <vector>
+
+#include <boost/lambda/lambda.hpp>
+namespace bl = boost::lambda; 
 
 
 namespace occgrid {
@@ -97,24 +101,17 @@ public:
   }
 };
 
-namespace detail {
-  template <typename T>
-    struct all_but_this_pred : public std::unary_function<T, bool> {
-      all_but_this_pred(const T var) : var_(var) { }
-      bool operator()(T v) const { return var_ != v; }
-      private:
-      const T var_;
-    };
-}
-
 template<typename Real,
+  //typename UnaryFunction,
   typename InputIterator,
   typename SampleSpaceMap,
   typename Assignment
   >
+// typename UnaryFunction::result_type
 Real
 summaryOf(
 		const boost::function<Real (const Assignment&)> &func,
+    //UnaryFunction &func,
 		InputIterator dependent_nodes_begin,
 		InputIterator dependent_nodes_end,
     const SampleSpaceMap& cdmap,
@@ -123,16 +120,13 @@ summaryOf(
     const typename SampleSpaceMap::value_type::first_type::value_type &xv
     )
 {
-  // typedef typename boost::remove_reference<typename UnaryFunction::argument_type>::type ConstPropertyMap;
-  // typedef typename boost::remove_const<ConstPropertyMap>::type Assignment;
-  //typedef typename UnaryFunction::result_type Real;
-  typedef typename std::iterator_traits<InputIterator>::value_type Vnode;
-
-  // filter iterator to get all neighbors except var
-  typedef detail::all_but_this_pred<Vnode> pred;
-  typedef boost::filter_iterator<pred, InputIterator> filter_iterator;
-  filter_iterator fi_begin(pred(x), dependent_nodes_begin, dependent_nodes_end);
-  filter_iterator fi_end(pred(x), dependent_nodes_end, dependent_nodes_end);
+  BOOST_AUTO_TPL(fi_begin,
+      boost::make_filter_iterator(
+        (x != bl::_1), dependent_nodes_begin, dependent_nodes_end));
+  BOOST_AUTO_TPL(fi_end,  
+      boost::make_filter_iterator(
+        (x != bl::_1), dependent_nodes_end, dependent_nodes_end));
+  typedef BOOST_TYPEOF_TPL(fi_begin) filter_iterator;
 
   CartesianProduct<filter_iterator, SampleSpaceMap> poss_assign(fi_begin, fi_end, cdmap);
   Real summary(0);
@@ -145,4 +139,49 @@ summaryOf(
   return summary;
 }
 
+template<typename Real,
+  //typename UnaryFunction,
+  typename InputIterator,
+  typename SampleSpaceMap,
+  typename Assignment
+  >
+// typename UnaryFunction::result_type
+Real
+maxOf(
+		const boost::function<Real (const Assignment&)> &func,
+    //UnaryFunction &func,
+		InputIterator dependent_nodes_begin,
+		InputIterator dependent_nodes_end,
+    const SampleSpaceMap& cdmap,
+		const typename std::iterator_traits<InputIterator>::value_type &x,
+    //const typename Assignment::value_type &xv
+    const typename SampleSpaceMap::value_type::first_type::value_type &xv
+    )
+{
+  // typedef typename boost::remove_reference<
+  //   typename UnaryFunction::argument_type>::type const_assignment_type;
+  // typedef typename boost::remove_const<const_assignment_type>::type Assignment;
+  // typedef typename UnaryFunction::result_type Real;
+  typedef typename std::iterator_traits<InputIterator>::value_type Vnode;
+
+  // filter iterator to get all neighbors except var
+  BOOST_AUTO_TPL(fi_begin,
+      boost::make_filter_iterator(
+        (x != bl::_1), dependent_nodes_begin, dependent_nodes_end));
+  BOOST_AUTO_TPL(fi_end,  
+      boost::make_filter_iterator(
+        (x != bl::_1), dependent_nodes_end, dependent_nodes_end));
+  typedef BOOST_TYPEOF_TPL(fi_begin) filter_iterator;
+
+  CartesianProduct<filter_iterator, SampleSpaceMap> poss_assign(fi_begin, fi_end, cdmap);
+  Real mx(0);
+  Assignment assign;
+  assign[x] = xv;
+  while (poss_assign.next(assign)) {
+    Real fa = func(assign);
+    using std::max;
+    mx = max(mx, fa);
+  }
+  return mx;
+}
 } // namespace occgrid

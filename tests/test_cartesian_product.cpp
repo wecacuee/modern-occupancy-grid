@@ -165,7 +165,8 @@ TEST(summaryOf, test1) {
   BinaryCodomainMap cdmap;
   InputIterator dnb = dependent_nodes.begin(), dne = dependent_nodes.end();
   typename InputIterator::value_type x(dependent_nodes[2]);
-  double res = summaryOf<double, InputIterator, BinaryCodomainMap, Assignment>(func , dnb, dne, cdmap, x, one);
+  double res = summaryOf<double,
+         InputIterator, BinaryCodomainMap, Assignment>(func , dnb, dne, cdmap, x, one);
   (void)res;
   ASSERT_EQ(9.6, res);
 }

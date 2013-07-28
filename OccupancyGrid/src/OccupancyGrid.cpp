@@ -72,11 +72,10 @@ void OccupancyGrid::rayTrace(const gtsam::Pose2 &pose, const double range,
   }
 }
 
-OccupancyGrid::LaserFactorPtr
-OccupancyGrid::addLaserReturn(const Pose2 &pose, double range,
-    Index& factor_index,
-    vector<Index>& cells)
+void
+OccupancyGrid::addLaser(const Pose2 &pose, double range)
 {
+  vector<Index> cells; // list of keys of cells hit by the laser
   Index key;
   rayTrace(pose, range, cells, key);
 
@@ -84,30 +83,12 @@ OccupancyGrid::addLaserReturn(const Pose2 &pose, double range,
   if (key < (cellCount() - 1))
     heat_map_[key] = 4;
 
-  boost::shared_ptr<LaserFactor> lfptr;
   // add a factor that connects all those cells (if there are any)
   if (cells.size() > 0) {
     // also, store some book-keeping info in this class
-    factor_index = factors_.size();
-
     pose_.push_back(pose);
     range_.push_back(range);
-    lfptr.reset(new LaserFactor(cells));
-    push_back(lfptr);
-  }
-  return lfptr;
-}
-
-/*****************************************************************************/
-void OccupancyGrid::addLaser(const Pose2 &pose, double range) {
-  // also, store some book-keeping info in this class
-  gtsam::Index factor_index;
-  vector<Index> fcells; // list of keys of cells hit by the laser
-  LaserFactorPtr factor = addLaserReturn(pose, range, factor_index, fcells);
-  gtsam::Index node_idx = addNode(factor);
-  for (size_t i = 0; i < fcells.size(); i++) {
-    gtsam::Index cellidx = fcells[i];
-    cell2factors_[cellidx].push_back(node_idx);
+    push_back(make_laser(cells));
   }
 }
 

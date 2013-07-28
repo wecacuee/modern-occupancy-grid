@@ -26,6 +26,7 @@ add_library(occupancy_grid_graph SHARED
 			OccupancyGrid/src/LaserFactor.cpp
 			OccupancyGrid/src/cvmat_serialization.cpp
 			OccupancyGrid/src/loadData.cpp
+			OccupancyGrid/src/utility.cpp
 			)
 target_link_libraries (occupancy_grid_graph gtsam-shared)
 
@@ -69,13 +70,17 @@ add_executable(run_belief_propagation
 target_link_libraries(run_belief_propagation occupancy_grid_graph ${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(test_sumproduct
+	OccupancyGrid/src/utility.cpp
 	tests/test_sumproduct.cpp)
-target_link_libraries(test_sumproduct ${Boost_LIBRARIES}
+target_link_libraries(test_sumproduct 
+	${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
 
 add_executable(test_cartesian_product
+	OccupancyGrid/src/utility.cpp
 	tests/test_cartesian_product.cpp)
-target_link_libraries(test_cartesian_product ${Boost_LIBRARIES}
+target_link_libraries(test_cartesian_product 
+	${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
 
 add_executable(test_occgrid 

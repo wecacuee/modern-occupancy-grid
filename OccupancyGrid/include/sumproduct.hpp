@@ -1,15 +1,18 @@
 #include "cartesian_product.hpp"
 #include <boost/graph/graph_utility.hpp>
 #include <boost/graph/graph_traits.hpp>
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
+#include <boost/lambda/bind.hpp>
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/construct.hpp>
 #include <boost/graph/visitors.hpp>
 #include <boost/range/any_range.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/iterator/iterator_categories.hpp>
 #include <boost/random.hpp>
 #include <boost/graph/random.hpp>
+#include <boost/typeof/typeof.hpp>
 #include <sstream>
+#include "utility.hpp"
 
 namespace occgrid {
 
@@ -32,65 +35,43 @@ void normalize(InputIterator first, InputIterator last, PropertyMap& map) {
 }
 
 namespace detail {
-  template<typename T, typename T1, typename T2, typename T3>
-  struct bind_first_two {
-    private: T1 u_; T2 v_;
-    public:
-      typedef T result_type;
-      typedef T3 argument_type;
-      bind_first_two(T1 u, T2 v) : u_(u), v_(v) {}
-      result_type operator()(T3 cd) const {
-        return T(u_, v_, cd);
-      }
-  };
-
   template<typename FactorGraph, typename MessageValues,
     typename SampleSpaceMap,
     typename FactorMap>
-  void sumproduct(
+  typename MessageValues::value_type
+    belief(
       typename boost::graph_traits<FactorGraph>::edge_descriptor e,
       const FactorGraph &fg, MessageValues &msgs,
-      SampleSpaceMap &cdmap, FactorMap& fmap, v2f_edge_tag) {
-    typedef typename boost::graph_traits<FactorGraph>::edge_descriptor Edge;
+      SampleSpaceMap &cdmap, FactorMap& fmap,
+      const typename SampleSpaceMap::value_type::first_type::value_type &xv,
+      v2f_edge_tag) {
     typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
     typedef typename MessageValues::value_type Real;
-    typename boost::graph_traits<FactorGraph>::out_edge_iterator e_it, e_end;
-    typedef typename SampleSpaceMap::value_type::first_type sample_space_iterator;
-    typedef typename std::iterator_traits<sample_space_iterator>::value_type samplespace_type;
-    typename SampleSpaceMap::value_type::first_type cd, cd_end;
+
     vertex_descriptor var = source(e, fg), factor = target(e, fg);
-
-    for (boost::tie(cd, cd_end) = get(cdmap, var); cd != cd_end; ++cd) {
-      boost::tie(e_it, e_end) = out_edges(var, fg);
-      Real prod = 1;
-      for (; e_it != e_end; ++e_it) {
-        using boost::opposite;
-        vertex_descriptor opp = opposite(*e_it, var, fg);
-        if (opp != factor)
-          prod *= msgs[typename MessageValues::key_type(opp, var, *cd)];
-      }
-      //std::cout << "mu(x" << var + 1 << "->f" << factor << ":" << *cd << ") = " << prod << std::endl;
-      msgs[typename MessageValues::key_type(var, factor, *cd)] = prod;
+    typename boost::graph_traits<FactorGraph>::out_edge_iterator e_it, e_end;
+    boost::tie(e_it, e_end) = out_edges(var, fg);
+    Real prod = 1;
+    for (; e_it != e_end; ++e_it) {
+      using boost::opposite;
+      vertex_descriptor opp = opposite(*e_it, var, fg);
+      if (opp != factor)
+        prod *= msgs[typename MessageValues::key_type(opp, var, xv)];
     }
-
-    boost::tie(cd, cd_end) = get(cdmap, var);
-    bind_first_two<typename MessageValues::key_type, vertex_descriptor, vertex_descriptor, samplespace_type> ctmkt(var, factor);
-    normalize(boost::make_transform_iterator(cd, ctmkt),
-              boost::make_transform_iterator(cd_end, ctmkt),
-              msgs);
+    return prod;
   }
 
   template<typename FactorGraph,
     typename MessageValues,
     typename FactorMap>
-  struct belief_from_vars 
+  struct belief_from_var_assignment 
   : public std::unary_function<
     typename FactorMap::value_type::argument_type,
     typename MessageValues::value_type >  
   {
     typedef typename FactorMap::value_type::argument_type argument_type;
     typedef typename MessageValues::value_type result_type;
-    belief_from_vars(const FactorGraph& g,
+    belief_from_var_assignment(const FactorGraph& g,
         const MessageValues& msgs,
         const FactorMap& fmap,
         const typename boost::graph_traits<FactorGraph>::edge_descriptor e)
@@ -115,51 +96,41 @@ namespace detail {
     std::pair<adjacency_iterator, adjacency_iterator> nbrs_;
   };
 
-
   template<typename FactorGraph,
     typename MessageValues,
     typename SampleSpaceMap,
     typename FactorMap>
-  void sumproduct(
+  typename MessageValues::value_type
+  belief(
       typename boost::graph_traits<FactorGraph>::edge_descriptor e,
       const FactorGraph &fg,
       MessageValues &msgs,
       SampleSpaceMap &cdmap,
       FactorMap& fmap, 
-      f2v_edge_tag) {
+      //const typename Assignment::value_type &xv
+      const typename SampleSpaceMap::value_type::first_type::value_type &xv,
+      f2v_edge_tag
+      ) {
     typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
-    typedef typename boost::graph_traits<FactorGraph>::edge_descriptor edge_descriptor;
     typedef typename MessageValues::value_type Real;
     typedef typename boost::graph_traits<FactorGraph>::adjacency_iterator adjacency_iterator;
     typedef typename SampleSpaceMap::value_type::first_type sample_space_iterator;
-    typedef typename std::iterator_traits<sample_space_iterator>::value_type samplespace_type;
     typedef typename FactorMap::value_type::argument_type const_assignment_ref_type;
     typedef typename boost::remove_reference<const_assignment_ref_type>::type const_assignment_type;
     typedef typename boost::remove_const<const_assignment_type>::type assignment_type;
-
     using boost::source;
     using boost::target;
     using boost::adjacent_vertices;
     vertex_descriptor factor = source(e, fg), var = target(e, fg);
-    std::pair<adjacency_iterator, adjacency_iterator> nbrs( adjacent_vertices(factor, fg));
-
-    sample_space_iterator cd, cd_end;
-    boost::tie(cd, cd_end) = get(cdmap, var);
-    for (boost::tie(cd, cd_end) = get(cdmap, var); cd != cd_end; ++cd) {
-      const belief_from_vars<FactorGraph, MessageValues, FactorMap> bfv(fg, msgs,
-          fmap, e);
-      Real sum = summaryOf<Real,
-           adjacency_iterator, 
-           SampleSpaceMap, assignment_type>(bfv, nbrs.first, nbrs.second, cdmap, var, *cd);
-      msgs[typename MessageValues::key_type(factor, var, *cd)] = sum;
-    }
-
-    // normalize
-    boost::tie(cd, cd_end) = get(cdmap, var);
-    bind_first_two<typename MessageValues::key_type, vertex_descriptor, vertex_descriptor, samplespace_type> ctmkt(factor, var);
-    normalize(boost::make_transform_iterator(cd, ctmkt),
-              boost::make_transform_iterator(cd_end, ctmkt),
-              msgs);
+    BOOST_AUTO_TPL(nbrs, adjacent_vertices(factor, fg));
+    // Functor to compute belief from a given assignment of neigboring
+    // variables.
+    const belief_from_var_assignment<FactorGraph, MessageValues, FactorMap> bfv(fg, msgs,
+        fmap, e);
+    // Marginalize bfv for var = xv over all nbrs
+    Real sum = summaryOf<Real, adjacency_iterator, SampleSpaceMap,
+         assignment_type>(bfv, nbrs.first, nbrs.second, cdmap, var, xv);
+    return sum;
   }
 } // namespace detail
 
@@ -167,26 +138,69 @@ template<typename FactorGraph, typename MessageValues,
   typename SampleSpaceMap,
   typename FactorMap,
   typename IsFactorMap>
-void sumproduct(
+typename MessageValues::value_type
+belief(
     typename boost::graph_traits<FactorGraph>::edge_descriptor e,
     const FactorGraph &fg,
-    MessageValues &msgs, SampleSpaceMap &cdmap, FactorMap& fmap,
-    IsFactorMap& is_factor) {
+    MessageValues &msgs,
+    SampleSpaceMap &cdmap,
+    FactorMap& fmap,
+    IsFactorMap& is_factor,
+    const typename SampleSpaceMap::value_type::first_type::value_type &xv)
+{
   typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
   vertex_descriptor u, v;
   using boost::incident;
   boost::tie(u, v) = incident(e, fg);
   if (get(is_factor, u) && (! get(is_factor, v)))
-    detail::sumproduct<FactorGraph, MessageValues, SampleSpaceMap, FactorMap>(
-        e, fg, msgs, cdmap, fmap, f2v_edge_tag());
+    return detail::belief<FactorGraph, MessageValues, SampleSpaceMap, FactorMap>(
+        e, fg, msgs, cdmap, fmap, xv, f2v_edge_tag());
   else if (( ! get(is_factor, u) ) && get(is_factor, v))
-   detail::sumproduct<FactorGraph, MessageValues, SampleSpaceMap, FactorMap>(
-       e, fg, msgs, cdmap, fmap, v2f_edge_tag());
+    return detail::belief<FactorGraph, MessageValues, SampleSpaceMap, FactorMap>(
+        e, fg, msgs, cdmap, fmap, xv, v2f_edge_tag());
   else {
     std::stringstream ss;
     ss << "Not a factor graph. Following edge is invalid:" << u << " - " << v;
     throw std::logic_error(ss.str());
   }
+}
+
+// for each state in sample space compute belief message over edge e
+// normalize the belief messages
+template<typename FactorGraph, typename MessageValues,
+  typename SampleSpaceMap,
+  typename FactorMap,
+  typename IsFactorMap>
+void sumproduct(
+    typename boost::graph_traits<FactorGraph>::edge_descriptor e,
+    const FactorGraph &fg,
+    MessageValues &msgs,
+    SampleSpaceMap &cdmap,
+    FactorMap& fmap,
+    IsFactorMap& is_factor)
+{
+    typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
+    typedef typename MessageValues::value_type Real;
+    typedef typename SampleSpaceMap::value_type::first_type sample_space_iterator;
+
+    vertex_descriptor factor = source(e, fg), var = target(e, fg);
+    sample_space_iterator cd, cd_end;
+    boost::tie(cd, cd_end) = get(cdmap, var);
+    for (boost::tie(cd, cd_end) = get(cdmap, var); cd != cd_end; ++cd) {
+      Real sum = belief(e, fg, msgs, cdmap, fmap, is_factor, *cd);
+      msgs[typename MessageValues::key_type(factor, var, *cd)] = sum;
+    }
+
+    // normalize
+    boost::tie(cd, cd_end) = get(cdmap, var);
+
+    typedef typename MessageValues::key_type msg_key_type;
+    namespace bl = boost::lambda;
+    BOOST_AUTO_TPL(ctmkt,
+          bl::bind(bl::constructor<msg_key_type>(), factor, var, boost::lambda::_1));
+    normalize(make_trans_it(cd, ctmkt),
+              make_trans_it(cd_end, ctmkt),
+              msgs);
 }
 
 template<typename FactorGraph, typename MessageValues,

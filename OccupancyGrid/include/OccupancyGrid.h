@@ -60,18 +60,20 @@ private:
     std::vector<gtsam::Index>& cells,
     gtsam::Index& key);
 
-  /// add laser and return the index of new factor and the cells traversed
-  LaserFactorPtr addLaserReturn(const gtsam::Pose2 &pose, double range,
-      gtsam::Index& factor_index,
-      std::vector<gtsam::Index>& cells);
-
-
   /// Generate a node id for this factor
-  gtsam::Index addNode(LaserFactorPtr f) {
+  LaserFactorPtr make_laser(
+      const std::vector<gtsam::Index> cells	///cells in which laser passes through
+      ) {
+    gtsam::Index node_idx(cellCount() + factors_.size());
+    LaserFactorPtr f  = boost::make_shared<LaserFactor>(
+        cells, node_idx);
     factors_.push_back(f);
-    gtsam::Index factor_idx = factors_.size() - 1;
-    gtsam::Index node_idx = factor_idx + cellCount();
-    return node_idx;
+
+    for (size_t i = 0; i < cells.size(); i++) {
+      gtsam::Index cellidx = cells[i];
+      cell2factors_[cellidx].push_back(node_idx);
+    }
+    return f;
   }
 
 public:

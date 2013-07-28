@@ -4,6 +4,8 @@
 #include <boost/property_map/property_map.hpp>
 #include <boost/lexical_cast.hpp>
 #include <gtest/gtest.h>
+#include "utility.hpp"
+using namespace occgrid;
 
 /// Adjacency list graph for FactorGraph
 typedef boost::adjacency_list<
@@ -71,62 +73,6 @@ private:
 
 /// Value assignment to variable nodes
 typedef associative_property_map< boost::unordered_map<Vertex, sample_space_type > > AssignmentMap;
-
-
-class SymReal {
-private:
-  std::string expression_;
-  friend SymReal& operator*=(SymReal&, SymReal&);
-  friend SymReal& operator+=(SymReal&, SymReal&);
-  friend std::ostream& operator << (std::ostream& os, const SymReal& r);
-  friend SymReal& operator/=(SymReal&, SymReal&);
-public:
-  SymReal() : expression_() {}
-  SymReal(double r) : expression_( boost::lexical_cast<std::string>(r) ) {}
-  SymReal(std::string exp) : expression_(exp) {}
-};
-
-SymReal& operator*=(SymReal& r1, SymReal& r2) {
-  if (r2.expression_ == "1") 
-    r1.expression_ = r1.expression_ ;
-  else if (r1.expression_ == "1") 
-    r1.expression_ = r2.expression_ ;
-  else {
-    // std::string eb = (r1.depth_ > 0) ? "]" : "";
-    // std::string sb = (r1.depth_ > 0) ? "[" : "";
-    // r1.expression_ = sb + r1.expression_ + eb ;
-    // eb = (r2.depth_ > 0) ? "]" : "";
-    // sb = (r2.depth_ > 0) ? "[" : "";
-    // r2.expression_ = sb + r2.expression_ + eb;
-    r1.expression_ += r2.expression_;
-  }
-  return r1;
-}
-
-SymReal& operator+=(SymReal& r1, SymReal& r2) {
-  if (r2.expression_ == "0") 
-    r1.expression_ = r1.expression_ ;
-  else if (r1.expression_ == "0") 
-    r1.expression_ = r2.expression_ ;
-  else {
-    if ((r1.expression_[0] == '[') && (r1.expression_[r1.expression_.size() - 1] == ']'))
-      r1.expression_[0] = ' ', r1.expression_[r1.expression_.size() - 1] = ' ';
-
-    r1.expression_ = "[" + r1.expression_ + " + " + r2.expression_ + "]";
-  }
-  return r1;
-}
-
-std::ostream& operator << (std::ostream& os, const SymReal& r) {
-  os << r.expression_;
-  return os;
-}
-
-SymReal& operator/=(SymReal& r1, SymReal& r2) {
-  return r1; // cheating. We don't want normalization
-}
-
-//typedef double SymReal;
 
 /// Factor map for factor nodes
 typedef boost::function<SymReal (const AssignmentMap&)> FactorType;

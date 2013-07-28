@@ -12,6 +12,9 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include <boost/bind.hpp>
+#include <boost/bind/placeholders.hpp>
+
 using namespace std;
 using namespace gtsam;
 
@@ -22,15 +25,12 @@ double LaserFactor::operator()(const Values &vals) const {
   global_vis_.highlightCells(cells_);
   global_vis_.show();
 #endif
-
-  // loops through all but the last cell and checks that they are all 0.  Otherwise return 1000.
-  for (Index i = 0; i < cells_.size() - 1; i++)
-    if (vals.at(cells_[i]) == 1)
-      return 1000;
-
-  // check if the last cell hit by the laser is 1. return 900 otherwise.
-  if (vals.at(cells_[cells_.size() - 1]) == 0)
-    return 900;
-
-  return 1;
+  if (is_same_assignment(
+        boost::bind(&LaserFactor::w0_assignment, this, _1), vals))
+    return w0_;
+  else if (is_same_assignment(
+        boost::bind(&LaserFactor::w1_assignment, this, _1), vals))
+    return w1_;
+  else
+    return w_otherwise_;
 }

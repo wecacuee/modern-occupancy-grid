@@ -48,6 +48,8 @@
 // edge_descriptor is just std::pair<vertex_descriptor, vertex_descriptor>
 //
 // MessageValues is also sorted out
+//
+#include "utility.hpp"
 
 #include <gtsam/discrete/DiscreteFactorGraph.h> 
 #include <boost/graph/graph_traits.hpp>
@@ -56,6 +58,7 @@
 #include <boost/bind.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/iterator/counting_iterator.hpp>
+#include <boost/bind.hpp>
 
 namespace occgrid {
   struct gtsam_traversal_category : 
@@ -143,10 +146,11 @@ namespace occgrid {
       return g_.is_factor(v);
     }
 
-    inline boost::function<double (typename Factor::argument_type)>
+    inline boost::function<logdouble (typename Factor::argument_type)>
       factorFromNodeId(gtsam::Index node_idx) const {
-        return *(g_.factorFromNodeId(node_idx));
-    }
+        BOOST_AUTO_TPL(factor, *(g_.factorFromNodeId(node_idx)));
+        return boost::bind(toprobability<logdouble>, boost::bind(factor, _1));
+      }
 
     struct SampleSpaceMap {
       typedef typename Factor::argument_type::mapped_type ValueType;
@@ -184,7 +188,7 @@ namespace occgrid {
       private:
         const G& g_;
       public:
-      typedef boost::function<double (typename Factor::argument_type)> value_type;
+      typedef boost::function<logdouble (typename Factor::argument_type)> value_type;
       typedef const value_type reference;
       typedef vertex_descriptor key_type;
       typedef boost::readable_property_map_tag category;
@@ -204,7 +208,7 @@ namespace occgrid {
           std::pair< std::pair<vertex_descriptor, vertex_descriptor>, sample_space_type>(
               std::pair<vertex_descriptor, vertex_descriptor>(u, v), ss) {};
       };
-      typedef boost::unordered_map<key_type, double> base_type;
+      typedef boost::unordered_map<key_type, logdouble> base_type;
       typedef boost::associative_property_map<base_type>
         property_map_type;
     };
@@ -244,6 +248,19 @@ namespace occgrid {
       return std::make_pair(boost::counting_iterator<vertices_size_type>(0),
                             boost::counting_iterator<vertices_size_type>(n));
     }
+
+  template <typename G>
+    typename G::edges_size_type
+    num_edges(const G& ogg) {
+      typedef typename boost::graph_traits<G>::vertex_iterator vertex_iterator;
+      vertex_iterator v, v_end;
+      typename G::edges_size_type nedges = 0;
+      for (boost::tie(v, v_end) = vertices(ogg); v != v_end; ++v)
+        nedges += out_degree(*v, ogg);
+      return nedges;
+    }
+  
+  // TODO implement edges() by concatenating iterators from adjacency_list
 
   template <typename G>
   typename G::SampleSpaceMap get(sample_space_t, const G& g) {
