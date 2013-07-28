@@ -49,8 +49,8 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
   LaserFactor::Occupancy occupancy = occupancyGrid.emptyOccupancy();
 
   double Ex = occupancyGrid(occupancy);
-  // global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
-  // global_vis_.enable_show();
+  global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
+  global_vis_.enable_show();
 
   // for logging
   vector<double> energy;
@@ -66,9 +66,11 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
     if (it % 100 == 0) {
       printf("%lf\n", (double) it / (double) iterations);
 
-      // global_vis_.reset();
-      // global_vis_.setOccupancy(occupancy);
-      // global_vis_.show();
+      if (it % 10000) {
+        global_vis_.reset();
+        global_vis_.setMarginals(marginals);
+        global_vis_.show();
+      }
     }
 
     // Sample a point close to the previous point with gaussian probability
@@ -100,7 +102,7 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
     // Calculate acceptance ratio, a
     // See e.g. MacKay 96 "Intro to Monte Carlo Methods"
     // a = P(x')/P(x) = exp {-E(x')} / exp {-E(x)} = exp {E(x)-E(x')}
-    double a = exp(Ex - Ex_prime);
+    double a = exp(Ex - Ex_prime) * ((occupancy[x_prime]) ? 0.30 : 3.33);
 
     // If a <= 1 otherwise accept with probability a
     double rn = static_cast<double>(std::rand()) / (RAND_MAX);
