@@ -19,18 +19,18 @@ namespace occgrid {
  * @type : InputIterator : A type of Iterator of VariableNodes
  * @type : PossibleValueIter : A type of Iterator of VariableNodes
  */
-template<typename InputIterator, typename CodomainMap>
+template<typename InputIterator, typename SampleSpaceMap>
 class CartesianProduct {
 private:
   typedef typename std::iterator_traits<InputIterator>::value_type Vnode;
-  typedef typename CodomainMap::value_type::first_type PossibleValueIter;
+  typedef typename SampleSpaceMap::value_type::first_type PossibleValueIter;
   typedef typename std::iterator_traits<PossibleValueIter>::value_type Value;
 
   // Nodes with possible assignments
 	const InputIterator nodes_begin_;
   const InputIterator nodes_end_;
 
-  const CodomainMap& cdmap_;
+  const SampleSpaceMap& cdmap_;
 
   // A vector of value iterators pointing to the current value of each node
   std::vector< PossibleValueIter > current_val_;
@@ -42,7 +42,7 @@ public:
   CartesianProduct(
       InputIterator nodes_begin,
       InputIterator nodes_end,
-      CodomainMap cdmap)
+      SampleSpaceMap cdmap)
     : nodes_begin_(nodes_begin),
     nodes_end_(nodes_end),
     cdmap_(cdmap),
@@ -94,26 +94,26 @@ public:
 };
 
 template<typename InputIterator,
-  typename CodomainMap,
+  typename SampleSpaceMap,
   typename Real,
   typename PropertyMap>
 Real summaryOf(
 		const boost::function<Real (PropertyMap&) > &func,
 		InputIterator dependent_nodes_begin,
 		InputIterator dependent_nodes_end,
-    CodomainMap& cdmap,
+    SampleSpaceMap& cdmap,
 		typename std::iterator_traits<InputIterator>::value_type &x,
-    typename CodomainMap::value_type::first_type::value_type &xv
+    typename SampleSpaceMap::value_type::first_type::value_type &xv
     )
 {
   typedef typename std::iterator_traits<InputIterator>::value_type Vnode;
 
-  CartesianProduct<InputIterator, CodomainMap> poss_assign(
+  CartesianProduct<InputIterator, SampleSpaceMap> poss_assign(
       dependent_nodes_begin, dependent_nodes_end, cdmap);
   Real summary(0);
   PropertyMap assign;
   while (poss_assign.next(assign)) {
-    if (assign[x] == xv) {
+    if (get(assign,x) == xv) {
       summary += func(assign);
     }
   }

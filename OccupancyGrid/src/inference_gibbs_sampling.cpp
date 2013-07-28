@@ -91,6 +91,7 @@ inference_gibbs_sampling(const std::vector<Observation2D>& observations, double 
         filename << i << ".png";
         cv::imwrite(filename.str(), map.og_);
     }
+    return map;
 }
 
 void 

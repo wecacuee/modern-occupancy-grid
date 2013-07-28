@@ -39,10 +39,10 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
   boost::variate_generator<boost::mt19937&,
     boost::normal_distribution< double > > var_nor(rng, normal_dist);
 
-  double dsize   = static_cast<double>(size);
-  double dheight = floor(sqrt(dsize));
-  size_t height  = static_cast<size_t>(dheight);
-  size_t width   = static_cast<size_t>(floor(dsize/dheight));
+  // double dsize   = static_cast<double>(size);
+  // double dheight = floor(sqrt(dsize));
+  // size_t height  = static_cast<size_t>(dheight);
+  // size_t width   = static_cast<size_t>(floor(dsize/dheight));
 
   // Create empty occupancy as initial state and
   // compute initial neg log-probability of occupancy grid, - log P(x_t)
@@ -129,7 +129,7 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
   }
 
   FILE *fptr = fopen("Data/Metropolis_Energy.txt", "w");
-  for (int i = 0; i < iterations; i++)
+  for (size_t i = 0; i < iterations; i++)
     fprintf(fptr, "%lf ", energy[i]);
 
   //compute the marginals

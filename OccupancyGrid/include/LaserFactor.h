@@ -25,6 +25,8 @@ private:
 public:
 
   typedef gtsam::DiscreteFactor::Values Occupancy;
+  typedef Occupancy argument_type;
+  typedef double result_type;
 
 	/// Constructor
 	LaserFactor(const std::vector<gtsam::Index> &cells) : cells_(cells) {}

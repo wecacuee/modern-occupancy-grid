@@ -77,7 +77,7 @@ class OccupancyGrid2D {
         int row = k / og_.size[1];
         int col = k % og_.size[1];
         //printf("%d, %d, %d, %lu", k, row, col, og_.total());
-        assert(k < og_.total());
+        //assert(k < og_.total());
         og_.at<uint8_t>(row, col) = value;
     }
 
@@ -85,7 +85,7 @@ class OccupancyGrid2D {
         int row = k / og_.size[1];
         int col = k % og_.size[1];
         //printf("%d, %d, %d, %lu", k, row, col, og_.total());
-        assert(k < og_.total());
+        //assert(k < og_.total());
         return og_.at<uint8_t>(row, col);
     }
 

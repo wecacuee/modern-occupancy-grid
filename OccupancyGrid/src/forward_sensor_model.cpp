@@ -72,9 +72,9 @@ class ForwardSensorModelTest : public ::testing::Test {
   protected:
     OccupancyGrid2D<double, int> map;
     boost::mt19937 gen;
+    double range_observation; 
     boost::normal_distribution<> norm_dist;;
     boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > norm_rand;;
-    double range_observation; 
 
     ForwardSensorModelTest():
       map(-2.5, -1.5, 0.5, 0.5, 12, 6),
@@ -99,7 +99,6 @@ class ForwardSensorModelTest : public ::testing::Test {
 TEST_F(ForwardSensorModelTest, test1) {
     double noise = norm_rand();
     range_observation += noise;
-    double angle_of_observation = 0;
     double robot_angle = atan2(0.5, 2.5);
     Observation2D observation(0, 0, robot_angle, range_observation);
     double exp_range;
@@ -161,7 +160,7 @@ double log_odds_observation_given_map_and_all_poses(
     }
 
     double lodds = 0;
-    for (int i = 0; i < observations.size(); i ++) {
+    for (size_t i = 0; i < observations.size(); i ++) {
         lodds += lodds_vector[i];
     }
     return lodds;

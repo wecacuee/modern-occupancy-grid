@@ -96,7 +96,7 @@ OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t it
 	}
 
 	FILE *fptr = fopen("Data/DDMCMC_Energy.txt","w");
-	for(int i = 0; i < iterations; i++){
+	for(size_t i = 0; i < iterations; i++){
 		fprintf(fptr, "%lf ", energy[i]);
 	}
 

@@ -35,6 +35,7 @@
 class OccupancyGrid : public gtsam::DiscreteFactorGraph {
   friend class LaserFactor;
   typedef boost::shared_ptr< LaserFactor > LaserFactorPtr;
+  typedef boost::shared_ptr< gtsam::DiscreteFactor > DiscreteFactorPtr;
   typedef LaserFactor::Occupancy Occupancy;
   typedef LaserFactor::Occupancy::key_type IndexType;
   typedef LaserFactor::Occupancy::mapped_type ValueType;
@@ -45,15 +46,14 @@ private:
 	size_t			height_; ///< number of cells tall the grid is
 	double			res_;    ///< the resolution at which the grid is created
 
-	std::vector<gtsam::Index> laser_indices_; ///< indices of the laser factor in factors_
 	std::vector<gtsam::Index>	heat_map_;      ///< heat map of the occupancy grid
-
+ 
 	std::vector<gtsam::Pose2>	pose_; ///< list of poses of the added lasers
 	std::vector<double>	range_;      ///< list of ranges of the added lasers
 
   /// the factors that are influenced by a cell
   // a vector of factor indices for each cell in the grid
-  std::vector<std::vector<LaserFactorPtr> > cell2factors_; 
+  std::vector<std::vector<gtsam::Index> > cell2factors_; 
 
   /// Ray trace and return the cells traversed and key of last cell
   void rayTrace(const gtsam::Pose2 &pose, const double range,
@@ -64,6 +64,16 @@ private:
   LaserFactorPtr addLaserReturn(const gtsam::Pose2 &pose, double range,
       gtsam::Index& factor_index,
       std::vector<gtsam::Index>& cells);
+
+
+  /// Generate a node id for this factor
+  gtsam::Index addNode(LaserFactorPtr f) {
+    factors_.push_back(f);
+    gtsam::Index factor_idx = factors_.size() - 1;
+    gtsam::Index node_idx = factor_idx + cellCount();
+    return node_idx;
+  }
+
 public:
 
 	size_t width() const {
@@ -108,10 +118,10 @@ public:
 	 * @param occupancy defines the grid which the laser will be evaulated with
 	 * @ret a double value that is the value of the specified laser factor for the grid
 	 */
-	double laserFactorValue(const boost::shared_ptr< gtsam::DiscreteFactor > &f,
+	double laserFactorValue(const gtsam::Index node_idx,
       const LaserFactor::Occupancy &occupancy) const 
   {
-		return (*f)(occupancy);
+		return (*factors_[node_idx - cellCount()])(occupancy);
 	}
 
 	/// returns the sum of the laser factors for the current state of the grid
@@ -127,15 +137,25 @@ public:
    */
   double computeDelta(LaserFactor::Occupancy &occupancy, const gtsam::Index &cellidx, size_t newValue) const;
 
-  /// Returns the neighbors of a cell in a factor graph
-  inline std::vector< LaserFactorPtr > getCellNeighbors(gtsam::Index cellidx) {
-    return cell2factors_[cellidx];
+  inline bool is_factor(gtsam::Index node_idx) const {
+    return (node_idx < cellCount()) ? false : true;
   }
 
-  /// Returns the neigbors of a factor in factor graph
-  inline std::vector< gtsam::Index > getCellNeighbors( LaserFactorPtr f) {
-    return f->cells_;
+  inline LaserFactorPtr factorFromNodeId(gtsam::Index node_idx) const {
+    return boost::dynamic_pointer_cast<LaserFactor>(factors_[node_idx - cellCount()]);
   }
+
+  /// Returns the neighbors of a cell in a factor graph
+  inline const std::vector< gtsam::Index >& getNeighbors(gtsam::Index node_idx) const {
+    return (is_factor(node_idx)) ? 
+      factorFromNodeId(node_idx)->cells_ : cell2factors_[node_idx];
+  }
+
+  /// Returns the number of factors
+  inline size_t factorCount() const {
+    return factors_.size();
+  }
+
 
 	/// run a metropolis sampler
 	Marginals runMetropolis(size_t iterations);
@@ -145,6 +165,5 @@ public:
 
 	/// save heat map as a pgm file
 	void saveHeatMap(const char *fname) const;
-
 };
 

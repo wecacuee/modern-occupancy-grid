@@ -8,20 +8,22 @@
 template<typename real_t, typename int_t>
 class OccupancyGrid2DInverseSensor : public OccupancyGrid2D<real_t, int_t> {
   public:
-    cv::Mat_<real_t> log_odds_map_;
-    int_t observed_manh_range_;
-    cv::Vec<int_t, 2> robot_position_;
     using OccupancyGrid2D<real_t, int_t>::og_;
     using OccupancyGrid2D<real_t, int_t>::cell_size_;
     using OccupancyGrid2D<real_t, int_t>::min_pt_;
     using OccupancyGrid2D<real_t, int_t>::FREE;
-    const real_t LOG_ODDS_FREE;
+    int_t observed_manh_range_;
+    cv::Vec<int_t, 2> robot_position_;
+    cv::Mat_<real_t> log_odds_map_;
     const real_t LOG_ODDS_OCCUPIED;
+    const real_t LOG_ODDS_FREE;
 
     OccupancyGrid2DInverseSensor(real_t min_x, real_t min_y, real_t cell_size_x, real_t
         cell_size_y, int_t ncells_x, int_t ncells_y) :
       OccupancyGrid2D<real_t, int_t>(min_x, min_y, cell_size_x, cell_size_y,
           ncells_x, ncells_y),
+      observed_manh_range_(),
+      robot_position_(),
       log_odds_map_(ncells_x, ncells_y, 0.0L),
       LOG_ODDS_OCCUPIED(1.3863),
       LOG_ODDS_FREE(-1.3863)

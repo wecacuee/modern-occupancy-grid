@@ -3,6 +3,7 @@
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/property_map/property_map.hpp>
 #include <boost/lexical_cast.hpp>
+#include <gtest/gtest.h>
 
 /// Adjacency list graph for FactorGraph
 typedef boost::adjacency_list<
@@ -12,8 +13,8 @@ typedef boost::adjacency_list<
 /// Vertex type
 typedef typename boost::graph_traits< FactorGraph >::vertex_descriptor Vertex;
 
-typedef std::size_t codomain_type;
-typedef typename std::vector<codomain_type>::const_iterator codomain_iterator;
+typedef std::size_t sample_space_type;
+typedef typename std::vector<sample_space_type>::const_iterator codomain_iterator;
 typedef std::pair<codomain_iterator, codomain_iterator> codomain_iter_pair;
 /// Codomain functor
 //
@@ -38,7 +39,7 @@ class BinaryCodomainMap {
 };
 BinaryCodomainMap::value_type get(BinaryCodomainMap c, Vertex n) {
   const static std::size_t codomain_array[] = {0, 1};
-  const static std::vector<codomain_type> codomain_vector(
+  const static std::vector<sample_space_type> codomain_vector(
       codomain_array, codomain_array + 2);
   return std::make_pair(codomain_vector.begin(), codomain_vector.end());
 }
@@ -69,43 +70,81 @@ private:
 //=========================================================================
 
 /// Value assignment to variable nodes
-typedef associative_property_map< boost::unordered_map<Vertex, codomain_type > > AssignmentMap;
+typedef associative_property_map< boost::unordered_map<Vertex, sample_space_type > > AssignmentMap;
 
 
-class Real {
+class SymReal {
 private:
   std::string expression_;
-  friend Real& operator*=(Real&, Real&);
-  friend Real& operator+=(Real&, Real&);
-  friend std::ostream& operator << (std::ostream& os, const Real& r);
+  friend SymReal& operator*=(SymReal&, SymReal&);
+  friend SymReal& operator+=(SymReal&, SymReal&);
+  friend std::ostream& operator << (std::ostream& os, const SymReal& r);
+  friend SymReal& operator/=(SymReal&, SymReal&);
 public:
-  Real() : expression_() {}
-  Real(double r) : expression_( boost::lexical_cast<std::string>(r) ) {}
-  Real(std::string exp) : expression_(exp) {}
+  SymReal() : expression_() {}
+  SymReal(double r) : expression_( boost::lexical_cast<std::string>(r) ) {}
+  SymReal(std::string exp) : expression_(exp) {}
 };
 
-Real& operator*=(Real& r1, Real& r2) {
-  r1.expression_ = (r2.expression_ == "1") ? r1.expression_ 
-    : (r1.expression_ == "1") ? r2.expression_ 
-    : r1.expression_ + r2.expression_;
-  return r1;
-}
-Real& operator+=(Real& r1, Real& r2) {
-  r1.expression_ = (r2.expression_ == "0") ? r1.expression_ 
-    : (r1.expression_ == "0") ? r2.expression_ 
-    : r1.expression_ + " + " + r2.expression_;
+SymReal& operator*=(SymReal& r1, SymReal& r2) {
+  if (r2.expression_ == "1") 
+    r1.expression_ = r1.expression_ ;
+  else if (r1.expression_ == "1") 
+    r1.expression_ = r2.expression_ ;
+  else {
+    // std::string eb = (r1.depth_ > 0) ? "]" : "";
+    // std::string sb = (r1.depth_ > 0) ? "[" : "";
+    // r1.expression_ = sb + r1.expression_ + eb ;
+    // eb = (r2.depth_ > 0) ? "]" : "";
+    // sb = (r2.depth_ > 0) ? "[" : "";
+    // r2.expression_ = sb + r2.expression_ + eb;
+    r1.expression_ += r2.expression_;
+  }
   return r1;
 }
 
-std::ostream& operator << (std::ostream& os, const Real& r) {
+SymReal& operator+=(SymReal& r1, SymReal& r2) {
+  if (r2.expression_ == "0") 
+    r1.expression_ = r1.expression_ ;
+  else if (r1.expression_ == "0") 
+    r1.expression_ = r2.expression_ ;
+  else {
+    if ((r1.expression_[0] == '[') && (r1.expression_[r1.expression_.size() - 1] == ']'))
+      r1.expression_[0] = ' ', r1.expression_[r1.expression_.size() - 1] = ' ';
+
+    r1.expression_ = "[" + r1.expression_ + " + " + r2.expression_ + "]";
+  }
+  return r1;
+}
+
+std::ostream& operator << (std::ostream& os, const SymReal& r) {
   os << r.expression_;
   return os;
 }
-//typedef double Real;
+
+SymReal& operator/=(SymReal& r1, SymReal& r2) {
+  return r1; // cheating. We don't want normalization
+}
+
+//typedef double SymReal;
 
 /// Factor map for factor nodes
-typedef boost::function<Real (AssignmentMap)> FactorType;
+typedef boost::function<SymReal (AssignmentMap)> FactorType;
 typedef boost::associative_property_map< boost::unordered_map<Vertex, FactorType > > FactorMap;
+
+enum variables { x1, x2, x3, x4, x5 };
+enum factors { fa = x5 + 1, fb, fc, fd, fe };
+
+std::string vertex_name(Vertex v) {
+  std::stringstream ss;
+  if (v >= fa) {
+    ss << "f" << static_cast<char>(v - fa + 'a');
+    return ss.str();
+  } else {
+    ss << "x" << (v + 1);
+    return ss.str();
+  }
+}
 
 template<typename VertexIterator>
 struct vertex_factor {
@@ -121,38 +160,73 @@ public:
       // std::cout << std::endl;
     }
 
-  Real operator()(AssignmentMap& amap) const {
+  SymReal operator()(AssignmentMap& amap) const {
     std::stringstream ss;
-    ss << "f" << v_ << "(";
+    ss << vertex_name(v_) << "(";
     for (VertexIterator v(v_begin_); v != v_end_; ++v) 
-      ss << "x" << (*v + 1) << "=" << amap[*v] << ", ";
+      ss << vertex_name(*v) << "=" << amap[*v] << ", ";
     ss << ")";
-    return Real(ss.str());
+    return SymReal(ss.str());
   }
 };
 
-typedef std::pair< std::pair<Vertex, Vertex>, codomain_type> MessageKeyType;
-typedef boost::associative_property_map< boost::unordered_map<MessageKeyType, Real > > MessageValues;
+struct MessageKeyType : public std::pair< std::pair<Vertex, Vertex>, sample_space_type> {
+  explicit MessageKeyType(Vertex u, Vertex v, sample_space_type ss) : 
+    std::pair< std::pair<Vertex, Vertex>, sample_space_type>(std::pair<Vertex, Vertex>(u, v), ss) {};
+};
+typedef boost::unordered_map<MessageKeyType, SymReal > MessageValuesBaseType;
+typedef boost::associative_property_map<MessageValuesBaseType> MessageValues;
 typedef boost::associative_property_map< boost::unordered_map<Vertex, bool > > IsFactorMap;
 
-std::string vertex_name(Vertex v, IsFactorMap is_factor, std::size_t fa) {
-  std::stringstream ss;
-  if (is_factor[v]) {
-    ss << "f" << static_cast<char>(v - fa + 'a');
-    return ss.str();
-  } else {
-    ss << "x" << (v + 1);
-    return ss.str();
-  }
+const std::string* expected_output() {
+  const static std::string strarray[] = 
+  {
+    "mu(x3->fc:1) = [fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]",
+"mu(x4->fd:1) = 1",
+"mu(x4->fd:0) = 1",
+"mu(fa->x1:1) = fa(x1=1, )",
+"mu(fc->x1:1) = [  fc(x3=0, x2=0, x1=1, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fb(x2=0, ) + fc(x3=1, x2=0, x1=1, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fb(x2=0, )  + fc(x3=0, x2=1, x1=1, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fb(x2=1, )  + fc(x3=1, x2=1, x1=1, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fb(x2=1, )]",
+"mu(fa->x1:0) = fa(x1=0, )",
+"mu(fc->x1:0) = [  fc(x3=0, x2=0, x1=0, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fb(x2=0, ) + fc(x3=1, x2=0, x1=0, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fb(x2=0, )  + fc(x3=0, x2=1, x1=0, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fb(x2=1, )  + fc(x3=1, x2=1, x1=0, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fb(x2=1, )]",
+"mu(x5->fe:1) = 1",
+"mu(x5->fe:0) = 1",
+"mu(fc->x2:1) = [  fc(x3=0, x2=1, x1=0, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fa(x1=0, ) + fc(x3=1, x2=1, x1=0, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fa(x1=0, )  + fc(x3=0, x2=1, x1=1, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fa(x1=1, )  + fc(x3=1, x2=1, x1=1, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fa(x1=1, )]",
+"mu(fc->x2:0) = [  fc(x3=0, x2=0, x1=0, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fa(x1=0, ) + fc(x3=1, x2=0, x1=0, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fa(x1=0, )  + fc(x3=0, x2=0, x1=1, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fa(x1=1, )  + fc(x3=1, x2=0, x1=1, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fa(x1=1, )]",
+"mu(x1->fc:0) = fa(x1=0, )",
+"mu(x1->fc:1) = fa(x1=1, )",
+"mu(fd->x3:1) = [fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )]",
+"mu(fd->x3:0) = [fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )]",
+"mu(x1->fa:0) = [  fc(x3=0, x2=0, x1=0, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fb(x2=0, ) + fc(x3=1, x2=0, x1=0, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fb(x2=0, )  + fc(x3=0, x2=1, x1=0, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fb(x2=1, )  + fc(x3=1, x2=1, x1=0, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fb(x2=1, )]",
+"mu(x1->fa:1) = [  fc(x3=0, x2=0, x1=1, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fb(x2=0, ) + fc(x3=1, x2=0, x1=1, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fb(x2=0, )  + fc(x3=0, x2=1, x1=1, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fb(x2=1, )  + fc(x3=1, x2=1, x1=1, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fb(x2=1, )]",
+"mu(fe->x5:0) = [fe(x3=0, x5=0, )[  fc(x3=0, x2=0, x1=0, )fb(x2=0, )fa(x1=0, ) + fc(x3=0, x2=1, x1=0, )fb(x2=1, )fa(x1=0, )  + fc(x3=0, x2=0, x1=1, )fb(x2=0, )fa(x1=1, )  + fc(x3=0, x2=1, x1=1, )fb(x2=1, )fa(x1=1, )][fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )] + fe(x3=1, x5=0, )[  fc(x3=1, x2=0, x1=0, )fb(x2=0, )fa(x1=0, ) + fc(x3=1, x2=1, x1=0, )fb(x2=1, )fa(x1=0, )  + fc(x3=1, x2=0, x1=1, )fb(x2=0, )fa(x1=1, )  + fc(x3=1, x2=1, x1=1, )fb(x2=1, )fa(x1=1, )][fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )]]",
+"mu(fe->x5:1) = [fe(x3=0, x5=1, )[  fc(x3=0, x2=0, x1=0, )fb(x2=0, )fa(x1=0, ) + fc(x3=0, x2=1, x1=0, )fb(x2=1, )fa(x1=0, )  + fc(x3=0, x2=0, x1=1, )fb(x2=0, )fa(x1=1, )  + fc(x3=0, x2=1, x1=1, )fb(x2=1, )fa(x1=1, )][fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )] + fe(x3=1, x5=1, )[  fc(x3=1, x2=0, x1=0, )fb(x2=0, )fa(x1=0, ) + fc(x3=1, x2=1, x1=0, )fb(x2=1, )fa(x1=0, )  + fc(x3=1, x2=0, x1=1, )fb(x2=0, )fa(x1=1, )  + fc(x3=1, x2=1, x1=1, )fb(x2=1, )fa(x1=1, )][fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )]]",
+"mu(fb->x2:1) = fb(x2=1, )",
+"mu(fb->x2:0) = fb(x2=0, )",
+"mu(x3->fd:1) = [  fc(x3=1, x2=0, x1=0, )fb(x2=0, )fa(x1=0, ) + fc(x3=1, x2=1, x1=0, )fb(x2=1, )fa(x1=0, )  + fc(x3=1, x2=0, x1=1, )fb(x2=0, )fa(x1=1, )  + fc(x3=1, x2=1, x1=1, )fb(x2=1, )fa(x1=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]",
+"mu(x3->fd:0) = [  fc(x3=0, x2=0, x1=0, )fb(x2=0, )fa(x1=0, ) + fc(x3=0, x2=1, x1=0, )fb(x2=1, )fa(x1=0, )  + fc(x3=0, x2=0, x1=1, )fb(x2=0, )fa(x1=1, )  + fc(x3=0, x2=1, x1=1, )fb(x2=1, )fa(x1=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]",
+"mu(x3->fe:0) = [  fc(x3=0, x2=0, x1=0, )fb(x2=0, )fa(x1=0, ) + fc(x3=0, x2=1, x1=0, )fb(x2=1, )fa(x1=0, )  + fc(x3=0, x2=0, x1=1, )fb(x2=0, )fa(x1=1, )  + fc(x3=0, x2=1, x1=1, )fb(x2=1, )fa(x1=1, )][fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )]",
+"mu(fc->x3:0) = [  fc(x3=0, x2=0, x1=0, )fb(x2=0, )fa(x1=0, ) + fc(x3=0, x2=1, x1=0, )fb(x2=1, )fa(x1=0, )  + fc(x3=0, x2=0, x1=1, )fb(x2=0, )fa(x1=1, )  + fc(x3=0, x2=1, x1=1, )fb(x2=1, )fa(x1=1, )]",
+"mu(x3->fe:1) = [  fc(x3=1, x2=0, x1=0, )fb(x2=0, )fa(x1=0, ) + fc(x3=1, x2=1, x1=0, )fb(x2=1, )fa(x1=0, )  + fc(x3=1, x2=0, x1=1, )fb(x2=0, )fa(x1=1, )  + fc(x3=1, x2=1, x1=1, )fb(x2=1, )fa(x1=1, )][fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )]",
+"mu(fc->x3:1) = [  fc(x3=1, x2=0, x1=0, )fb(x2=0, )fa(x1=0, ) + fc(x3=1, x2=1, x1=0, )fb(x2=1, )fa(x1=0, )  + fc(x3=1, x2=0, x1=1, )fb(x2=0, )fa(x1=1, )  + fc(x3=1, x2=1, x1=1, )fb(x2=1, )fa(x1=1, )]",
+"mu(x2->fb:0) = [  fc(x3=0, x2=0, x1=0, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fa(x1=0, ) + fc(x3=1, x2=0, x1=0, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fa(x1=0, )  + fc(x3=0, x2=0, x1=1, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fa(x1=1, )  + fc(x3=1, x2=0, x1=1, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fa(x1=1, )]",
+"mu(x2->fb:1) = [  fc(x3=0, x2=1, x1=0, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fa(x1=0, ) + fc(x3=1, x2=1, x1=0, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fa(x1=0, )  + fc(x3=0, x2=1, x1=1, )[fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]fa(x1=1, )  + fc(x3=1, x2=1, x1=1, )[fd(x3=1, x4=0, ) + fd(x3=1, x4=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]fa(x1=1, )]",
+"mu(fe->x3:1) = [fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]",
+"mu(fd->x4:0) = [fd(x3=0, x4=0, )[  fc(x3=0, x2=0, x1=0, )fb(x2=0, )fa(x1=0, ) + fc(x3=0, x2=1, x1=0, )fb(x2=1, )fa(x1=0, )  + fc(x3=0, x2=0, x1=1, )fb(x2=0, )fa(x1=1, )  + fc(x3=0, x2=1, x1=1, )fb(x2=1, )fa(x1=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )] + fd(x3=1, x4=0, )[  fc(x3=1, x2=0, x1=0, )fb(x2=0, )fa(x1=0, ) + fc(x3=1, x2=1, x1=0, )fb(x2=1, )fa(x1=0, )  + fc(x3=1, x2=0, x1=1, )fb(x2=0, )fa(x1=1, )  + fc(x3=1, x2=1, x1=1, )fb(x2=1, )fa(x1=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]]",
+"mu(fd->x4:1) = [fd(x3=0, x4=1, )[  fc(x3=0, x2=0, x1=0, )fb(x2=0, )fa(x1=0, ) + fc(x3=0, x2=1, x1=0, )fb(x2=1, )fa(x1=0, )  + fc(x3=0, x2=0, x1=1, )fb(x2=0, )fa(x1=1, )  + fc(x3=0, x2=1, x1=1, )fb(x2=1, )fa(x1=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )] + fd(x3=1, x4=1, )[  fc(x3=1, x2=0, x1=0, )fb(x2=0, )fa(x1=0, ) + fc(x3=1, x2=1, x1=0, )fb(x2=1, )fa(x1=0, )  + fc(x3=1, x2=0, x1=1, )fb(x2=0, )fa(x1=1, )  + fc(x3=1, x2=1, x1=1, )fb(x2=1, )fa(x1=1, )][fe(x3=1, x5=0, ) + fe(x3=1, x5=1, )]]",
+"mu(x2->fc:1) = fb(x2=1, )",
+"mu(fe->x3:0) = [fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]",
+"mu(x2->fc:0) = fb(x2=0, )",
+"mu(x3->fc:0) = [fd(x3=0, x4=0, ) + fd(x3=0, x4=1, )][fe(x3=0, x5=0, ) + fe(x3=0, x5=1, )]",
+};
+  return strarray;
 }
 
-int main(int argc, const char *argv[])
-{
-  // Construct a graph described in Example 1  of 
-  // Factor Graphs and the Sum-Product Algorithm by Frank R Kshischang et al
-  // (2001)
-  enum variables { x1, x2, x3, x4, x5 };
-  enum factors { fa = x5 + 1, fb, fc, fd, fe };
+TEST(test_sumproduct, kshischang_et_al) {
+  bool generate_expected_output = false;
+  if (generate_expected_output)
+    std::cout << " Construct a graph described in Example 1  of "
+      << " Factor Graphs and the Sum-Product Algorithm by Frank R Kshischang et al "
+      << " (2001)" << std::endl;
   typedef std::pair<int, int> Edge;
   Edge edge_array[] = { Edge(fa, x1), Edge(fc, x3),
     Edge(fb, x2), Edge(fc, x2), Edge(fc, x1), Edge(fd, x3),
@@ -195,7 +269,7 @@ int main(int argc, const char *argv[])
     put(fmap, *v, vf);
   }
 
-  boost::unordered_map<MessageKeyType, Real> msg_values;
+  MessageValuesBaseType msg_values;
 
   codomain_iter_pair cdip(codomain_static_function());
   BinaryCodomainMap cdmap;
@@ -205,7 +279,7 @@ int main(int argc, const char *argv[])
 
   for(boost::tie(e, e_end) = edges(g); e != e_end; ++e)
     for (codomain_iterator cd = cdip.first; cd != cdip.second; ++cd)
-      put(msgs, std::make_pair(std::make_pair(source(*e, g), target(*e, g)), *cd), 1);
+      put(msgs, typename MessageValues::key_type(source(*e, g), target(*e, g), *cd), 1);
 
   occgrid::sumproduct_visitor<
     FactorGraph,
@@ -217,14 +291,23 @@ int main(int argc, const char *argv[])
 
   occgrid::single_i_algorithm_traversal(g, spvis);
 
-  typedef typename boost::unordered_map<MessageKeyType, Real>::const_iterator map_iterator;
+  const std::string* expected_str = expected_output();
+  typedef typename boost::unordered_map<MessageKeyType, SymReal>::const_iterator map_iterator;
   for (map_iterator it(msg_values.cbegin()); it != msg_values.cend(); ++it) {
     Vertex factor = it->first.first.first;
     Vertex var = it->first.first.second;
-    codomain_type cd = it->first.second;
-    std::cout << "mu(" << vertex_name(factor, is_factor, fa)
-      << "->" << vertex_name(var, is_factor, fa) << ":" << cd << ") = " << it->second << std::endl;
+    sample_space_type cd = it->first.second;
+    std::stringstream ss;
+    ss << "mu(" << vertex_name(factor) << "->" << vertex_name(var) << ":" << cd << ") = " << it->second;
+    if (generate_expected_output)
+      std::cout << "\"" << ss.str() << "\"," << std::endl;
+    else
+      ASSERT_EQ(*expected_str, ss.str());
+    expected_str++;
   }
+}
 
-  return 0;
+int main(int argc, char *argv[]) {
+  ::testing::InitGoogleTest(&argc, argv);
+   return RUN_ALL_TESTS();
 }

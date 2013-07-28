@@ -77,6 +77,13 @@ DecimalCodomainMap::value_type get(DecimalCodomainMap c, nodeId_t n) {
   return codomain_static_function();
 }
 
+Assignment::mapped_type& get(Assignment& map, const typename Assignment::key_type& k) {
+  return map[k];
+}
+void put(Assignment& map, const typename Assignment::key_type& k, typename Assignment::mapped_type& value) {
+  map[k] = value;
+}
+
 TEST(CartesianProduct, test1) {
   std::vector<nodeId_t> bivars;
   for (int i = 0; i < 5; i ++)

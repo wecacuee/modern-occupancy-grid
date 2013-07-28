@@ -15,7 +15,7 @@ int main(int argc, const char *argv[]) {
   liness >> width;
   liness >> height;
   cv::Mat img(height, width, CV_64F);
-  for (int i = 0; i < width * height; i++) {
+  for (size_t i = 0; i < width * height; i++) {
     double val;
     fptr >> val;
     size_t x = i % width;

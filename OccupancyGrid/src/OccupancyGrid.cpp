@@ -49,9 +49,10 @@ void OccupancyGrid::rayTrace(const gtsam::Pose2 &pose, const double range,
   // ray trace from pose to range t//a >= 1 accept new state find all cells the laser passes through
   double x = pose.x(); //start position of the laser
   double y = pose.y();
-  double step = res_ / 8.0; //amount to step in each iteration of laser traversal
+  double step = res_; //amount to step in each iteration of laser traversal
 
 
+  // TODO: use integer addition based ray tracing.
   // traverse laser to find all the cells
   for (double i = 0; i < range; i += step) {
     //get point on laser
@@ -62,11 +63,10 @@ void OccupancyGrid::rayTrace(const gtsam::Pose2 &pose, const double range,
     key = keyLookup(x, y);
 
     // add cell to list of cells if it is new
-    if ((i == 0 || (key != cells[cells.size() - 1]) && key < (cellCount() - 1))) {
-      if (!(key < width_ * height_))  {
-        printf("key:%lu\n", key);
-        assert(false);
-      }
+    if (((i == 0 // first element in cells
+            || (key != cells[cells.size() - 1])) // we just added it last time
+          && (key < (cellCount() - 1))))  // must be inside occupancy grid
+    {
       cells.push_back(key);
     }
   }
@@ -84,6 +84,7 @@ OccupancyGrid::addLaserReturn(const Pose2 &pose, double range,
   if (key < (cellCount() - 1))
     heat_map_[key] = 4;
 
+  boost::shared_ptr<LaserFactor> lfptr;
   // add a factor that connects all those cells (if there are any)
   if (cells.size() > 0) {
     // also, store some book-keeping info in this class
@@ -91,10 +92,10 @@ OccupancyGrid::addLaserReturn(const Pose2 &pose, double range,
 
     pose_.push_back(pose);
     range_.push_back(range);
-    boost::shared_ptr<LaserFactor> lfptr(new LaserFactor(cells));
+    lfptr.reset(new LaserFactor(cells));
     push_back(lfptr);
-    return lfptr;
   }
+  return lfptr;
 }
 
 /*****************************************************************************/
@@ -103,9 +104,10 @@ void OccupancyGrid::addLaser(const Pose2 &pose, double range) {
   gtsam::Index factor_index;
   vector<Index> fcells; // list of keys of cells hit by the laser
   LaserFactorPtr factor = addLaserReturn(pose, range, factor_index, fcells);
-  for (int i = 0; i < fcells.size(); i++) {
+  gtsam::Index node_idx = addNode(factor);
+  for (size_t i = 0; i < fcells.size(); i++) {
     gtsam::Index cellidx = fcells[i];
-    cell2factors_[cellidx].push_back(factor);
+    cell2factors_[cellidx].push_back(node_idx);
   }
 }
 
@@ -132,8 +134,11 @@ Index OccupancyGrid::keyLookup(double x, double y) const {
 double OccupancyGrid::operator()(const LaserFactor::Occupancy &occupancy) const {
   double value = 0;
   // loop over all laser factors in the graph
-  for (Index i = 0; i < factors_.size(); i++)
-    value += laserFactorValue( factors_[i], occupancy);
+  typedef typename std::vector<
+    boost::shared_ptr<
+    gtsam::DiscreteFactor> >::const_iterator const_iterator;
+  for (const_iterator f(factors_.begin()); f != factors_.end(); ++f)
+    value += (**f)(occupancy);
   return value;
 }
 
@@ -141,9 +146,9 @@ double OccupancyGrid::operator()(const LaserFactor::Occupancy &occupancy) const 
 double OccupancyGrid::computeDelta(LaserFactor::Occupancy &occupancy,
     const Index &cellidx, size_t newValue) const
 {
-  vector< LaserFactorPtr > recomputefactors = cell2factors_[cellidx];
+  vector< gtsam::Index > recomputefactors = cell2factors_[cellidx];
   double oldEnergy = 0;
-  for (vector< LaserFactorPtr >::iterator it = recomputefactors.begin();
+  for (vector< gtsam::Index >::iterator it = recomputefactors.begin();
       it != recomputefactors.end(); it++)
     oldEnergy += laserFactorValue(*it, occupancy);
 
@@ -167,7 +172,7 @@ double OccupancyGrid::computeDelta(LaserFactor::Occupancy &occupancy,
   } newocc( occupancy , cellidx, newValue);
 
   double newEnergy = 0;
-  for (vector< LaserFactorPtr >::iterator it = recomputefactors.begin();
+  for (vector< gtsam::Index >::iterator it = recomputefactors.begin();
       it != recomputefactors.end(); it++)
     newEnergy += laserFactorValue(*it, occupancy);
   return newEnergy - oldEnergy;
@@ -189,10 +194,8 @@ void OccupancyGrid::saveHeatMap(const char *fname) const {
   FILE *fptr = fopen(fname, "wb");
   fprintf(fptr, "P3 %d %d 255\n", (int) width_, (int) height_);
 
-  unsigned int red, green, blue;
-  unsigned int byte;
+  //unsigned int red, green, blue;
   for (size_t it = 0; it < cellCount(); it++) {
-    byte = 0;
     if (heat_map_[it] == 4)
       fprintf(fptr, "255 0 0\n");
     else

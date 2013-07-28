@@ -5,7 +5,7 @@ cmake_policy(SET CMP0015 NEW)
 #set the default path for built executables to the "bin" directory
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(CMAKE_CXX_FLAGS_SYNTAX "-x c++ -fsyntax-only")
-set(CMAKE_CXX_FLAGS_DEBUG "-Wall -O0 -ggdb")
+set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Werror -O0 -ggdb")
 
 ###################################################################################
 # Find dependencies via installed packages
@@ -20,26 +20,27 @@ include_directories(${OpenCV_INCLUDE_DIR})
 # run in toplevel dir, for example "bin/SICKSlowMetropolis 18 18 0.18"
 # after that, DisplayMarginals should display ?? But source is missing
 include_directories(OccupancyGrid/include)
-add_executable(SICKSlowMetropolis
+
+add_library(occupancy_grid_graph SHARED
 			OccupancyGrid/src/OccupancyGrid.cpp
 			OccupancyGrid/src/LaserFactor.cpp
-			OccupancyGrid/src/MCMC/Metropolis.cpp
 			OccupancyGrid/src/cvmat_serialization.cpp
 			OccupancyGrid/src/loadData.cpp
+			)
+target_link_libraries (occupancy_grid_graph gtsam-shared)
+
+add_executable(SICKSlowMetropolis
+			OccupancyGrid/src/MCMC/Metropolis.cpp
 			tests/testSICKSlowMetropolis.cpp
 			)
-target_link_libraries (SICKSlowMetropolis gtsam-shared
+target_link_libraries (SICKSlowMetropolis occupancy_grid_graph gtsam-shared
 			${OpenCV_LIBS})
 
 add_executable(SICK_DDMCMC
-			OccupancyGrid/src/OccupancyGrid.cpp
-			OccupancyGrid/src/LaserFactor.cpp
 			OccupancyGrid/src/MCMC/DDMCMC.cpp
-			OccupancyGrid/src/cvmat_serialization.cpp
-			OccupancyGrid/src/loadData.cpp
 			tests/testSICKDDMCMC.cpp
 			)
-target_link_libraries (SICK_DDMCMC gtsam-shared
+target_link_libraries (SICK_DDMCMC occupancy_grid_graph gtsam-shared
 			${OpenCV_LIBS})
 
 ###################################################################################
@@ -62,6 +63,10 @@ add_library(merali13icra SHARED
 	OccupancyGrid/src/cvmat_serialization.cpp)
 target_link_libraries(merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
+
+add_executable(run_belief_propagation
+	OccupancyGrid/src/run_belief_propagation.cpp)
+target_link_libraries(run_belief_propagation occupancy_grid_graph ${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(test_sumproduct
 	tests/test_sumproduct.cpp)

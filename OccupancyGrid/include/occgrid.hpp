@@ -140,8 +140,8 @@ real_t OccupancyGrid2D<real_t, int_t>::ray_trace(
   assert(tx >= 0);
   assert(ty >= 0);
 
-  real_t min_cell_size = 
-    (cell_size_(0) < cell_size_(1)) ?  cell_size_(0) : cell_size_(1);
+  // real_t min_cell_size = 
+  //   (cell_size_(0) < cell_size_(1)) ?  cell_size_(0) : cell_size_(1);
 
   real_t dirmag = sqrt(dx*dx + dy*dy); 
   real_t n = floor(max_range * fabs(dx) / dirmag / cell_size_(0)) 
@@ -222,9 +222,8 @@ class OccupancyGrid2DTest : public ::testing::Test {
 
 TEST_F(OccupancyGrid2DTest, testFirstQuadrant) {
     cv::Vec<double, 2> final_pos;
-    double range = og_.ray_trace(position_(0), position_(1), angle_,
-	100,
-	final_pos);
+    double range = og_.ray_trace(position_(0), position_(1), angle_, 100,
+        final_pos);
     ASSERT_DOUBLE_EQ(sqrt(2.5*2.5 + 0.5*0.5), range);
     ASSERT_DOUBLE_EQ(2.5, final_pos(0));
     ASSERT_DOUBLE_EQ(0.5, final_pos(1));

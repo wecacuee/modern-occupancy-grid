@@ -32,7 +32,7 @@ int main(int argc, char *argv[]){
       "Data/player_sim/laser_range_all.bin",
       "Data/player_sim/scan_angles_all.bin",
       allposes, allranges, max_dist);
-  for (int i = 0; i < allranges.size(); i++) {
+  for (size_t i = 0; i < allranges.size(); i++) {
     const Pose2& pose = allposes[i];
     const double range = allranges[i];
     // this is where factors are added into the factor graph
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]){
 	FILE* fptr = fopen(marginalsOutput, "w");
 	fprintf(fptr, "%lu %lu\n", occupancyGrid.width(), occupancyGrid.height());
 
-	for(int i = 0; i < occupancyMarginals.size(); i++){
+	for(size_t i = 0; i < occupancyMarginals.size(); i++){
 		fprintf(fptr, "%lf ", occupancyMarginals[i]);
 	}
 
