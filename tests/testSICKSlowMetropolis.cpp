@@ -3,7 +3,6 @@
  * @author Brian Peasley
  * @date   ?
  */
-#include "../OccupancyGrid/include/OccupancyGridCache.h"
 #include "../OccupancyGrid/include/MCMC.h"
 #include "../OccupancyGrid/include/cvmat_serialization.h"
 #include "../OccupancyGrid/include/visualiser.h"
@@ -28,7 +27,7 @@ int main(int argc, char *argv[]) {
   double resolution = atof(argv[3]); //meters
 
   // Create the occupancy grid data structure
-  OccupancyGridCache occupancyGrid(width, height, resolution); //default center to middle
+  OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
   global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
   vector<Pose2> allposes;
   vector<double> allranges;

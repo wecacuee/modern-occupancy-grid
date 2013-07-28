@@ -1,7 +1,8 @@
 #include "sumproduct.hpp"
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/breadth_first_search.hpp>
 #include <boost/property_map/property_map.hpp>
+#include <boost/lexical_cast.hpp>
 
 /// Adjacency list graph for FactorGraph
 typedef boost::adjacency_list<
@@ -71,20 +72,36 @@ private:
 typedef associative_property_map< boost::unordered_map<Vertex, codomain_type > > AssignmentMap;
 
 
- // class Real {
- // private:
- //   std::string expression_;
- //   friend Real operator*=(Real&);
- //   friend Real operator+=(Real&);
- // };
- // 
- // Real operator*=(Real& r) {
- //   return (r == "1") ? expression_ : expression_ + r;
- // }
- // Real operator+=(Real& r) {
- //   return expression_ " + " r;
- // }
-typedef double Real;
+class Real {
+private:
+  std::string expression_;
+  friend Real& operator*=(Real&, Real&);
+  friend Real& operator+=(Real&, Real&);
+  friend std::ostream& operator << (std::ostream& os, const Real& r);
+public:
+  Real() : expression_() {}
+  Real(double r) : expression_( boost::lexical_cast<std::string>(r) ) {}
+  Real(std::string exp) : expression_(exp) {}
+};
+
+Real& operator*=(Real& r1, Real& r2) {
+  r1.expression_ = (r2.expression_ == "1") ? r1.expression_ 
+    : (r1.expression_ == "1") ? r2.expression_ 
+    : r1.expression_ + r2.expression_;
+  return r1;
+}
+Real& operator+=(Real& r1, Real& r2) {
+  r1.expression_ = (r2.expression_ == "0") ? r1.expression_ 
+    : (r1.expression_ == "0") ? r2.expression_ 
+    : r1.expression_ + " + " + r2.expression_;
+  return r1;
+}
+
+std::ostream& operator << (std::ostream& os, const Real& r) {
+  os << r.expression_;
+  return os;
+}
+//typedef double Real;
 
 /// Factor map for factor nodes
 typedef boost::function<Real (AssignmentMap)> FactorType;
@@ -105,12 +122,12 @@ public:
     }
 
   Real operator()(AssignmentMap& amap) const {
-    std::cout << "Neigbors of" << v_ << " start" << std::endl;
-    for (VertexIterator v(v_begin_); v != v_end_; ++v) {
-      std::cout << *v << " -> " << amap[*v] << std::endl;
-    }
-    std::cout << "Neigbors end" << std::endl;
-    return 0;
+    std::stringstream ss;
+    ss << "f" << v_ << "(";
+    for (VertexIterator v(v_begin_); v != v_end_; ++v) 
+      ss << "x" << (*v + 1) << "=" << amap[*v] << ", ";
+    ss << ")";
+    return Real(ss.str());
   }
 };
 
@@ -118,8 +135,22 @@ typedef std::pair< std::pair<Vertex, Vertex>, codomain_type> MessageKeyType;
 typedef boost::associative_property_map< boost::unordered_map<MessageKeyType, Real > > MessageValues;
 typedef boost::associative_property_map< boost::unordered_map<Vertex, bool > > IsFactorMap;
 
+std::string vertex_name(Vertex v, IsFactorMap is_factor, std::size_t fa) {
+  std::stringstream ss;
+  if (is_factor[v]) {
+    ss << "f" << static_cast<char>(v - fa + 'a');
+    return ss.str();
+  } else {
+    ss << "x" << (v + 1);
+    return ss.str();
+  }
+}
+
 int main(int argc, const char *argv[])
 {
+  // Construct a graph described in Example 1  of 
+  // Factor Graphs and the Sum-Product Algorithm by Frank R Kshischang et al
+  // (2001)
   enum variables { x1, x2, x3, x4, x5 };
   enum factors { fa = x5 + 1, fb, fc, fd, fe };
   typedef std::pair<int, int> Edge;
@@ -130,7 +161,6 @@ int main(int argc, const char *argv[])
   FactorGraph g(edge_array,
       edge_array + sizeof(edge_array) / sizeof(Edge),
        10 );
-  using namespace boost;
   //std::cout << "Vertices:" << num_vertices(g) << std::endl;
 
   typedef typename boost::graph_traits<FactorGraph>::vertex_iterator vertex_iterator;
@@ -185,7 +215,16 @@ int main(int argc, const char *argv[])
     IsFactorMap>
       spvis (msgs, cdmap, fmap, is_factor);
 
-  boost::depth_first_search(g, boost::visitor(boost::make_dfs_visitor(spvis)));
+  occgrid::single_i_algorithm_traversal(g, spvis);
+
+  typedef typename boost::unordered_map<MessageKeyType, Real>::const_iterator map_iterator;
+  for (map_iterator it(msg_values.cbegin()); it != msg_values.cend(); ++it) {
+    Vertex factor = it->first.first.first;
+    Vertex var = it->first.first.second;
+    codomain_type cd = it->first.second;
+    std::cout << "mu(" << vertex_name(factor, is_factor, fa)
+      << "->" << vertex_name(var, is_factor, fa) << ":" << cd << ") = " << it->second << std::endl;
+  }
 
   return 0;
 }

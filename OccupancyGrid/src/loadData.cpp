@@ -1,4 +1,4 @@
-#include "../OccupancyGrid/include/loadData.h"
+#include "loadData.h"
 #include <cstdio>
 #include <cvmat_serialization.h>
 
@@ -16,7 +16,8 @@ void loadDataFromTxt(const std::string& odometry_fname,
   FILE *fptr = fopen(odometry_fname.c_str(), "r");
   while (!feof(fptr)) {
     double x, y, theta;
-    fscanf(fptr, "%lf %lf %lf", &x, &y, &theta);
+    if (fscanf(fptr, "%lf %lf %lf", &x, &y, &theta) != 3)
+      throw std::runtime_error("error while fscanf");
     theta *= 3.174159 / 180.0;
     pose.push_back(*(new Pose2(x, y, theta)));
   }
@@ -33,8 +34,10 @@ void loadDataFromTxt(const std::string& odometry_fname,
   double min_dist;
   int n_readings;
 
-  fscanf(fptr, "%lf %lf %lf %lf %lf %d", &min_angle, &max_angle, &step,
-      &max_dist, &min_dist, &n_readings);
+  if (fscanf(fptr, "%lf %lf %lf %lf %lf %d", &min_angle, &max_angle, &step,
+      &max_dist, &min_dist, &n_readings) != 6)
+    throw std::runtime_error("error while fscanf");
+
   double range;
   Index it = 0;
   while (!feof(fptr)) {
@@ -42,7 +45,9 @@ void loadDataFromTxt(const std::string& odometry_fname,
     for (int i = 0; i < n_readings && !feof(fptr); i++) {
       Pose2 p(pose[it].y() / 100, pose[it].x(), theta);
       allposes.push_back(p);
-      fscanf(fptr, "%lf", &range); //load range
+      if (fscanf(fptr, "%lf", &range) != 1) //load range
+        throw std::runtime_error("error while fscanf");
+
       ranges.push_back(range);
       theta += step; //increment angle for next laser
     }

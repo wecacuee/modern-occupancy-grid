@@ -17,7 +17,7 @@
  * @brief factor that encodes a laser measurements likelihood.
  */
 class LaserFactor : public gtsam::DiscreteFactor{
-  friend class OccupancyGridCache;
+  friend class OccupancyGrid;
 
 private:
 	std::vector<gtsam::Index> cells_;	///cells in which laser passes through

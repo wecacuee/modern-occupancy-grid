@@ -15,6 +15,7 @@
 
 #include <CppUnitLite/TestHarness.h>
 
+#include <boost/shared_ptr.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int.hpp>
 
@@ -32,7 +33,11 @@
  * Measurements will create factors, as well as the prior.
  */
 class OccupancyGrid : public gtsam::DiscreteFactorGraph {
-  friend class OccupancyGridCache;
+  friend class LaserFactor;
+  typedef boost::shared_ptr< LaserFactor > LaserFactorPtr;
+  typedef LaserFactor::Occupancy Occupancy;
+  typedef LaserFactor::Occupancy::key_type IndexType;
+  typedef LaserFactor::Occupancy::mapped_type ValueType;
 
 private:
 
@@ -46,13 +51,17 @@ private:
 	std::vector<gtsam::Pose2>	pose_; ///< list of poses of the added lasers
 	std::vector<double>	range_;      ///< list of ranges of the added lasers
 
+  /// the factors that are influenced by a cell
+  // a vector of factor indices for each cell in the grid
+  std::vector<std::vector<LaserFactorPtr> > cell2factors_; 
+
   /// Ray trace and return the cells traversed and key of last cell
   void rayTrace(const gtsam::Pose2 &pose, const double range,
     std::vector<gtsam::Index>& cells,
     gtsam::Index& key);
 
   /// add laser and return the index of new factor and the cells traversed
-  void addLaserReturn(const gtsam::Pose2 &pose, double range,
+  LaserFactorPtr addLaserReturn(const gtsam::Pose2 &pose, double range,
       gtsam::Index& factor_index,
       std::vector<gtsam::Index>& cells);
 public:
@@ -99,13 +108,34 @@ public:
 	 * @param occupancy defines the grid which the laser will be evaulated with
 	 * @ret a double value that is the value of the specified laser factor for the grid
 	 */
-	double laserFactorValue(gtsam::Index index, const LaserFactor::Occupancy &occupancy) const{
-
-		return (*factors_[ index ])(occupancy);
+	double laserFactorValue(const boost::shared_ptr< gtsam::DiscreteFactor > &f,
+      const LaserFactor::Occupancy &occupancy) const 
+  {
+		return (*f)(occupancy);
 	}
 
 	/// returns the sum of the laser factors for the current state of the grid
 	virtual double operator()(const LaserFactor::Occupancy &occupancy) const;
+
+  /** 
+   * Returns the change in Energy value occupancy[cellidx] is replaced by
+   * newValue.
+   *
+   * occupancy remains unchanged, when the function returns. However it is
+   * changed intermediately, so make sure you add locking while making the
+   * algorithm multi-threaded.
+   */
+  double computeDelta(LaserFactor::Occupancy &occupancy, const gtsam::Index &cellidx, size_t newValue) const;
+
+  /// Returns the neighbors of a cell in a factor graph
+  inline std::vector< LaserFactorPtr > getCellNeighbors(gtsam::Index cellidx) {
+    return cell2factors_[cellidx];
+  }
+
+  /// Returns the neigbors of a factor in factor graph
+  inline std::vector< gtsam::Index > getCellNeighbors( LaserFactorPtr f) {
+    return f->cells_;
+  }
 
 	/// run a metropolis sampler
 	Marginals runMetropolis(size_t iterations);

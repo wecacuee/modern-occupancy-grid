@@ -1,5 +1,5 @@
-#include "../include/OccupancyGridCache.h"
-#include "../include/visualiser.h"
+#include "OccupancyGridCache.h"
+#include "visualiser.h"
 
 #define OCC_GRID_DEBUG 0
 
@@ -102,8 +102,4 @@ void OccupancyGridCache::addLaser(const gtsam::Pose2 &pose, double range) {
   global_vis_.enable_show();
   global_vis_.show(1);
 #endif
-  for (int i = 0; i < fcells.size(); i++) {
-    gtsam::Index cellidx = fcells[i];
-    cell2factors_[cellidx].push_back(factoridx);
-  }
 }

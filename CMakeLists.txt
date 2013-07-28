@@ -4,6 +4,8 @@ cmake_policy(SET CMP0015 NEW)
 
 #set the default path for built executables to the "bin" directory
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+set(CMAKE_CXX_FLAGS_SYNTAX "-x c++ -fsyntax-only")
+set(CMAKE_CXX_FLAGS_DEBUG "-Wall -O0 -ggdb")
 
 ###################################################################################
 # Find dependencies via installed packages
@@ -20,7 +22,6 @@ include_directories(${OpenCV_INCLUDE_DIR})
 include_directories(OccupancyGrid/include)
 add_executable(SICKSlowMetropolis
 			OccupancyGrid/src/OccupancyGrid.cpp
-			OccupancyGrid/src/OccupancyGridCache.cpp
 			OccupancyGrid/src/LaserFactor.cpp
 			OccupancyGrid/src/MCMC/Metropolis.cpp
 			OccupancyGrid/src/cvmat_serialization.cpp
@@ -32,7 +33,6 @@ target_link_libraries (SICKSlowMetropolis gtsam-shared
 
 add_executable(SICK_DDMCMC
 			OccupancyGrid/src/OccupancyGrid.cpp
-			OccupancyGrid/src/OccupancyGridCache.cpp
 			OccupancyGrid/src/LaserFactor.cpp
 			OccupancyGrid/src/MCMC/DDMCMC.cpp
 			OccupancyGrid/src/cvmat_serialization.cpp
@@ -61,6 +61,16 @@ add_library(merali13icra SHARED
 	OccupancyGrid/src/forward_sensor_model.cpp
 	OccupancyGrid/src/cvmat_serialization.cpp)
 target_link_libraries(merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES}
+	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
+
+add_executable(test_sumproduct
+	tests/test_sumproduct.cpp)
+target_link_libraries(test_sumproduct ${Boost_LIBRARIES}
+	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
+
+add_executable(test_cartesian_product
+	tests/test_cartesian_product.cpp)
+target_link_libraries(test_cartesian_product ${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
 
 add_executable(test_occgrid 

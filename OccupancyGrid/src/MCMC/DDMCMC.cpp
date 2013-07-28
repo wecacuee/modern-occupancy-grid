@@ -5,7 +5,8 @@
  *      @author Frank Dellaert
  */
 
-#include "../../include/OccupancyGrid.h"
+#include "OccupancyGrid.h"
+#include "visualiser.h"
 
 using namespace std;
 using namespace gtsam;
@@ -40,7 +41,9 @@ OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t it
 	// run Metropolis for the requested number of operations
 	// compute initial probability of occupancy grid, P(x_t)
 
-	double Px = occupancyGrid(occupancy);
+  double Ex = occupancyGrid(occupancy);
+  global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
+  global_vis_.enable_show();
 
 	for(size_t it = 0; it < marginals.size(); it++)
 		marginals[it] = 0.0;
@@ -49,37 +52,47 @@ OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t it
 	vector<double> energy;
 
 	for(size_t it = 0; it < iterations; it++){
-		energy.push_back(Px);
-		if (it%100==0) printf("%lf\n", (double)it/(double)iterations);
+		energy.push_back(Ex);
+		if ( it%100 == 0 ) {
+      printf("%lf\n", (double)it/(double)iterations);
+      if (it % 10000) {
+        global_vis_.reset();
+        global_vis_.setMarginals(marginals);
+        global_vis_.show();
+      }
+    }
 		//choose a random cell
 		Index j = random_cell(rng);
 
-		//flip the state of a random cell, x
-			 occupancy[map[j]] = 1 - occupancy[map[j]];
-
 		//compute probability of new occupancy grid, P(x')
 		//by summing over all LaserFactor::operator()
-			 double Px_prime = occupancyGrid(occupancy);
+    double deltaEx = 
+      occupancyGrid.computeDelta(occupancy, map[j], 1 - occupancy[map[j]]);
 
-		//occupancy.print();
-		//calculate acceptance ratio, a
-			double a = Px_prime/Px;
+    // Calculate acceptance ratio, a
+    // See e.g. MacKay 96 "Intro to Monte Carlo Methods"
+    // a = P(x')/P(x) = exp {-E(x')} / exp {-E(x)} = exp {E(x)-E(x')}
+    double a = exp(-deltaEx);
+      
+    // If a <= 1 otherwise accept with probability a
+    double rn = static_cast<double>(std::rand()) / (RAND_MAX);
+    bool accept = (a>=1) ? true // definitely accept
+      : (a >= rn) ?  true       // accept with probability a
+      : false;
 
 		//if a <= 1 otherwise accept with probability a
 		//if we accept the new state P(x_t) = P(x')
-		//	printf(" %.3lf %.3lf\t", Px, Px_prime);
-			if(a <= 1){
-				Px = Px_prime;
-			}
-			else{
-				 occupancy[map[j]] = 1 - occupancy[map[j]];
-			}
+    //	printf(" %.3lf %.3lf\t", Px, Px_prime);
+    if(accept) {
+      Ex += deltaEx; 
+      occupancy[map[j]] = 1 - occupancy[map[j]];
+    }
 
-		//increment the number of iterations each cell has been on
-			for(size_t i = 0; i < size; i++){
-				if(occupancy[i] == 1)
-					marginals[i]++;
-			}
+    //increment the number of iterations each cell has been on
+    for(size_t i = 0; i < size; i++){
+      if(occupancy[i] == 1)
+        marginals[i]++;
+    }
 	}
 
 	FILE *fptr = fopen("Data/DDMCMC_Energy.txt","w");

@@ -1,4 +1,4 @@
-#include "../OccupancyGrid/include/OccupancyGridCache.h"
+#include "../OccupancyGrid/include/OccupancyGrid.h"
 #include "../OccupancyGrid/include/MCMC.h"
 #include "../OccupancyGrid/include/visualiser.h"
 #include "../OccupancyGrid/include/loadData.h"
@@ -16,7 +16,7 @@ int main(int argc, char *argv[]){
 	double width 		=	atof(argv[1]); 		//meters
 	double height 		= 	atof(argv[2]); 		//meters
 	double resolution 	= 	atof(argv[3]); 	//meters
-	OccupancyGridCache occupancyGrid(width, height, resolution); //default center to middle
+	OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
 
   global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
   vector<Pose2> allposes;

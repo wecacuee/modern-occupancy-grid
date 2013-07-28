@@ -4,7 +4,7 @@
  *      @author Vikas Dhiman
  */
 #pragma once
-#include "../include/OccupancyGrid.h"
+#include "OccupancyGrid.h"
 
 /**
  * We do not need to recompute all laser factors when we flip only one or few

@@ -5,8 +5,8 @@
  *      @author Frank Dellaert
  */
 
-#include "../../include/OccupancyGrid.h"
-#include "../../include/visualiser.h"
+#include "OccupancyGrid.h"
+#include "visualiser.h"
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
 
@@ -50,7 +50,6 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
 
   double Ex = occupancyGrid(occupancy);
   global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
-  global_vis_.enable_show();
 
   // for logging
   vector<double> energy;
@@ -67,6 +66,7 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
       printf("%lf\n", (double) it / (double) iterations);
 
       if (it % 10000) {
+        global_vis_.enable_show();
         global_vis_.reset();
         global_vis_.setMarginals(marginals);
         global_vis_.show();
@@ -85,24 +85,25 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
     row += var_nor();
     col += var_nor();
     Index row_lu = (row < 0) ? 0
-      : (row >= nrows) ? nrows
+      : (row >= nrows) ? nrows - 1
       : static_cast<Index>(row);
     Index col_lu = (col < 0) ? 0
-      : (col >= ncols) ? ncols
+      : (col >= ncols) ? ncols - 1
       : static_cast<Index>(col);
     Index x_prime = row_lu * occupancyGrid.width() + col_lu;
 
-    // Flip the state of a random cell, x_prime
-    occupancy[x_prime] = 1 - occupancy[x_prime];
 
     // Compute neg log-probability of new occupancy grid, -log P(x')
     // by summing over all LaserFactor::operator()
-    double Ex_prime = occupancyGrid(occupancy);
+    double oldValue = occupancy[x_prime];
+    double deltaEx = 
+      occupancyGrid.computeDelta(occupancy, x_prime, 1 - occupancy[x_prime]);
+    assert(occupancy[x_prime] == oldValue);
 
     // Calculate acceptance ratio, a
     // See e.g. MacKay 96 "Intro to Monte Carlo Methods"
     // a = P(x')/P(x) = exp {-E(x')} / exp {-E(x)} = exp {E(x)-E(x')}
-    double a = exp(Ex - Ex_prime) * ((occupancy[x_prime]) ? 0.30 : 3.33);
+    double a = exp(- deltaEx);
 
     // If a <= 1 otherwise accept with probability a
     double rn = static_cast<double>(std::rand()) / (RAND_MAX);
@@ -112,11 +113,11 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
 
     //printf("%lu : %lu; accepted: %d\n", x_prime, occupancy.at(x_prime), accept);
     if (accept) {
-      Ex = Ex_prime;
+      Ex += deltaEx;
       x = x_prime;
-    } else {
-      // we don't accept: flip it back !
+      // we accept: flip it !
       occupancy[x_prime] = 1 - occupancy[x_prime];
+    } else {
       x = random_cell(rng);
     }
 

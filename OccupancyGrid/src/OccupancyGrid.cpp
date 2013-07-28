@@ -5,7 +5,7 @@
  *      @author Frank Dellaert
  */
 
-#include "../include/OccupancyGrid.h"
+#include "OccupancyGrid.h"
 #include <cassert>
 
 using namespace std;
@@ -16,7 +16,8 @@ OccupancyGrid::OccupancyGrid(double width, double height, double resolution) :
   width_( width / resolution),
   height_(height / resolution),
   res_(resolution),
-  heat_map_(cellCount(), 1)
+  heat_map_(cellCount(), 1),
+  cell2factors_(cellCount())
 {
 
 }
@@ -71,7 +72,8 @@ void OccupancyGrid::rayTrace(const gtsam::Pose2 &pose, const double range,
   }
 }
 
-void OccupancyGrid::addLaserReturn(const Pose2 &pose, double range,
+OccupancyGrid::LaserFactorPtr
+OccupancyGrid::addLaserReturn(const Pose2 &pose, double range,
     Index& factor_index,
     vector<Index>& cells)
 {
@@ -91,16 +93,20 @@ void OccupancyGrid::addLaserReturn(const Pose2 &pose, double range,
     range_.push_back(range);
     boost::shared_ptr<LaserFactor> lfptr(new LaserFactor(cells));
     push_back(lfptr);
+    return lfptr;
   }
-
 }
 
 /*****************************************************************************/
 void OccupancyGrid::addLaser(const Pose2 &pose, double range) {
   // also, store some book-keeping info in this class
-  gtsam::Index factor_index = factors_.size();
-  vector<Index> cells; // list of keys of cells hit by the laser
-  addLaserReturn(pose, range, factor_index, cells);
+  gtsam::Index factor_index;
+  vector<Index> fcells; // list of keys of cells hit by the laser
+  LaserFactorPtr factor = addLaserReturn(pose, range, factor_index, fcells);
+  for (int i = 0; i < fcells.size(); i++) {
+    gtsam::Index cellidx = fcells[i];
+    cell2factors_[cellidx].push_back(factor);
+  }
 }
 
 /*****************************************************************************/
@@ -124,12 +130,47 @@ Index OccupancyGrid::keyLookup(double x, double y) const {
 
 /*****************************************************************************/
 double OccupancyGrid::operator()(const LaserFactor::Occupancy &occupancy) const {
-  cout << "Parent called" << endl;
   double value = 0;
   // loop over all laser factors in the graph
   for (Index i = 0; i < factors_.size(); i++)
-    value += laserFactorValue(i, occupancy);
+    value += laserFactorValue( factors_[i], occupancy);
   return value;
+}
+
+/*****************************************************************************/
+double OccupancyGrid::computeDelta(LaserFactor::Occupancy &occupancy,
+    const Index &cellidx, size_t newValue) const
+{
+  vector< LaserFactorPtr > recomputefactors = cell2factors_[cellidx];
+  double oldEnergy = 0;
+  for (vector< LaserFactorPtr >::iterator it = recomputefactors.begin();
+      it != recomputefactors.end(); it++)
+    oldEnergy += laserFactorValue(*it, occupancy);
+
+  // Ensures rollback to original value of occupancy grid
+  class TempGrid {
+    public:
+      LaserFactor::Occupancy &occ_;
+      const IndexType &cellidx_;
+      const ValueType oldValue_;
+      TempGrid(LaserFactor::Occupancy& occ, const IndexType& cellidx,
+          const ValueType &newValue
+          ) : occ_(occ),
+      cellidx_(cellidx),
+      oldValue_(occ.at(cellidx)) {
+        occ_[cellidx_] = newValue;
+      }
+
+      ~TempGrid() {
+        occ_[cellidx_] = oldValue_;
+      }
+  } newocc( occupancy , cellidx, newValue);
+
+  double newEnergy = 0;
+  for (vector< LaserFactorPtr >::iterator it = recomputefactors.begin();
+      it != recomputefactors.end(); it++)
+    newEnergy += laserFactorValue(*it, occupancy);
+  return newEnergy - oldEnergy;
 }
 
 /*****************************************************************************/
