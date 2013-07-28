@@ -7,6 +7,8 @@
 #pragma once
 
 #include <boost/function.hpp>
+#include <boost/iterator/filter_iterator.hpp>
+#include <boost/type_traits.hpp>
 #include <vector>
 
 
@@ -56,6 +58,8 @@ public:
     }
 
   /// Return the next assignment
+  // TODO: We don't need to accept a property map type, we can just do by
+  // transformed iterator over a map object
   template<typename PropertyMap>
   bool next(PropertyMap &assign) {
     bool carry_over = true;
@@ -93,29 +97,50 @@ public:
   }
 };
 
-template<typename InputIterator,
+namespace detail {
+  template <typename T>
+    struct all_but_this_pred : public std::unary_function<T, bool> {
+      all_but_this_pred(const T var) : var_(var) { }
+      bool operator()(T v) const { return var_ != v; }
+      private:
+      const T var_;
+    };
+}
+
+template<typename Real,
+  typename InputIterator,
   typename SampleSpaceMap,
-  typename Real,
-  typename PropertyMap>
-Real summaryOf(
-		const boost::function<Real (PropertyMap&) > &func,
+  typename Assignment
+  >
+Real
+summaryOf(
+		const boost::function<Real (const Assignment&)> &func,
 		InputIterator dependent_nodes_begin,
 		InputIterator dependent_nodes_end,
-    SampleSpaceMap& cdmap,
-		typename std::iterator_traits<InputIterator>::value_type &x,
-    typename SampleSpaceMap::value_type::first_type::value_type &xv
+    const SampleSpaceMap& cdmap,
+		const typename std::iterator_traits<InputIterator>::value_type &x,
+    //const typename Assignment::value_type &xv
+    const typename SampleSpaceMap::value_type::first_type::value_type &xv
     )
 {
+  // typedef typename boost::remove_reference<typename UnaryFunction::argument_type>::type ConstPropertyMap;
+  // typedef typename boost::remove_const<ConstPropertyMap>::type Assignment;
+  //typedef typename UnaryFunction::result_type Real;
   typedef typename std::iterator_traits<InputIterator>::value_type Vnode;
 
-  CartesianProduct<InputIterator, SampleSpaceMap> poss_assign(
-      dependent_nodes_begin, dependent_nodes_end, cdmap);
+  // filter iterator to get all neighbors except var
+  typedef detail::all_but_this_pred<Vnode> pred;
+  typedef boost::filter_iterator<pred, InputIterator> filter_iterator;
+  filter_iterator fi_begin(pred(x), dependent_nodes_begin, dependent_nodes_end);
+  filter_iterator fi_end(pred(x), dependent_nodes_end, dependent_nodes_end);
+
+  CartesianProduct<filter_iterator, SampleSpaceMap> poss_assign(fi_begin, fi_end, cdmap);
   Real summary(0);
-  PropertyMap assign;
+  Assignment assign;
+  assign[x] = xv;
   while (poss_assign.next(assign)) {
-    if (get(assign,x) == xv) {
-      summary += func(assign);
-    }
+    Real fa = func(assign);
+    summary += fa;
   }
   return summary;
 }

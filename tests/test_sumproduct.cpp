@@ -129,7 +129,7 @@ SymReal& operator/=(SymReal& r1, SymReal& r2) {
 //typedef double SymReal;
 
 /// Factor map for factor nodes
-typedef boost::function<SymReal (AssignmentMap)> FactorType;
+typedef boost::function<SymReal (const AssignmentMap&)> FactorType;
 typedef boost::associative_property_map< boost::unordered_map<Vertex, FactorType > > FactorMap;
 
 enum variables { x1, x2, x3, x4, x5 };
@@ -160,7 +160,7 @@ public:
       // std::cout << std::endl;
     }
 
-  SymReal operator()(AssignmentMap& amap) const {
+  SymReal operator()(const AssignmentMap& amap) const {
     std::stringstream ss;
     ss << vertex_name(v_) << "(";
     for (VertexIterator v(v_begin_); v != v_end_; ++v) 

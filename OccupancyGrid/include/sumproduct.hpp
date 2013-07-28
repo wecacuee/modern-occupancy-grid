@@ -7,7 +7,6 @@
 #include <boost/range/any_range.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/iterator/iterator_categories.hpp>
-#include <boost/iterator/filter_iterator.hpp>
 #include <boost/random.hpp>
 #include <boost/graph/random.hpp>
 #include <sstream>
@@ -20,6 +19,7 @@ struct f2v_edge_tag {};
 /**
  * \brief normalizes values in `map` over InputIterator to sum up to one
  */
+// TODO: just use a transform iterator over a map to just accept a Iterator
 template<typename InputIterator, typename PropertyMap>
 void normalize(InputIterator first, InputIterator last, PropertyMap& map) {
   typedef typename boost::property_traits<PropertyMap>::value_type value_type;
@@ -52,20 +52,20 @@ namespace detail {
       const FactorGraph &fg, MessageValues &msgs,
       SampleSpaceMap &cdmap, FactorMap& fmap, v2f_edge_tag) {
     typedef typename boost::graph_traits<FactorGraph>::edge_descriptor Edge;
-    typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor Vertex;
+    typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
     typedef typename MessageValues::value_type Real;
     typename boost::graph_traits<FactorGraph>::out_edge_iterator e_it, e_end;
     typedef typename SampleSpaceMap::value_type::first_type sample_space_iterator;
     typedef typename std::iterator_traits<sample_space_iterator>::value_type samplespace_type;
     typename SampleSpaceMap::value_type::first_type cd, cd_end;
-    Vertex var = source(e, fg), factor = target(e, fg);
+    vertex_descriptor var = source(e, fg), factor = target(e, fg);
 
     for (boost::tie(cd, cd_end) = get(cdmap, var); cd != cd_end; ++cd) {
       boost::tie(e_it, e_end) = out_edges(var, fg);
       Real prod = 1;
       for (; e_it != e_end; ++e_it) {
         using boost::opposite;
-        Vertex opp = opposite(*e_it, var, fg);
+        vertex_descriptor opp = opposite(*e_it, var, fg);
         if (opp != factor)
           prod *= msgs[typename MessageValues::key_type(opp, var, *cd)];
       }
@@ -74,21 +74,47 @@ namespace detail {
     }
 
     boost::tie(cd, cd_end) = get(cdmap, var);
-    bind_first_two<typename MessageValues::key_type, Vertex, Vertex, samplespace_type> ctmkt(var, factor);
+    bind_first_two<typename MessageValues::key_type, vertex_descriptor, vertex_descriptor, samplespace_type> ctmkt(var, factor);
     normalize(boost::make_transform_iterator(cd, ctmkt),
               boost::make_transform_iterator(cd_end, ctmkt),
               msgs);
   }
 
-  namespace detail {
-    template <typename T>
-      struct all_but_this_pred : public std::unary_function<T, bool> {
-        all_but_this_pred(const T var) : var_(var) { }
-        bool operator()(T v) const { return var_ != v; }
-        private:
-        const T var_;
-      };
-  }
+  template<typename FactorGraph,
+    typename MessageValues,
+    typename FactorMap>
+  struct belief_from_vars 
+  : public std::unary_function<
+    typename FactorMap::value_type::argument_type,
+    typename MessageValues::value_type >  
+  {
+    typedef typename FactorMap::value_type::argument_type argument_type;
+    typedef typename MessageValues::value_type result_type;
+    belief_from_vars(const FactorGraph& g,
+        const MessageValues& msgs,
+        const FactorMap& fmap,
+        const typename boost::graph_traits<FactorGraph>::edge_descriptor e)
+      : msgs_(msgs), e_(e), factor_(source(e, g)), var_(target(e, g)),
+      func_(get(fmap, factor_)), nbrs_(adjacent_vertices(factor_, g)) {
+
+      }
+    result_type operator()(argument_type assign) {
+      result_type prod = func_(assign);
+      for (adjacency_iterator nbr(nbrs_.first); nbr != nbrs_.second; ++nbr) {
+        if (*nbr != var_)
+          prod *= msgs_[typename MessageValues::key_type(*nbr, factor_, assign[*nbr])];
+      }
+      return prod;
+    }
+    private:
+    const MessageValues& msgs_;
+    const typename boost::graph_traits<FactorGraph>::edge_descriptor e_;
+    const typename boost::graph_traits<FactorGraph>::vertex_descriptor factor_, var_;
+    const typename boost::property_traits<FactorMap>::value_type func_;
+    typedef typename boost::graph_traits<FactorGraph>::adjacency_iterator adjacency_iterator;
+    std::pair<adjacency_iterator, adjacency_iterator> nbrs_;
+  };
+
 
   template<typename FactorGraph,
     typename MessageValues,
@@ -101,61 +127,36 @@ namespace detail {
       SampleSpaceMap &cdmap,
       FactorMap& fmap, 
       f2v_edge_tag) {
-    typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor Vertex;
-
-    typedef typename boost::graph_traits<FactorGraph>::out_edge_iterator out_edge_iterator; 
-    typedef typename  boost::graph_traits<FactorGraph>::vertex_iterator vertex_iterator;
-    typedef typename  boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
-    typedef typename  boost::graph_traits<FactorGraph>::degree_size_type degree_size_type;
+    typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
+    typedef typename boost::graph_traits<FactorGraph>::edge_descriptor edge_descriptor;
     typedef typename MessageValues::value_type Real;
-
-    Vertex factor = source(e, fg), var = target(e, fg);
-    typename FactorMap::value_type func = get(fmap, factor);
-
-    typedef typename std::iterator_traits<typename SampleSpaceMap::value_type::first_type>::value_type samplespace_type;
-
+    typedef typename boost::graph_traits<FactorGraph>::adjacency_iterator adjacency_iterator;
     typedef typename SampleSpaceMap::value_type::first_type sample_space_iterator;
+    typedef typename std::iterator_traits<sample_space_iterator>::value_type samplespace_type;
+    typedef typename FactorMap::value_type::argument_type const_assignment_ref_type;
+    typedef typename boost::remove_reference<const_assignment_ref_type>::type const_assignment_type;
+    typedef typename boost::remove_const<const_assignment_type>::type assignment_type;
+
+    using boost::source;
+    using boost::target;
+    using boost::adjacent_vertices;
+    vertex_descriptor factor = source(e, fg), var = target(e, fg);
+    std::pair<adjacency_iterator, adjacency_iterator> nbrs( adjacent_vertices(factor, fg));
+
     sample_space_iterator cd, cd_end;
     boost::tie(cd, cd_end) = get(cdmap, var);
-    //typename std::iterator_traits<sample_space_iterator>::difference_type ss_size = std::distance(cd, cd_end);
     for (boost::tie(cd, cd_end) = get(cdmap, var); cd != cd_end; ++cd) {
-      // Construct a vector of neigbors from out_edges
-      // std::vector<vertex_descriptor> nbrs;
-      // typedef typename std::vector<vertex_descriptor>::const_iterator nbr_iter;
-      // neighbors(var, fg, std::back_inserter(nbrs));
-      typedef typename boost::graph_traits<FactorGraph>::adjacency_iterator adjacency_iterator;
-      std::pair<adjacency_iterator, adjacency_iterator> nbrs( adjacent_vertices(factor, fg));
-
-      // degree_size_type d = out_degree(factor, fg);
-      // std::cout << "Neighbours:" << d << std::endl;
-      // std::cout << "Possible assignments:" << std::pow(ss_size, d - 1) << std::endl;
-
-      // filter iterator to get all neighbors except var
-      typedef detail::all_but_this_pred<vertex_descriptor> pred;
-      typedef boost::filter_iterator<pred, adjacency_iterator> filter_iterator;
-      filter_iterator fi_begin(pred(var), nbrs.first, nbrs.second);
-      filter_iterator fi_end(pred(var), nbrs.second, nbrs.second);
-
-      // Construct all possible assignments
-      CartesianProduct<filter_iterator, SampleSpaceMap> poss_assign(fi_begin, fi_end, cdmap);
-      typename FactorMap::value_type::argument_type assign;
-      Real sum = 0;
-      assign[var] = *cd;
-      while (poss_assign.next(assign)) {
-        //for (adjacency_iterator nbr(nbrs.first); nbr != nbrs.second; ++nbr) std::cout << *nbr << ":" << assign[*nbr] << "; " << std::endl;
-        Real prod = func(assign);
-        for (adjacency_iterator nbr(nbrs.first); nbr != nbrs.second; ++nbr) {
-          if (*nbr != var)
-            prod *= msgs[typename MessageValues::key_type(*nbr, factor, assign[*nbr])];
-        }
-        sum += prod;
-      }
-      //std::cout << "mu(f" << factor << "->x" << var + 1 << ":" << *cd << ") = " << sum << std::endl;
+      const belief_from_vars<FactorGraph, MessageValues, FactorMap> bfv(fg, msgs,
+          fmap, e);
+      Real sum = summaryOf<Real,
+           adjacency_iterator, 
+           SampleSpaceMap, assignment_type>(bfv, nbrs.first, nbrs.second, cdmap, var, *cd);
       msgs[typename MessageValues::key_type(factor, var, *cd)] = sum;
     }
 
+    // normalize
     boost::tie(cd, cd_end) = get(cdmap, var);
-    bind_first_two<typename MessageValues::key_type, Vertex, Vertex, samplespace_type> ctmkt(factor, var);
+    bind_first_two<typename MessageValues::key_type, vertex_descriptor, vertex_descriptor, samplespace_type> ctmkt(factor, var);
     normalize(boost::make_transform_iterator(cd, ctmkt),
               boost::make_transform_iterator(cd_end, ctmkt),
               msgs);
@@ -171,9 +172,8 @@ void sumproduct(
     const FactorGraph &fg,
     MessageValues &msgs, SampleSpaceMap &cdmap, FactorMap& fmap,
     IsFactorMap& is_factor) {
-  typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor Vertex;
-
-  Vertex u, v;
+  typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
+  vertex_descriptor u, v;
   using boost::incident;
   boost::tie(u, v) = incident(e, fg);
   if (get(is_factor, u) && (! get(is_factor, v)))

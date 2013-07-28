@@ -6,8 +6,6 @@
 
 #include "cartesian_product.hpp"
 
-#include "beliefpropagation.h" // need Value/Assignment
-
 #include <boost/bind.hpp>
 #include <cstdio>
 #include <vector>
@@ -15,14 +13,21 @@
 #include <gtest/gtest.h>
 
 #include <boost/property_map/property_map.hpp>
+#include <boost/unordered_map.hpp>
+#include <boost/type_traits.hpp>
 
 using namespace occgrid;
 
+typedef size_t nodeId_t;
+typedef size_t Value;
+typedef boost::unordered_map<size_t, Value> Assignment;
 /****************************************************************
  * Testing
  ****************************************************************/
 template<int Radix>
-class RadixNode : public VariableNode {
+class RadixNode {
+  typedef typename std::vector< Value >::const_iterator PossibleValueIter;
+  typedef typename std::pair<PossibleValueIter, PossibleValueIter> iter_pair;
   private:
     const static std::vector<Value> poss_values_;
     nodeId_t node_id_;
@@ -85,6 +90,8 @@ void put(Assignment& map, const typename Assignment::key_type& k, typename Assig
 }
 
 TEST(CartesianProduct, test1) {
+// int main(int argc, const char *argv[])
+// {
   std::vector<nodeId_t> bivars;
   for (int i = 0; i < 5; i ++)
     bivars.push_back(i);
@@ -105,6 +112,7 @@ TEST(CartesianProduct, test1) {
       nodeId_t nid = *it;
       char digit = num_as_str[NDIGIT - nid - 1];
       size_t fulldigit = (size_t) (digit - '0');
+      (void) fulldigit;
       ASSERT_EQ(fulldigit, assign[nid]) << "Error at " << nid << ":" << fulldigit << "<>" << assign[nid] << "num:" << std::string(num_as_str);
     }
   }
@@ -126,35 +134,44 @@ BinaryCodomainMap::value_type get(BinaryCodomainMap c, nodeId_t n) {
 }
 
 template<typename InputIterator>
-double averageOf(InputIterator begin, InputIterator end, const Assignment& assign) {
-  double sum = 0;
-  for (InputIterator it(begin); it != end; ++it)
-    sum += assign.at(*it);
-  double avg =  sum / 5;
-  return avg;
-}
+struct averageOf 
+: public std::unary_function<const Assignment&, double> {
+  averageOf(InputIterator begin, InputIterator end) : begin_(begin), end_(end) {}
+  double operator() (const Assignment& assign) const {
+    double sum = 0;
+    for (InputIterator it(begin_); it != end_; ++it)
+      sum += const_cast<Assignment&>(assign)[*it];
+    double avg =  sum / 5;
+    return avg;
+  }
+  private:
+  InputIterator begin_, end_;
+};
 
 TEST(summaryOf, test1) {
+// int main(int argc, const char *argv[])
+// {
   std::vector<nodeId_t> dependent_nodes;
   for  (int i=0;i<5;i++) {
     dependent_nodes.push_back(i);
   }
+  //typedef typename UnaryFunction::argument_type PropertyMap;
+  //typedef boost::remove_reference<typename UnaryFunction::argument_type>::type PropertyMap;
+  typedef std::vector<nodeId_t>::const_iterator InputIterator;
+  //typename PropertyMap::mapped_type one(1);
   Value one(1);
-  const boost::function<double (Assignment&)> f = 
-    boost::bind(averageOf<std::vector<nodeId_t>::const_iterator>, dependent_nodes.begin(), dependent_nodes.end(), _1);
+  averageOf<InputIterator> func(dependent_nodes.begin(), dependent_nodes.end());
+    //boost::bind(averageOf<std::vector<nodeId_t>::const_iterator>, dependent_nodes.begin(), dependent_nodes.end(), _1);
   BinaryCodomainMap cdmap;
-  double res = summaryOf<
-    std::vector<nodeId_t>::const_iterator,
-    BinaryCodomainMap,
-    double, 
-    Assignment>
-         (f , dependent_nodes.begin(), dependent_nodes.end(), cdmap,
-          dependent_nodes[2], one);
+  InputIterator dnb = dependent_nodes.begin(), dne = dependent_nodes.end();
+  typename InputIterator::value_type x(dependent_nodes[2]);
+  double res = summaryOf<double, InputIterator, BinaryCodomainMap, Assignment>(func , dnb, dne, cdmap, x, one);
+  (void)res;
   ASSERT_EQ(9.6, res);
 }
 
 int main(int argc, char *argv[])
 {
-  ::testing::InitGoogleTest(&argc, argv);
+   ::testing::InitGoogleTest(&argc, argv);
    return RUN_ALL_TESTS();
 }
