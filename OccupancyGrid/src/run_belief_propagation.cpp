@@ -48,8 +48,10 @@ struct display_peridically_visitor
   display_peridically_visitor(const MessageValues& msgs) : msgs_(msgs), count_(0) {}
   void operator()(typename boost::graph_traits<FactorGraph>::edge_descriptor e,
       const FactorGraph& fg) {
-    if (count_ % 1000 == 0)
+    if ((count_ % 10000 == 0) && (count_ > 50000)) {
+      std::cout << "Iterations:" << count_ << std::endl;
       display(fg);
+    }
     ++count_;
   }
   void display(const FactorGraph& fg) {
@@ -58,12 +60,8 @@ struct display_peridically_visitor
     std::vector<value_type> marginals(num_variables(fg));
     size_t count = 0;
     BOOST_FOREACH(vertex_descriptor u, variables(fg)) {
-      value_type prod_0(1);
-      value_type prod_1(1);
-      BOOST_FOREACH(vertex_descriptor v, adjacent_vertices(u, fg)) {
-        prod_0 *= msgs_[typename MessageValues::key_type(u, v, 0)];
-        prod_1 *= msgs_[typename MessageValues::key_type(u, v, 1)];
-      }
+      value_type prod_0(marginal(fg, msgs_, u, 0));
+      value_type prod_1(marginal(fg, msgs_, u, 1));
       marginals[count ++] = prod_1 / (prod_0 + prod_1);
     }
     fg.display(global_vis_, marginals);
@@ -113,7 +111,6 @@ int main(int argc, const char *argv[])
   OccupancyGridGraph::IsFactorMap is_factor = get(is_factor_t(), ogg);
 
   // getting num_edges(ogg)
-  std::cout << "Number of edges:" << num_edges(ogg) << std::endl;
 
   sumproduct_visitor<
     OccupancyGridGraph,
@@ -127,7 +124,8 @@ int main(int argc, const char *argv[])
     MessageTypes<OccupancyGridGraph>::property_map_type > display_vis(msgs);
 
   //BOOST_AUTO(vistor_list, std::make_pair(spvis, display_vis));
-  random_edge_traversal(ogg, spvis, num_edges(ogg) / 10.);
+  BOOST_AUTO(n_iter, num_edges(ogg) / 3);
+  std::cout << "Number of iterations:" << n_iter << std::endl;
+  random_edge_traversal(ogg, spvis, n_iter);
   display_vis.display(ogg);
-  cv::waitKey(-1);
 }

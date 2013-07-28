@@ -12,6 +12,7 @@
 #include <boost/random.hpp>
 #include <boost/graph/random.hpp>
 #include <boost/typeof/typeof.hpp>
+#include <boost/foreach.hpp>
 #include <sstream>
 #include "utility.hpp"
 #include "sumproduct_traits.hpp"
@@ -227,6 +228,22 @@ public:
   }
 };
 
+template <typename FactorGraph, typename MessageValues, typename SampleSpaceType>
+typename boost::property_traits<MessageValues>::value_type
+marginal(const FactorGraph& fg, 
+    const MessageValues& msgs,
+    typename boost::graph_traits<FactorGraph>::vertex_descriptor u,
+    SampleSpaceType xv
+    ) {
+  typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
+  typedef typename boost::property_traits<MessageValues>::value_type value_type;
+  value_type prod(1);
+  BOOST_FOREACH(vertex_descriptor v, adjacent_vertices(u, fg))
+    prod *= msgs[typename MessageValues::key_type(u, v, xv)];
+  return prod;
+}
+
+
 namespace detail {
   template <typename G, typename RandomNumGen>
   typename boost::graph_traits<G>::edge_descriptor
@@ -273,6 +290,22 @@ void random_edge_traversal(const FactorGraph& g, Visitors& visitor, std::size_t 
   //std::cout << "n:" << n << std::endl;
   for (std::size_t i = 0; i < max_iter; ++i)
     invoke_visitors(visitor, occgrid::random_edge(g, gen), g, boost::on_examine_edge());
+}
+
+/** \brief Single i algoirthm traversal for sum product algorithm over trees */
+template<typename FactorGraph, typename Visitors>
+void total_edge_traversal(const FactorGraph& g, Visitors& visitor, size_t sweeps = 2) {
+  boost::mt19937 gen;
+  //std::cout << "n:" << n << std::endl;
+  typedef typename boost::graph_traits<FactorGraph>::edge_descriptor edge_descriptor;
+  typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
+  for (size_t i = 0; i < sweeps; ++i) {
+    BOOST_FOREACH(vertex_descriptor v, vertices(g)) {
+      BOOST_FOREACH(edge_descriptor e, out_edges(v, g)) {
+        invoke_visitors(visitor, e, g, boost::on_examine_edge());
+      }
+    }
+  }
 }
 
 /** \brief Single i algoirthm traversal for sum product algorithm over trees */

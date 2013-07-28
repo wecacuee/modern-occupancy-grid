@@ -68,11 +68,7 @@ class logdouble :
   }
 
   logdouble operator-=(const logdouble& ld) {
-    //BOOST_ASSERT(neglog_ <= ld.neglog_);
-    if (neglog_ > ld.neglog_) {
-      std::cout << neglog_ << " > " << ld.neglog_ << std::endl;
-      BOOST_ASSERT(false);
-    }
+    BOOST_ASSERT(neglog_ <= ld.neglog_);
     double minlog = neglog_;
     if (abs(neglog_ - ld.neglog_) < 10) {
       double d1 = std::exp(-(neglog_ - minlog));
@@ -87,11 +83,6 @@ class logdouble :
     neglog_ -= ld.neglog_;
     return *this;
   }
-  // logdouble operator=(const double d) {
-  //   BOOST_ASSERT(d >= 0);
-  //   neglog_ = - std::log(d);
-  //   return *this;
-  // }
   friend std::ostream& operator << (std::ostream& os, const logdouble& r);
   explicit logdouble() : neglog_(0) {};
   explicit logdouble(double d) : neglog_(fromdouble(d)) {
