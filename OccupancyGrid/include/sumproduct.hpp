@@ -7,7 +7,6 @@
 #include <boost/lambda/construct.hpp>
 #include <boost/graph/visitors.hpp>
 #include <boost/range/any_range.hpp>
-#include <boost/iterator/transform_iterator.hpp>
 #include <boost/iterator/iterator_categories.hpp>
 #include <boost/random.hpp>
 #include <boost/graph/random.hpp>

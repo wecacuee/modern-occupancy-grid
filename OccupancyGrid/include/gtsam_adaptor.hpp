@@ -213,6 +213,21 @@ namespace occgrid {
       }
     };
 
+    template <typename Messages, typename MultiAssignment>
+    struct SlaveMinimizer {
+      private:
+        const G& g_;
+      public:
+        typedef boost::function<typename Messages::value_type (const Messages&, MultiAssignment&)> value_type;
+        typedef const value_type reference;
+        typedef vertex_descriptor key_type;
+        typedef boost::readable_property_map_tag category;
+        FactorMap(const G& g) : g_(g) { }
+        reference get(key_type key) const {
+          return g_.factorFromNodeId(key);
+        }
+    }
+
     struct FactorMap {
       private:
         const G& g_;
@@ -285,12 +300,28 @@ namespace occgrid {
     }
 
   template <typename G>
+    typename G::vertices_size_type
+    num_factors(const G& g) {
+      return g.num_factors();
+    }
+
+  template <typename G>
     std::pair<typename G::vertex_iterator, typename G::vertex_iterator>
     vertices(const G& g) {
       typedef typename G::vertices_size_type vertices_size_type;
       vertices_size_type n(num_vertices(g));
       return std::make_pair(boost::counting_iterator<vertices_size_type>(0),
                             boost::counting_iterator<vertices_size_type>(n));
+    }
+
+  template <typename G>
+    std::pair<typename G::vertex_iterator, typename G::vertex_iterator>
+    factors(const G& g) {
+      typedef typename G::vertices_size_type vertices_size_type;
+      vertices_size_type nv(num_vertices(g));
+      vertices_size_type nf(num_factors(g));
+      return std::make_pair(boost::counting_iterator<vertices_size_type>(nv),
+                            boost::counting_iterator<vertices_size_type>(nv + nf));
     }
 
   template <typename G>
