@@ -117,6 +117,41 @@ profiling results, 60\% of the time is spent in caching.
 
 Another option to speed up is to just calculate the delta i.e. $Ex - Ex'$, which will require a change of interface i.e. to change the meaning of what \emph{operator()} does for a factor graph according to gtsam conventions. However, speed gain may not be more than 5\%.
 
+\section{Belief Propagation}
+I have got results from Belief Propagation algorithm. 
+Although the general version of sum product algorithm is almost impossible to work with because of large neighbourhood size. For example, if a laser passes through 20 cells that means that the laster factor has 20 neighbours in the factor graph and hence $2^{20}$ terms to sum upon. The expression for computing sum product marginal is given by
+\begin{align}
+  \mu_{f \rightarrow x_i}(x_i) &= \sum_{\sim\{x_i\}} f(N(f)) \prod_{y \in N(f) \setminus \{x_i\}} \mu_{f \rightarrow y}(y)
+\end{align}
+where $\sum_{\sim\{x_i\}}$ represents marginalization i.e. summation over all possible assignments of $N(f)$ while keeping $x_i$ fixed.
+
+However, the sum product term can be simplified in case of different functions including the piecewise constant function that we have. After simplification the belief computation over a factor becomes linear in number of neighbors as compared to exponential in the general case.
+\begin{align}
+  f(N(f)) &= \begin{cases}
+       w_0 & \text{ if } N(f) = \mathbf{x_{0}}\\
+       w_1 & \text{ if } N(f) = \mathbf{x_{1}}\\
+       w_2 & \text{ otherwise}
+  \end{cases}
+\end{align}
+\begin{align}
+  \mu_{f \rightarrow x_i}(x_i) &= 
+    w_0 \prod_{x \in N(f) \setminus \{x_i\}} \mu_{f \rightarrow x}(x_{0})  +
+    w_1 \prod_{x \in N(f) \setminus \{x_i\}} \mu_{f \rightarrow x}(x_{1}) +\\
+    & w_2 \left(1 - \prod_{x \in N(f) \setminus \{x_i\}} \mu_{f \rightarrow x}(x_{0})
+    - \prod_{x \in N(f) \setminus \{x_i\}} \mu_{f \rightarrow x}(x_{1})\right) 
+\end{align}
+
+Fig. \ref{fig:bpresults} shows belief propagation results. In each iteration a random edge was chosen and belief updated by belief propagation algorithm. 4 million iterations were completed in about 90 seconds.
+\begin{figure}
+  \includegraphics[width=0.3\textwidth]{bpresults_100x100_50.png}
+  \includegraphics[width=0.3\textwidth]{bpresults_100x100_200.png}
+  \includegraphics[width=0.3\textwidth]{beliefpropagation_results_100x100.png}
+  \caption{Belief propagation results after a) 0.5 million iterations b) 2 million iterations and c) 4 million iterations}
+  \label{fig:bpresults}
+\end{figure}
+
+We have not yet introduced smoothness factors, which means that the only factors are laser factors and that causes belief propagation to updated beliefs of only relevant areas in the occupancy grid where we have some kind of information available.
+
 %\IEEEtriggeratref{5} % manually align last two columns
 \bibliographystyle{plain}
 

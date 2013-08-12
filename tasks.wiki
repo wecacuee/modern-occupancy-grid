@@ -8,6 +8,7 @@
     * [X] Wrap gtsam to boost graph 
     * [ ] Try belief propagation for total_edge_traversal for 4, 3, 2 sweeps. Does it yields better results than random_edge_traversal with edges / 3 iterations?
     * [ ] Write a small report on belief propgation results
+        * [ ] estimate 1000
 * [.] implement dual decomposition
     * [ ] 1500 Understand paper Accelerated dual decomposition
     * [ ] 1530 Read implemented code
@@ -18,7 +19,8 @@
             * [X] estimate 1721 : extended algorithm to arbitrary number of factors
             * [X] Revised estimate 2: 1821 : designed the interafaces and class for algorithm
             * [X] Revised estimate 3: 1921 : started writing slave problem solver. Taking a break now.
-            * [ ] Revised estimate 4: 2221 
+            * [X] Revised estimate 4: 2221 
+            * [X] Revised estimate 5: 0043 : finished writing the untested version of subgradient descent
         * [ ] 1851 test subgradient descent
         * [ ] 1921 debug subgradient descent
     * [ ] Implement data structure to wrap gtsam

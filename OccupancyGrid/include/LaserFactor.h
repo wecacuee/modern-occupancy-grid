@@ -18,6 +18,9 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 #include <boost/typeof/typeof.hpp>
+#include <boost/graph/properties.hpp>
+#include <boost/iterator/counting_iterator.hpp>
+#include <boost/bind.hpp>
 
 #include "utility.hpp"
 #include <iostream>
@@ -107,8 +110,8 @@ public:
       // minimum among w1_ and w_otherwise_)
       bool allsame = true;
       for (size_t c = 0; c < cells_.size(); ++c) {
-        if (msgs[msg_key_type(factor_index_, cell_[c], 0)]
-            != msg[msg_key_type(factor_index_, cell_[c], 1)]) {
+        if (msgs[msg_key_type(factor_index_, cells_[c], 0)]
+            != msgs[msg_key_type(factor_index_, cells_[c], 1)]) {
           allsame = false;
           break;
         }
@@ -116,7 +119,7 @@ public:
       if (allsame) {
         value_type w0_energy(w0_);
         for (size_t c = 0; c < cells_.size(); ++c) {
-          w0_energy += msgs[msg_key_type(factor_index_, cell_[c], w0_assignment(cells_[c]))];
+          w0_energy += msgs[msg_key_type(factor_index_, cells_[c], w0_assignment(cells_[c]))];
           multi_assignment[std::make_pair(factor_index_, cells_[c])] = w0_assignment(cells_[c]);
         }
         return w0_energy;
@@ -125,11 +128,11 @@ public:
       // get the minimizing assignment
       namespace bl = boost::lambda;
       std::vector<sample_space_type> other_minimizing_assign(cells_.size());
-      std::vector<sample_space_type> incrementatbility(cell_.size());
+      std::vector<sample_space_type> incrementatbility(cells_.size());
       // O(n)
       for (size_t c = 0; c < cells_.size(); ++c) {
-        value_type msg_0( msgs[msg_key_type(factor_index_, cell_[c], 0)]);
-        value_type msg_1( msgs[msg_key_type(factor_index_, cell_[c], 1)]);
+        value_type msg_0( msgs[msg_key_type(factor_index_, cells_[c], 0)]);
+        value_type msg_1( msgs[msg_key_type(factor_index_, cells_[c], 1)]);
         other_minimizing_assign[c] = std::min(msg_0, msg_1);
         incrementatbility[c] = std::abs(msg_0 - msg_1);
       }
@@ -139,7 +142,7 @@ public:
       // O(n)
       std::copy(
           boost::counting_iterator<size_t>(0),
-          boost::counting_iterator<size_t>(cell_.size()),
+          boost::counting_iterator<size_t>(cells_.size()),
           std::back_inserter(indices));
       // O(n)
       std::nth_element(indices.begin(), boost::next(indices.begin(), 2),
@@ -170,17 +173,17 @@ public:
       // O(n)
       value_type w0_energy(w0_);
       for (size_t c = 0; c < cells_.size(); ++c)
-        w0_energy += msgs[msg_key_type(factor_index_, cell_[c], w0_assignment(cells_[c]))];
+        w0_energy += msgs[msg_key_type(factor_index_, cells_[c], w0_assignment(cells_[c]))];
 
       // O(n)
       value_type w1_energy(w1_);
       for (size_t c = 0; c < cells_.size(); ++c)
-        w1_energy += msgs[msg_key_type(factor_index_, cell_[c], w1_assignment(cells_[c]))];
+        w1_energy += msgs[msg_key_type(factor_index_, cells_[c], w1_assignment(cells_[c]))];
 
       // O(n)
       value_type w_otherwise_energy(w_otherwise_);
       for (size_t c = 0; c < cells_.size(); ++c)
-        w_otherwise_energy += msgs[msg_key_type(factor_index_, cell_[c], other_minimizing_assign[c])];
+        w_otherwise_energy += msgs[msg_key_type(factor_index_, cells_[c], other_minimizing_assign[c])];
 
       // Choose the case with minimum energy
       // O(n)

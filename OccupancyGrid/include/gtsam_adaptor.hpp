@@ -222,11 +222,11 @@ namespace occgrid {
         typedef const value_type reference;
         typedef vertex_descriptor key_type;
         typedef boost::readable_property_map_tag category;
-        FactorMap(const G& g) : g_(g) { }
+        SlaveMinimizer(const G& g) : g_(g) { }
         reference get(key_type key) const {
           return g_.factorFromNodeId(key);
         }
-    }
+    };
 
     struct FactorMap {
       private:
