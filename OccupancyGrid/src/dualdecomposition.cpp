@@ -8,6 +8,7 @@
 #include "DDLaserFactor.hpp"
 
 Visualiser global_vis_;
+Visualiser global_vis2_;
 
 using namespace std;
 using namespace boost;
@@ -17,7 +18,7 @@ using namespace occgrid;
 int main(int argc, const char *argv[])
 {
   global_vis_.enable_show();
-  cv::namedWindow("c", cv::WINDOW_NORMAL);
+  global_vis2_.enable_show();
   // parse arguments
   if (argc != 4) {
     printf("ERROR [USAGE]: executable <width (in m)> <height (in m)> <resolution (in m)>");
@@ -30,6 +31,7 @@ int main(int argc, const char *argv[])
   // Create the occupancy grid data structure
   OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
   global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
+  global_vis2_.init(occupancyGrid.height(), occupancyGrid.width(), "d");
   vector<Pose2> allposes;
   vector<double> allranges;
   double max_dist;
@@ -62,5 +64,5 @@ int main(int argc, const char *argv[])
     typename OccupancyGridGraph::SampleSpaceMap,
     Messages,
     MultiAssignment > dd(msgs, multiassign);
-  dd(ogg, slvmin, ssm, 100);
+  dd(ogg, slvmin, ssm, 1000);
 }

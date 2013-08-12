@@ -24,13 +24,19 @@ private:
   /// Turn on visualization on demand
   bool enable_show_;
   mutable int count_;
+  std::string window_name_;
 
 public:
-  inline Visualiser() : enable_show_(false), count_(0) { }
-  Visualiser(size_t nrows, size_t ncols) : vis_(nrows, ncols, CV_8UC3), enable_show_(false), count_(0) { }
+  inline Visualiser() : enable_show_(false), count_(0), window_name_("c") { }
+  Visualiser(size_t nrows, size_t ncols, std::string winname="c")
+    : vis_(nrows, ncols, CV_8UC3), enable_show_(false), count_(0),
+    window_name_(winname) { }
 
   /// For lazy initialization
-  inline void init(size_t nrows, size_t ncols) { vis_.create(nrows, ncols, CV_8UC3); }
+  inline void init(size_t nrows, size_t ncols, std::string winname="c") {
+    vis_.create(nrows, ncols, CV_8UC3); 
+    window_name_ = winname;
+  }
 
   /// Convert Index to x,y coordinates for opencv mat
   inline void idx2xy(const gtsam::Index idx, size_t& x, size_t& y) {
@@ -103,7 +109,8 @@ public:
   /// update the window
   void show(int t = 33) const {
     if (! enable_show_) return;
-    cv::imshow("c", vis_);
+    cv::namedWindow(window_name_, cv::WINDOW_NORMAL);
+    cv::imshow(window_name_, vis_);
     boost::format format("/tmp/occgridvis%d.png");
     cv::imwrite((format % count_++).str(), vis_);
     cv::waitKey(t);
@@ -111,3 +118,4 @@ public:
 };
 
 extern Visualiser global_vis_;
+extern Visualiser global_vis2_;
