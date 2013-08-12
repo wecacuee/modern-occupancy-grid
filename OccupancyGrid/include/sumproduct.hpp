@@ -1,3 +1,8 @@
+/**
+ * @brief Defines functions for sumproduct algorithm
+ * @file sumproduct.hpp
+ * @author Vikas Dhiman
+ */
 #pragma once
 #include "cartesian_product.hpp"
 #include <boost/graph/graph_utility.hpp>
@@ -34,6 +39,25 @@ void normalize(InputIterator first, InputIterator last, PropertyMap& map) {
 }
 
 namespace detail {
+  /**
+   * @brief Computes belief message over variable to factor edge.
+   *
+   * @type FactorGraph: A adjacency list graph.
+   * @type MessageValues: A property map denoting messages on graph edges per
+   * variable state.
+   * @type SampleSpaceMap: Map prodviding sample space of each variable in the
+   * graph node.
+   * @type FactorMap: Map providing factor function for each factor node.
+   *
+   * @param e: the edge
+   * @param fg: the graph
+   * @param msgs: Messages over directed edges for each state of connected
+   * variables
+   * @param cdmap: Sample space map.
+   * @param fmap: Factor map
+   * @param xv: The fixed state of source variable node
+   * @param v2f_edge_tag: For tag dispatch
+   */
   template<typename FactorGraph, typename MessageValues,
     typename SampleSpaceMap,
     typename FactorMap>
@@ -44,22 +68,40 @@ namespace detail {
       SampleSpaceMap &cdmap, FactorMap& fmap,
       const typename SampleSpaceMap::value_type::first_type::value_type &xv,
       v2f_edge_tag) {
+    // Short alias
     typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
+    // Deduce real type
     typedef typename MessageValues::value_type Real;
 
     vertex_descriptor var = source(e, fg), factor = target(e, fg);
-    typename boost::graph_traits<FactorGraph>::out_edge_iterator e_it, e_end;
-    boost::tie(e_it, e_end) = out_edges(var, fg);
+    // \prod_{h \in n(var) \ factor} msgs_{h -> var(var = xv)}
     Real prod (1);
-    for (; e_it != e_end; ++e_it) {
-      using boost::opposite;
-      vertex_descriptor opp = opposite(*e_it, var, fg);
-      if (opp != factor)
-        prod *= msgs[typename MessageValues::key_type(opp, var, xv)];
+    BOOST_FOREACH(vertex_descriptor h, adjacent_vertices(var, fg)) {
+      if (h != factor)
+        prod *= msgs[typename MessageValues::key_type(h, var, xv)];
     }
     return prod;
   }
 
+  /**
+   * @brief Compute a single term inside the summary function.
+   *
+   * f(X) \prod_{y in n(factor) except var} msgs[y, factor, (y = X_y)]
+   *
+   * where X is the assignment
+   *
+   * @type FactorGraph: A adjacency list graph.
+   * @type MessageValues: A property map denoting messages on graph edges per
+   * variable state.
+   * graph node.
+   * @type FactorMap: Map providing factor function for each factor node.
+   *
+   * @param g: the graph
+   * @param msgs: Messages over directed edges for each state of connected
+   * variables
+   * @param fmap: Factor map
+   * @param e: the edge
+   */
   template<typename FactorGraph,
     typename MessageValues,
     typename FactorMap>
@@ -68,6 +110,7 @@ namespace detail {
     typename FactorMap::value_type::argument_type,
     typename MessageValues::value_type >  
   {
+    typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
     typedef typename FactorMap::value_type::argument_type argument_type;
     typedef typename MessageValues::value_type result_type;
     belief_from_var_assignment(const FactorGraph& g,
@@ -80,9 +123,9 @@ namespace detail {
       }
     result_type operator()(argument_type assign) {
       result_type prod = func_(assign);
-      for (adjacency_iterator nbr(nbrs_.first); nbr != nbrs_.second; ++nbr) {
-        if (*nbr != var_)
-          prod *= msgs_[typename MessageValues::key_type(*nbr, factor_, assign[*nbr])];
+      BOOST_FOREACH(vertex_descriptor nbr, nbrs_) {
+        if (nbr != var_)
+          prod *= msgs_[typename MessageValues::key_type(nbr, factor_, assign[nbr])];
       }
       return prod;
     }
@@ -95,6 +138,25 @@ namespace detail {
     std::pair<adjacency_iterator, adjacency_iterator> nbrs_;
   };
 
+  /**
+   * @brief Computes belief message over factor to variable edge.
+   *
+   * @type FactorGraph: A adjacency list graph.
+   * @type MessageValues: A property map denoting messages on graph edges per
+   * variable state.
+   * @type SampleSpaceMap: Map prodviding sample space of each variable in the
+   * graph node.
+   * @type FactorMap: Map providing factor function for each factor node.
+   *
+   * @param e: the edge
+   * @param fg: the graph
+   * @param msgs: Messages over directed edges for each state of connected
+   * variables
+   * @param cdmap: Sample space map.
+   * @param fmap: Factor map
+   * @param xv: The fixed state of source variable node
+   * @param v2f_edge_tag: For tag dispatch
+   */
   template<typename FactorGraph,
     typename MessageValues,
     typename SampleSpaceMap,
@@ -117,6 +179,7 @@ namespace detail {
     typedef typename FactorMap::value_type::argument_type const_assignment_ref_type;
     typedef typename boost::remove_reference<const_assignment_ref_type>::type const_assignment_type;
     typedef typename boost::remove_const<const_assignment_type>::type assignment_type;
+    namespace bl = boost::lambda;
     using boost::source;
     using boost::target;
     using boost::adjacent_vertices;
@@ -124,15 +187,18 @@ namespace detail {
     BOOST_AUTO_TPL(nbrs, adjacent_vertices(factor, fg));
     // Functor to compute belief from a given assignment of neigboring
     // variables.
+    // f(X) \prod_{y in n(factor) except var} msgs[y, factor, (y = X_y)]
     const belief_from_var_assignment<FactorGraph, MessageValues, FactorMap> bfv(fg, msgs,
         fmap, e);
+    BOOST_AUTO_TPL(func, get(fmap, factor));
     // Marginalize bfv for var = xv over all nbrs
     Real sum = summaryOf<Real, adjacency_iterator, SampleSpaceMap,
-         assignment_type>(bfv, nbrs.first, nbrs.second, cdmap, var, xv);
+         assignment_type>( bfv, nbrs.first, nbrs.second, cdmap, var, xv);
     return sum;
   }
 } // namespace detail
 
+/// Dispatch belief depending on edge type 
 template<typename FactorGraph, typename MessageValues,
   typename SampleSpaceMap,
   typename FactorMap,
@@ -164,8 +230,8 @@ belief(
   }
 }
 
-// for each state in sample space compute belief message over edge e
-// normalize the belief messages
+/// for each state in sample space compute belief message over edge e
+/// normalize the belief messages
 template<typename FactorGraph, typename MessageValues,
   typename SampleSpaceMap,
   typename FactorMap,
@@ -202,6 +268,9 @@ void sumproduct(
               msgs);
 }
 
+/**
+ * @brief Visitor class for sumproduct algorithm
+ */
 template<typename FactorGraph, typename MessageValues,
   typename SampleSpaceMap,
   typename FactorMap,
@@ -227,6 +296,7 @@ public:
   }
 };
 
+/// Compute marginal of the given node u for value xv
 template <typename FactorGraph, typename MessageValues, typename SampleSpaceType>
 typename boost::property_traits<MessageValues>::value_type
 marginal(const FactorGraph& fg, 
@@ -275,6 +345,7 @@ namespace detail {
   }
 } // namespace detail
 
+/// Random edge iterator over edge list graph or (vertex list and adjacency list graph)
 template <typename G, typename RandomNumGen>
 typename boost::graph_traits<G>::edge_descriptor
 random_edge(G& g, RandomNumGen& gen) {
@@ -282,7 +353,7 @@ random_edge(G& g, RandomNumGen& gen) {
   return detail::random_edge(g, gen, category, category);
 }
 
-/** \brief Single i algoirthm traversal for sum product algorithm over trees */
+/** @brief Random edge traversal with visitors */
 template<typename FactorGraph, typename Visitors>
 void random_edge_traversal(const FactorGraph& g, Visitors& visitor, std::size_t max_iter) {
   boost::mt19937 gen;
@@ -291,7 +362,7 @@ void random_edge_traversal(const FactorGraph& g, Visitors& visitor, std::size_t 
     invoke_visitors(visitor, occgrid::random_edge(g, gen), g, boost::on_examine_edge());
 }
 
-/** \brief Single i algoirthm traversal for sum product algorithm over trees */
+/** \brief Total edge traversal over a vertex list and adjacency list graph */
 template<typename FactorGraph, typename Visitors>
 void total_edge_traversal(const FactorGraph& g, Visitors& visitor, size_t sweeps = 2) {
   boost::mt19937 gen;

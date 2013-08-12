@@ -65,9 +65,9 @@ add_library(merali13icra SHARED
 target_link_libraries(merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
 
-add_executable(dualdecomposition
-	OccupancyGrid/src/dualdecomposition.cpp)
-target_link_libraries(dualdecomposition occupancy_grid_graph ${Boost_LIBRARIES} ${OpenCV_LIBS})
+# add_executable(dualdecomposition
+# 	OccupancyGrid/src/dualdecomposition.cpp)
+# target_link_libraries(dualdecomposition occupancy_grid_graph ${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(run_belief_propagation
 	OccupancyGrid/src/run_belief_propagation.cpp)
