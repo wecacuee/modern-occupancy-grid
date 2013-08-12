@@ -4,23 +4,60 @@
 #include <cstdlib>
 #include <cvmat_serialization.h>
 #include <forward_sensor_model.h>
-#include <boost/random.hpp>
-#include <boost/random/lagged_fibonacci.hpp>
-#include <boost/random/uniform_01.hpp>
+
+// constant prior for now
+//double prior_occpupied_to_free(
+double prior_log_odds_occpupied_to_free(
+        OccupancyGrid2D<double, int>& map,
+        int k)
+{
+    return 0;
+}
 
 double probabability_occupied_to_free(
     const std::vector<Observation2D>& observations,
     OccupancyGrid2D<double, int>& map,
     int k) {
+    // It is strange how prior must be defined
+    // It must be P(m_k = 1| m_{\neg k}) / P(m_k = 0 | m_{\neg k)
+    // for symmetry
+    // 1st term in Eq (3) merali13icra
+    double prior_lodds = prior_log_odds_occpupied_to_free(map, k);
 
-    double total_lodds = log_odds_occupied_vs_free(observations, map, k);
+
+    // Don't want to change the original map, so we will reset this value in
+    // the end
+    //
+    uint8_t original_map_k_value = map.get(k);
+      //{
+        // map_k value can be changed only in this scope
+        // mental reminder :P
+
+
+        // make the cell occupied
+        map.set(k, map.OCCUPIED);
+
+        // 2nd term of Eq (3) merali13icra
+        double lodds_occupied = 
+          log_odds_observation_given_map_and_all_poses(observations, map);
+
+        // what if the cell is unoccpuied
+        // 3rd term of Eq (3) merali13icra
+        map.set(k,  map.FREE);
+        double lodds_free = 
+          log_odds_observation_given_map_and_all_poses(observations, map);
+
+      //}
+    // reset the original value
+    map.set(k, original_map_k_value);
+
+    double total_lodds = prior_lodds + lodds_occupied - lodds_free;
     // conversion from log odds to probability
     // just after Eq (3) merali13icra
     double normalized_prob_occupied = exp(total_lodds) / (1 + exp(total_lodds));
 
     return normalized_prob_occupied;
 }
-boost::mt19937 gloab_rng_;
 
 uint8_t sample_m_k(
     const std::vector<Observation2D>& observations,
@@ -29,11 +66,7 @@ uint8_t sample_m_k(
     double prob_odds = probabability_occupied_to_free(observations, map, k);
 
     // choose a number in [0, 1]
-    boost::uniform_01<double> distrib;
-
-    boost::variate_generator<boost::mt19937&, boost::uniform_01<double> >
-      rand_gen(gloab_rng_, distrib);
-    double rn = rand_gen();
+    double rn = static_cast<double>(std::rand()) / (RAND_MAX);
 
     // if probabability is more than choose occupied otherwise free
     return (rn < prob_odds) ? map.OCCUPIED : map.FREE;
@@ -50,9 +83,9 @@ inference_gibbs_sampling(const std::vector<Observation2D>& observations, double 
         for (int k = 0; k < total; k ++) {
             uint8_t occ_or_free = sample_m_k(observations, map, k);
             map.set(k, occ_or_free);
-            //printf("i=%d, k=%d, of=%d\n", i, k, occ_or_free);
-            cv::imshow("c", map.og_);
-            cv::waitKey(1);
+            printf("i=%d, k=%d, of=%d\n", i, k, occ_or_free);
+            // cv::imshow("c", map.og_);
+            // cv::waitKey(1);
         }
         std::stringstream filename;
         filename << i << ".png";

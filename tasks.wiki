@@ -1,6 +1,5 @@
 == Tasks (priority sorted) ==
 * [X] Implement Merali2013icra
-    * [ ] Find more about the time complexity of Merali 2013 icra paper
 * [X] Make MCMC implementation from Brian faster
 * [X] implement belief propagation
     * [X] Test summaryOf
