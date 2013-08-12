@@ -45,27 +45,27 @@ real_t OccupancyGrid2D<real_t, int_t>::nearest_neighbor_distance(
   for (int_t r = 0; r < max_range_x; r ++) {
       for (int_t xt = max(i - r, 0); xt <= min(i + r, og_.size[0]-1); xt++) {
 
-	  int_t ry = 
-	    static_cast<int_t>(
-		floor(((r - fabs(xt - i))* cell_size_(0)) / cell_size_(1)));
+          int_t ry = 
+            static_cast<int_t>(
+                floor(((r - fabs(xt - i))* cell_size_(0)) / cell_size_(1)));
 
-	  // y has only two possible values
-	  for (int_t yt = j - ry; yt <= j + ry; yt += ((2*ry <= 0) ? 1 : 2*ry)) {
-	      //if (DEBUG)
+          // y has only two possible values
+          for (int_t yt = j - ry; yt <= j + ry; yt += ((2*ry <= 0) ? 1 : 2*ry)) {
+              //if (DEBUG)
         // printf("(%d, %d), r: %d\n", xt, yt, r);
-	      if (yt >= og_.size[1] || yt < 0)
+              if (yt >= og_.size[1] || yt < 0)
           continue;
 
-	      if (is_occupied(xt, yt)) {
+              if (is_occupied(xt, yt)) {
             manhattan_neighbours.push_back(
                 cv::Vec<int_t, 2>(xt, yt));
             //if (DEBUG)
             //  printf("^^^^^^^^^^^^^^^^^^^\n");
         }
-	  }
+          }
       }
       if (manhattan_neighbours.size() > 0) {
-	  break;
+          break;
       }
   }
   real_t min_distance = std::numeric_limits<double>::infinity();
@@ -91,12 +91,13 @@ real_t OccupancyGrid2D<real_t, int_t>::nearest_neighbor_distance(
 
 template <typename real_t, typename int_t>
 real_t OccupancyGrid2D<real_t, int_t>::ray_trace(
-    real_t px, 
-    real_t py,
-    real_t ptheta,
+    const _Observation2D<real_t>& pose,
     real_t max_range,
     cv::Vec<real_t, 2>& final_pos) 
 {
+  real_t px(pose.px);
+  real_t py(pose.py);
+  real_t ptheta(pose.ptheta);
   // shift coordinates so that we are always in first quadrant
   px = px - min_pt_(0);
   py = py - min_pt_(1);
@@ -146,11 +147,13 @@ real_t OccupancyGrid2D<real_t, int_t>::ray_trace(
   real_t dirmag = sqrt(dx*dx + dy*dy); 
   real_t n = floor(max_range * fabs(dx) / dirmag / cell_size_(0)) 
     + floor(max_range * fabs(dy) / dirmag / cell_size_(1));
-  int maxsizex = og_.size[0];
-  int maxsizey = og_.size[1];
+  int_t maxsizex = og_.size[0];
+  int_t maxsizey = og_.size[1];
 
   while (n > 0) {
       n --;
+      if (! cell2observations_cached_)
+        cell2observations_[i * og_.size[1] + j].push_back(pose);
 
 #ifdef DEBUG
         printf("(%d, %d), (%f, %f)\n", i, j, tx, ty);
@@ -165,7 +168,6 @@ real_t OccupancyGrid2D<real_t, int_t>::ray_trace(
           tx = tx - ty;
           ty = Ty;
       }
-
 
       if (i < 0 ||  j < 0 || i >= maxsizex || j >= maxsizey ||
           //(og_.at<uint8_t>(i, j) != FREE)) 
@@ -183,6 +185,7 @@ real_t OccupancyGrid2D<real_t, int_t>::ray_trace(
           real_t disp_y = posy - py;
           return sqrt(disp_x * disp_x + disp_y * disp_y);
       }
+
   }
   return max_range;
 }
@@ -207,23 +210,24 @@ class OccupancyGrid2DTest : public ::testing::Test {
 
 
     virtual void SetUp() {
-	og_.og_ = cv::Scalar(og_.FREE);
-	og_.og_.at<uint8_t>(10, 4) = og_.OCCUPIED;
-	og_.og_.at<uint8_t>(10, 1) = og_.OCCUPIED;
-	og_.og_.at<uint8_t>(11, 2) = og_.OCCUPIED;
-	og_.og_.at<uint8_t>(11, 3) = og_.OCCUPIED;
-	og_.og_.at<uint8_t>(1, 2) = og_.OCCUPIED;
-	og_.og_.at<uint8_t>(1, 3) = og_.OCCUPIED;
+        og_.og_ = cv::Scalar(og_.FREE);
+        og_.og_.at<uint8_t>(10, 4) = og_.OCCUPIED;
+        og_.og_.at<uint8_t>(10, 1) = og_.OCCUPIED;
+        og_.og_.at<uint8_t>(11, 2) = og_.OCCUPIED;
+        og_.og_.at<uint8_t>(11, 3) = og_.OCCUPIED;
+        og_.og_.at<uint8_t>(1, 2) = og_.OCCUPIED;
+        og_.og_.at<uint8_t>(1, 3) = og_.OCCUPIED;
 #ifdef DEBUG
-	std::cout << og_.og_ << std::endl;
+        std::cout << og_.og_ << std::endl;
 #endif
     }
 };
 
 TEST_F(OccupancyGrid2DTest, testFirstQuadrant) {
     cv::Vec<double, 2> final_pos;
-    double range = og_.ray_trace(position_(0), position_(1), angle_, 100,
+    double range = og_.ray_trace(Observation2D(0, 1, angle_, 0), 100,
         final_pos);
+    (void) range;
     ASSERT_DOUBLE_EQ(sqrt(2.5*2.5 + 0.5*0.5), range);
     ASSERT_DOUBLE_EQ(2.5, final_pos(0));
     ASSERT_DOUBLE_EQ(0.5, final_pos(1));
@@ -231,8 +235,9 @@ TEST_F(OccupancyGrid2DTest, testFirstQuadrant) {
 
 TEST_F(OccupancyGrid2DTest, testFourthQuadrant) {
     cv::Vec<double, 2> final_pos;
-    double range = og_.ray_trace(position_(0), position_(1), 
-        - angle_, 100, final_pos);
+    double range = og_.ray_trace(Observation2D(0, 1, - angle_, 0),
+        100, final_pos);
+    (void) range;
     ASSERT_DOUBLE_EQ(range, sqrt(2.5*2.5 + 0.5*0.5));
     ASSERT_DOUBLE_EQ(final_pos(0), 2.5);
     ASSERT_DOUBLE_EQ(final_pos(1), -0.5);
@@ -241,10 +246,11 @@ TEST_F(OccupancyGrid2DTest, testFourthQuadrant) {
 
 TEST_F(OccupancyGrid2DTest, testThirdQuadrant) {
     cv::Vec<double, 2> final_pos;
-    double range = og_.ray_trace(position_(0), position_(1),
-        angle_ - bconst::pi<double>(),
-	100,
-	final_pos);
+    double range = og_.ray_trace(Observation2D(0, 1,
+        angle_ - bconst::pi<double>(), 0),
+        100,
+        final_pos);
+    (void) range;
     double epsilon = 1e-10;
     ASSERT_NEAR(final_pos(0), -1.5, epsilon);
     ASSERT_NEAR(final_pos(1), -0.3, epsilon);
@@ -253,10 +259,11 @@ TEST_F(OccupancyGrid2DTest, testThirdQuadrant) {
 
 TEST_F(OccupancyGrid2DTest, testSecondQuadrant) {
     cv::Vec<double, 2> final_pos;
-    double range = og_.ray_trace(position_(0), position_(1),
-        bconst::pi<double>() - angle_,
-	100,
-	final_pos);
+    double range = og_.ray_trace(Observation2D(0, 1,
+        bconst::pi<double>() - angle_, 0),
+        100,
+        final_pos);
+    (void) range;
     double eps = 1e-10;
     ASSERT_NEAR(final_pos(0), -1.5, eps);
     ASSERT_NEAR(final_pos(1), 0.3, eps);
@@ -265,10 +272,11 @@ TEST_F(OccupancyGrid2DTest, testSecondQuadrant) {
 
 TEST_F(OccupancyGrid2DTest, testHorizontal) {
     cv::Vec<double, 2> final_pos;
-    double range = og_.ray_trace(position_(0), position_(1) ,
-        0,
-	100,
-	final_pos);
+    double range = og_.ray_trace(Observation2D(0, 1 ,
+        0, 0),
+        100,
+        final_pos);
+    (void) range;
     ASSERT_DOUBLE_EQ(final_pos(0), 3);
     ASSERT_DOUBLE_EQ(final_pos(1), 0);
     ASSERT_DOUBLE_EQ(range, 3);
@@ -277,9 +285,10 @@ TEST_F(OccupancyGrid2DTest, testHorizontal) {
 TEST_F(OccupancyGrid2DTest, testNearestNeighbor) {
     cv::Vec<int, 2> neighbor;
     double dist = og_.nearest_neighbor_distance(
-	cv::Vec<double, 2>(1, 0),
-	6,
-	neighbor);
+        cv::Vec<double, 2>(1, 0),
+        6,
+        neighbor);
+    (void) dist;
     ASSERT_DOUBLE_EQ(dist, sqrt(1.75*1.75 + 0.75*0.75));
     ASSERT_EQ(neighbor(0), 10);
     ASSERT_EQ(neighbor(1), 4);

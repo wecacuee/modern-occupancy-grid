@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
             double total_angle = robot_angle + angles[c];
             cv::Vec2d final_pos;
             map.set_up_ray_trace(pose[0], pose[1], total_angle, ranges[c]);
-            map.ray_trace(pose[0], pose[1], total_angle, MAX_RANGE, final_pos);
+            map.ray_trace(Observation2D(pose[0], pose[1], total_angle, 0), MAX_RANGE, final_pos);
         }
         map.show(r);
     }
