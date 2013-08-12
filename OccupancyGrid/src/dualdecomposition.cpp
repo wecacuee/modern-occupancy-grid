@@ -15,7 +15,7 @@ using namespace occgrid;
 int main(int argc, const char *argv[])
 {
   global_vis_.enable_show();
-  cv::namedWindow("c", CV_WINDOW_NORMAL);
+  cv::namedWindow("c", cv::WINDOW_NORMAL);
   // parse arguments
   if (argc != 4) {
     printf("ERROR [USAGE]: executable <width (in m)> <height (in m)> <resolution (in m)>");

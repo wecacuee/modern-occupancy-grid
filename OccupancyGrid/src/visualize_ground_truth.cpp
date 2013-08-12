@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     loadMat(laser_ranges, argv[2]);
     cv::Mat scan_angles;
     loadMat(scan_angles, argv[3]);
-    cv::Mat floorplan = cv::imread(argv[4], CV_LOAD_IMAGE_GRAYSCALE);
+    cv::Mat floorplan = cv::imread(argv[4], cv::IMREAD_GRAYSCALE);
     cv::Vec2d min_pt(-9, -9);
     cv::Vec2d size_bitmap(16, 16);
     cv::Vec2i gridsize(floorplan.size[0], floorplan.size[1]);
@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
         }
         // draw input 
         cv::Mat visin;
-        cv::cvtColor(map.og_, visin, CV_GRAY2BGR);
+        cv::cvtColor(map.og_, visin, cv::COLOR_GRAY2BGR);
         cv::Vec2d position(pose[0], pose[1]);
         map.draw_lasers(visin, position, robot_angle, angles,
             laser_ranges.ptr<double>(r),
@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
 
         // draw ground truth
         cv::Mat vis;
-        cv::cvtColor(map.gt_, vis, CV_GRAY2BGR);
+        cv::cvtColor(map.gt_, vis, cv::COLOR_GRAY2BGR);
         map.draw_lasers(vis, position, robot_angle, angles, &ranges[0],
             scan_angles.cols, CV_RGB(0, 255, 0));
         cv::imshow("d", vis);

@@ -16,7 +16,7 @@ Visualiser global_vis_;
 /// Main
 int main(int argc, char *argv[]) {
 
-  cv::namedWindow("c", CV_WINDOW_NORMAL);
+  cv::namedWindow("c", cv::WINDOW_NORMAL);
   // parse arguments
   if (argc != 4) {
     printf("ERROR [USAGE]: executable <width (in m)> <height (in m)> <resolution (in m)>");

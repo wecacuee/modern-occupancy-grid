@@ -174,7 +174,7 @@ int main(int argc, char** argv) {
         std::cout << "bin/inference_gibbs_sampling Data/player_sim/laser_pose_all.bin Data/player_sim/laser_range_all.bin Data/player_sim/scan_angles_all.bin" << std::endl;
         exit(1);
     }
-    cv::namedWindow("c", CV_WINDOW_NORMAL);
+    cv::namedWindow("c", cv::WINDOW_NORMAL);
     cv::Mat laser_pose, laser_range, scan_angles;
     loadMat(laser_pose, argv[1]);
     loadMat(laser_range, argv[2]);

@@ -136,7 +136,7 @@ class OccupancyGrid2D {
         real_t* observed_ranges,
         int_t scan_count) {
         cv::Mat vis; 
-        cv::cvtColor(og_, vis, CV_GRAY2BGR);
+        cv::cvtColor(og_, vis, cv::COLOR_GRAY2BGR);
         draw_lasers(vis,
             position,
             robot_angle,

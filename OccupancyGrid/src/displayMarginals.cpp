@@ -25,7 +25,7 @@ int main(int argc, const char *argv[]) {
 
   img = 255 - img * 255;
   img.convertTo(img, CV_8U);
-  cv::namedWindow("c", CV_WINDOW_NORMAL);
+  cv::namedWindow("c", cv::WINDOW_NORMAL);
   cv::imwrite("out.png", img);
   cv::imshow("c", img);
   cv::waitKey(-1);
