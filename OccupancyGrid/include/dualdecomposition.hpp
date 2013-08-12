@@ -46,7 +46,7 @@
 #include <boost/utility/result_of.hpp>
 
 template <typename Graph, typename MultiAssignment>
-bool disagreement(const Graph& g,
+bool disagrees(const Graph& g,
     typename boost::graph_traits<Graph>::vertex_descriptor x,
     MultiAssignment& multi_assignment)
 {
@@ -112,22 +112,19 @@ class DualDecomposition {
     };
     typedef boost::unordered_map<vertex_descriptor, bool> Disagreement;
   public:
-    typedef typename boost::result_of<functor_type>::type belief_type;
-    typedef boost::unordered_map<std::pair<vertex_descriptor, sample_space_type>, belief_type> Marginals;
+    typedef typename boost::property_traits<Messages>::value_type belief_type;
 
   private:
     MultiAssignment multi_assignment_;
     Messages messages_;
     Messages message_gradients_;
     Disagreement disagrees_;
-    Marginals marginals_;
   public:
     DualDecomposition() 
       : multi_assignment_(),
       messages_(),
       message_gradients_(),
-      disagrees_(),
-      marginals_() {
+      disagrees_() {
       }
     void init(const G& g) {
       BOOST_FOREACH(vertex_descriptor f, factors(g)) {
@@ -145,16 +142,16 @@ class DualDecomposition {
         BOOST_FOREACH(vertex_descriptor f, factors(g)) {
           if (disagrees_[f])
             // minimize_slave_problem(Messages) to update MultiAssignment
-            marginals_[f] = get(slave_minimizer, f)(multi_assignment_, messages_);
+            get(slave_minimizer, f)(multi_assignment_, messages_);
         }
         // for each variable in graph:
         any_disagreement = false;
         BOOST_FOREACH(vertex_descriptor x, variables(g)) {
           bool disagreement = false;
-          if (disagreement(g, x, multi_assignment_)) {
+          if (disagrees(g, x, multi_assignment_)) {
             disagreement = true;
             any_disagreement = true;
-            resolve_disagreement(g, x, messages_, sample_space_map, step / i);
+            resolve_disagreement(g, x, multi_assignment_, messages_, sample_space_map, step / i);
           }
           BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
             disagrees_[f] = disagreement;
@@ -163,6 +160,6 @@ class DualDecomposition {
       }
     }
     belief_type marginals(vertex_descriptor v, sample_space_type xv) {
-      return marginals_[v, xv];
+      return 0;
     }
 };

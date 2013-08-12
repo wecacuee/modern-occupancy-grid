@@ -4,6 +4,7 @@
 #include "../OccupancyGrid/include/visualiser.h"
 #include "../OccupancyGrid/include/loadData.h"
 #include "../OccupancyGrid/include/OccupancyGrid.h"
+#include "../OccupancyGrid/include/BPLaserFactor.hpp"
 
 #include <opencv2/opencv.hpp>
 
@@ -12,19 +13,21 @@ using namespace std;
 using namespace gtsam;
 using namespace occgrid;
 
-typedef G<OccupancyGrid, LaserFactor, logdouble> OccupancyGridGraph;
+typedef G<OccupancyGrid, logdouble, size_t, gtsam::Index> OccupancyGridGraph;
 namespace occgrid {
   namespace detail {
+      // full template specialization for overriding the sumproduct update
+      // mechanism
       template <>
-      typename MessageTypes<OccupancyGridGraph>::property_map_type::value_type
+      logdouble
       belief< OccupancyGridGraph,
-        typename MessageTypes<OccupancyGridGraph>::property_map_type,
+        typename OccupancyGridGraph::MessageValues,
         typename OccupancyGridGraph::SampleSpaceMap,
         typename OccupancyGridGraph::FactorMap>
         (
          typename boost::graph_traits<OccupancyGridGraph>::edge_descriptor e,
          const OccupancyGridGraph  &fg,
-         typename MessageTypes<OccupancyGridGraph>::property_map_type &msgs,
+         typename OccupancyGridGraph::MessageValues &msgs,
          typename OccupancyGridGraph::SampleSpaceMap &cdmap,
          typename OccupancyGridGraph::FactorMap& fmap, 
          //const typename Assignment::value_type &xv
@@ -103,8 +106,8 @@ int main(int argc, const char *argv[])
     occupancyGrid.addLaser(pose, range); //add laser to grid
   }
 
-  typename MessageTypes<OccupancyGridGraph>::base_type msg_values;
-  typename MessageTypes<OccupancyGridGraph>::property_map_type msgs(msg_values);
+  typename OccupancyGridGraph::MessageTypes::base_type msg_values;
+  typename OccupancyGridGraph::MessageValues msgs(msg_values);
   OccupancyGridGraph ogg(occupancyGrid);
   using occgrid::get;
   OccupancyGridGraph::SampleSpaceMap cdmap = get(sample_space_t(), ogg);
@@ -115,14 +118,14 @@ int main(int argc, const char *argv[])
 
   sumproduct_visitor<
     OccupancyGridGraph,
-    MessageTypes<OccupancyGridGraph>::property_map_type,
+    OccupancyGridGraph::MessageValues,
     OccupancyGridGraph::SampleSpaceMap,
     OccupancyGridGraph::FactorMap,
     OccupancyGridGraph::IsFactorMap>
       spvis (msgs, cdmap, fmap, is_factor);
 
   display_peridically_visitor<OccupancyGridGraph,
-    MessageTypes<OccupancyGridGraph>::property_map_type > display_vis(msgs);
+    typename OccupancyGridGraph::MessageValues > display_vis(msgs);
 
   //BOOST_AUTO(vistor_list, std::make_pair(spvis, display_vis));
   BOOST_AUTO(n_iter, num_edges(ogg) * 2);

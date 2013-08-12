@@ -4,6 +4,8 @@
 #include "visualiser.h"
 #include <gtsam/geometry/Pose2.h>
 #include "gtsam_adaptor.hpp"
+#include "slaveminimizer.hpp"
+#include "DDLaserFactor.hpp"
 
 Visualiser global_vis_;
 
@@ -42,4 +44,23 @@ int main(int argc, const char *argv[])
     // this is where factors are added into the factor graph
     occupancyGrid.addLaser(pose, range); //add laser to grid
   }
+  typedef G<OccupancyGrid, double, gtsam::Index, size_t> OccupancyGridGraph;
+  typedef _MultiAssignment<OccupancyGridGraph>::base_type MultiAssignmentBaseType;
+  typedef _MultiAssignment<OccupancyGridGraph>::property_map_type MultiAssignment;
+  typedef typename OccupancyGridGraph::MessageTypes::base_type MessagesBaseType;
+  typedef typename OccupancyGridGraph::MessageValues Messages;
+  typedef SlaveMinimizer<OccupancyGridGraph,
+          DDLaserFactor<MultiAssignment, Messages>, Messages, MultiAssignment> SlaveMinimizer_;
+  DualDecomposition<OccupancyGridGraph, SlaveMinimizer_,
+    typename OccupancyGridGraph::SampleSpaceMap,
+    Messages,
+    MultiAssignment > dd;
+  OccupancyGridGraph ogg(occupancyGrid);
+  MultiAssignmentBaseType multiassignbase;
+  MultiAssignment multiassign(multiassignbase);
+  MessagesBaseType msg_base;
+  Messages msgs(msg_base);
+  SlaveMinimizer_ slvmin(ogg);
+  typename OccupancyGridGraph::SampleSpaceMap ssm = get(sample_space_t(), ogg);
+  dd(ogg, slvmin, ssm, 10);
 }

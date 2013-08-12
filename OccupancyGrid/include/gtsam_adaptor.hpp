@@ -61,6 +61,7 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 #include <boost/lambda/construct.hpp>
+#include "BPLaserFactor.hpp"
 
 namespace occgrid {
   struct gtsam_traversal_category : 
@@ -79,14 +80,15 @@ namespace occgrid {
   struct factor_map_t { 
     typedef boost::vertex_property_tag kind;
   };
-  template <typename gtsamGraph, typename Factor, typename belief_type>
+
+
+  template <typename gtsamGraph, typename belief_type, typename SampleSpaceType, typename VertexType>
   class G {
-    private:
-    const gtsamGraph& g_;
     public:
+    const gtsamGraph& g_;
     typedef belief_type factor_return_type;
-    typedef typename Factor::argument_type::mapped_type sample_space_type;
-    typedef gtsam::Index vertex_descriptor;
+    typedef SampleSpaceType sample_space_type;
+    typedef VertexType vertex_descriptor;
     typedef std::pair<gtsam::Index, gtsam::Index> edge_descriptor;
     typedef boost::undirected_tag directed_category;
     typedef gtsam_traversal_category traversal_category;
@@ -155,10 +157,11 @@ namespace occgrid {
     belief_type compute_belief(
         vertex_descriptor node_idx,
         vertex_descriptor cell,
-        const typename Factor::argument_type::mapped_type& cell_value,
+        const sample_space_type& cell_value,
         MessageValues& msgs
         ) const {
-      return g_.factorFromNodeId(node_idx)->belief(cell, cell_value, msgs);
+      return BPLaserFactor(*g_.factorFromNodeId(node_idx)).belief(
+          cell, cell_value, msgs);
     }
 
     template <typename Visualizer, typename MessageValues>
@@ -167,14 +170,14 @@ namespace occgrid {
         vis.show();
       }
 
-    inline boost::function<belief_type (typename Factor::argument_type)>
-      factorFromNodeId(gtsam::Index node_idx) const {
-        BOOST_AUTO_TPL(factor, *(g_.factorFromNodeId(node_idx)));
-        return boost::bind(toprobability<belief_type>, boost::bind(factor, _1));
-      }
+    // inline boost::function<belief_type (typename Factor::argument_type)>
+    //   factorFromNodeId(gtsam::Index node_idx) const {
+    //     BOOST_AUTO_TPL(factor, *(g_.factorFromNodeId(node_idx)));
+    //     return boost::bind(toprobability<belief_type>, boost::bind(factor, _1));
+    //   }
 
     struct SampleSpaceMap {
-      typedef typename Factor::argument_type::mapped_type ValueType;
+      typedef sample_space_type ValueType;
       typedef std::vector<ValueType> vector_type;
       typedef typename std::vector<ValueType>::const_iterator const_iterator;
       typedef std::pair<const_iterator, const_iterator> value_type;
@@ -184,7 +187,7 @@ namespace occgrid {
 
       reference
       get(key_type key) const {
-        typedef typename Factor::argument_type::mapped_type ValueType;
+        typedef sample_space_type ValueType;
         const static ValueType binary[] = {0, 1};
         const static vector_type binary_vector(binary, binary + 2);
         return std::make_pair(binary_vector.begin(), binary_vector.end());
@@ -207,41 +210,7 @@ namespace occgrid {
       }
     };
 
-    // needed for dual decomposition
-    template <typename Messages, typename MultiAssignment>
-    struct SlaveMinimizer {
-      private:
-        const G& g_;
-      public:
-        typedef boost::function<typename Messages::value_type (const Messages&, MultiAssignment&)> value_type;
-        typedef value_type reference;
-        typedef vertex_descriptor key_type;
-        typedef boost::readable_property_map_tag category;
-        SlaveMinimizer(const G& g) : g_(g) { }
-        reference get(key_type key) const {
-          return g_.factorFromNodeId(key);
-        }
-    };
-
-    struct FactorMap {
-      private:
-        const G& g_;
-      public:
-      typedef boost::function<belief_type (typename Factor::argument_type)> value_type;
-      typedef const value_type reference;
-      typedef vertex_descriptor key_type;
-      typedef boost::readable_property_map_tag category;
-      FactorMap(const G& g) : g_(g) { }
-      reference get(key_type key) const {
-        return g_.factorFromNodeId(key);
-      }
-    };
-  };
-  template <typename G>
     struct MessageTypes {
-      typedef typename G::sample_space_type sample_space_type;
-      typedef typename G::vertex_descriptor vertex_descriptor;
-      typedef typename G::factor_return_type belief_type;
       struct key_type :
         public std::pair< std::pair<vertex_descriptor, vertex_descriptor>, sample_space_type> {
         explicit key_type(vertex_descriptor u, vertex_descriptor v, sample_space_type ss) : 
@@ -252,12 +221,38 @@ namespace occgrid {
       struct base_type 
         : public boost::unordered_map<key_type, belief_type> {
           belief_type& operator[](const key_type& k) const {
-            belief_type default_msg(1. / G::SampleSpaceMap::size());
+            belief_type default_msg(1. / SampleSpaceMap::size());
             if (this->find(k) == this->end())
               (const_cast<base_type*>(this))->boost::unordered_map<key_type, belief_type>::operator[](k) = default_msg;
             return (const_cast<base_type*>(this))->boost::unordered_map<key_type, belief_type>::operator[](k);
           }
       };
+      typedef boost::associative_property_map<base_type> property_map_type;
+    };
+
+    typedef typename MessageTypes::property_map_type  MessageValues;
+    typedef boost::function<belief_type (MessageValues)> factor_type;
+    struct FactorMap {
+      private:
+        const G& g_;
+      public:
+      typedef factor_type value_type;
+      typedef const value_type reference;
+      typedef vertex_descriptor key_type;
+      typedef boost::readable_property_map_tag category;
+      FactorMap(const G& g) : g_(g) { }
+      reference get(key_type key) const {
+        return g_.factorFromNodeId(key);
+      }
+    };
+  };
+
+  template <typename G>
+    struct _MultiAssignment {
+      typedef typename G::sample_space_type sample_space_type;
+      typedef typename G::vertex_descriptor vertex_descriptor;
+      typedef std::pair<vertex_descriptor, vertex_descriptor> key_type;
+      typedef boost::unordered_map<key_type, sample_space_type> base_type;
       typedef boost::associative_property_map<base_type> property_map_type;
     };
 
