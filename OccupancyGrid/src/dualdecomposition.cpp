@@ -64,5 +64,5 @@ int main(int argc, const char *argv[])
     typename OccupancyGridGraph::SampleSpaceMap,
     Messages,
     MultiAssignment > dd(msgs, multiassign);
-  dd(ogg, slvmin, ssm, 10);
+  dd(ogg, slvmin, ssm, 100);
 }

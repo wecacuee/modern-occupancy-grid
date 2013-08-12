@@ -3,6 +3,7 @@
 
 \usepackage{graphicx,color}
 \usepackage{amsmath}
+\usepackage{listings}
 \usepackage[ruled,vlined]{algorithm2e}
 \usepackage{listings}
 \graphicspath{{./}{./figures/}}
@@ -152,8 +153,450 @@ Fig. \ref{fig:bpresults} shows belief propagation results. In each iteration a r
 
 We have not yet introduced smoothness factors, which means that the only factors are laser factors and that causes belief propagation to updated beliefs of only relevant areas in the occupancy grid where we have some kind of information available.
 
+\section{Dual decomposition}
+Dual decomposition works by allowing factors to optimize their copy of variable nodes and later resolve the disagreements by passing messages.  Dual decomposition takes about 7 seconds per iteration. Results are shown in Fig \ref{fig:dualdecomposition}. The effect of dual decomposition iterations is not evident at a 100x100 resolution. So I also have results at 500x500 resolution in Fig \ref{fig:dualdecomposition500x500}. Initially the edges are washed out because of noisy observations. After few iterations the edges emerge out. At 500x500 resolution each iteration of dual decomposition takes around 26 seconds. Though the number of Variable disagreement resolved throughout entire routine is pretty low. For 500x500 resolution, the 50911 variables disagree among their respective copies, by the end of 100 iterations the number is reduced to 50007 which is a reduction by ~1.8\% over 100 iterations. 
+\subsection{Advantages of dual decomposition}
+\begin{itemize}
+  \item When most of the factors agree with each other, we should use dual decomposition as it starts with a reasonable solution in such a case by postponing the disagreements.
+\end{itemize}
+\subsection{Disadvantages of dual decomposition}
+\begin{itemize}
+  \item Since it solves to get the minimum energy assignment, we do not get marginals for each variable but instead a best assignment. For disagreeing nodes, this assignment can be quite arbitrary.
+  \item Convergence of the algorithm can be quite slow and depends on the step size in subgradient descent algorithm.
+  \item It is tough to figure out, when the algorithm has converged as equally disagreeing nodes may never agree on a solution, hence quite likely the number of disagreeing nodes will never reduce to zero.
+\end{itemize}
+\begin{figure}
+  \includegraphics[width=0.25\textwidth]{dualdecomposition0_100x100.png}%
+  \includegraphics[width=0.25\textwidth]{dualdecomposition10_100x100.png}%
+  \includegraphics[width=0.25\textwidth]{dualdecomposition20_100x100.png}%
+  \includegraphics[width=0.25\textwidth]{dualdecomposition30_100x100.png}
+  \caption{Dual decomposition results at 100x100 resolution after a) 1 iteration b) 10 iterations c) 20 iterations and d) 30 iterations}
+  \label{fig:dualdecomposition}
+\end{figure}
+
+\begin{figure}
+  \includegraphics[width=0.25\textwidth]{dualdecomposition24_500x500.png}%
+  \includegraphics[width=0.25\textwidth]{dualdecomposition49_500x500.png}%
+  \includegraphics[width=0.25\textwidth]{dualdecomposition74_500x500.png}%
+  \includegraphics[width=0.25\textwidth]{dualdecomposition99_500x500.png}
+  \caption{Dual decomposition results at 500x500 after a) 25 iteration b) 50 iterations c) 75 iterations and d) 100 iterations}
+  \label{fig:dualdecomposition500x500}
+\end{figure}
+
+\lstset{language=Bash}
+\begin{lstlisting}
+vikasdhi@redpanda:~/wrk/OccupancyGrid$ bin/dualdecomposition 18 18 .036
+Factor disagreement count:554496
+Total energy:554496
+ clicks taken: 42.88
+Variable disagreement count:50925
+Factor disagreement count:277248
+Total energy:2.25915e+07
+ clicks taken: 25.32
+Variable disagreement count:50911
+...
+... After 100 iterations
+...
+Factor disagreement count:277248
+Total energy:1.07315e+08
+ clicks taken: 25.53
+Variable disagreement count:50007
+\end{lstlisting}
+
 %\IEEEtriggeratref{5} % manually align last two columns
 \bibliographystyle{plain}
 
 \bibliography{/home/vikasdhi/wrk/biblib/bibdb}
 \end{document}
+
+% Factor disagreement count:277248
+% Total energy:2.25915e+07
+%  clicks taken: 25.32
+% Variable disagreement count:50911
+% Factor disagreement count:277248
+% Total energy:3.36569e+07
+%  clicks taken: 25.36
+% Variable disagreement count:50869
+% Factor disagreement count:277248
+% Total energy:4.10358e+07
+%  clicks taken: 25.48
+% Variable disagreement count:50765
+% Factor disagreement count:277248
+% Total energy:4.65401e+07
+%  clicks taken: 25.55
+% Variable disagreement count:50602
+% Factor disagreement count:277248
+% Total energy:5.09022e+07
+%  clicks taken: 25.04
+% Variable disagreement count:50517
+% Factor disagreement count:277248
+% Total energy:5.45099e+07
+%  clicks taken: 25.26
+% Variable disagreement count:50475
+% Factor disagreement count:277248
+% Total energy:5.75865e+07
+%  clicks taken: 25.08
+% Variable disagreement count:50419
+% Factor disagreement count:277248
+% Total energy:6.0265e+07
+%  clicks taken: 25.26
+% Variable disagreement count:50425
+% Factor disagreement count:277248
+% Total energy:6.26357e+07
+%  clicks taken: 25.1
+% Variable disagreement count:50381
+% Factor disagreement count:277248
+% Total energy:6.47592e+07
+%  clicks taken: 25.16
+% Variable disagreement count:50345
+% Factor disagreement count:277248
+% Total energy:6.66789e+07
+%  clicks taken: 25.19
+% Variable disagreement count:50341
+% Factor disagreement count:277248
+% Total energy:6.84293e+07
+%  clicks taken: 25.59
+% Variable disagreement count:50310
+% Factor disagreement count:277248
+% Total energy:7.00375e+07
+%  clicks taken: 25.79
+% Variable disagreement count:50318
+% Factor disagreement count:277248
+% Total energy:7.15245e+07
+%  clicks taken: 25.39
+% Variable disagreement count:50279
+% Factor disagreement count:277248
+% Total energy:7.29039e+07
+%  clicks taken: 25.21
+% Variable disagreement count:50278
+% Factor disagreement count:277248
+% Total energy:7.41909e+07
+%  clicks taken: 25.17
+% Variable disagreement count:50296
+% Factor disagreement count:277248
+% Total energy:7.53958e+07
+%  clicks taken: 25.19
+% Variable disagreement count:50229
+% Factor disagreement count:277248
+% Total energy:7.65292e+07
+%  clicks taken: 25.09
+% Variable disagreement count:50237
+% Factor disagreement count:277248
+% Total energy:7.75994e+07
+%  clicks taken: 25.11
+% Variable disagreement count:50242
+% Factor disagreement count:277248
+% Total energy:7.86084e+07
+%  clicks taken: 25.1
+% Variable disagreement count:50186
+% Factor disagreement count:277248
+% Total energy:7.95635e+07
+%  clicks taken: 25.22
+% Variable disagreement count:50240
+% Factor disagreement count:277248
+% Total energy:8.04733e+07
+%  clicks taken: 25.43
+% Variable disagreement count:50210
+% Factor disagreement count:277248
+% Total energy:8.13387e+07
+%  clicks taken: 25.59
+% Variable disagreement count:50160
+% Factor disagreement count:277248
+% Total energy:8.21646e+07
+%  clicks taken: 25.57
+% Variable disagreement count:50194
+% Factor disagreement count:277248
+% Total energy:8.2954e+07
+%  clicks taken: 25.54
+% Variable disagreement count:50169
+% Factor disagreement count:277248
+% Total energy:8.3708e+07
+%  clicks taken: 25.15
+% Variable disagreement count:50203
+% Factor disagreement count:277248
+% Total energy:8.44315e+07
+%  clicks taken: 25.55
+% Variable disagreement count:50141
+% Factor disagreement count:277248
+% Total energy:8.51266e+07
+%  clicks taken: 25.59
+% Variable disagreement count:50169
+% Factor disagreement count:277248
+% Total energy:8.57941e+07
+%  clicks taken: 25.12
+% Variable disagreement count:50139
+% Factor disagreement count:277248
+% Total energy:8.64361e+07
+%  clicks taken: 25.47
+% Variable disagreement count:50160
+% Factor disagreement count:277248
+% Total energy:8.70562e+07
+%  clicks taken: 25.57
+% Variable disagreement count:50119
+% Factor disagreement count:277248
+% Total energy:8.76542e+07
+%  clicks taken: 25.13
+% Variable disagreement count:50120
+% Factor disagreement count:277248
+% Total energy:8.8232e+07
+%  clicks taken: 25.2
+% Variable disagreement count:50106
+% Factor disagreement count:277248
+% Total energy:8.87895e+07
+%  clicks taken: 25.18
+% Variable disagreement count:50117
+% Factor disagreement count:277248
+% Total energy:8.93305e+07
+%  clicks taken: 25.27
+% Variable disagreement count:50101
+% Factor disagreement count:277248
+% Total energy:8.98534e+07
+%  clicks taken: 25.48
+% Variable disagreement count:50044
+% Factor disagreement count:277248
+% Total energy:9.03608e+07
+%  clicks taken: 25.64
+% Variable disagreement count:50081
+% Factor disagreement count:277248
+% Total energy:9.08538e+07
+%  clicks taken: 25.74
+% Variable disagreement count:50082
+% Factor disagreement count:277248
+% Total energy:9.13307e+07
+%  clicks taken: 25.63
+% Variable disagreement count:50062
+% Factor disagreement count:277248
+% Total energy:9.17948e+07
+%  clicks taken: 25.51
+% Variable disagreement count:50072
+% Factor disagreement count:277248
+% Total energy:9.22457e+07
+%  clicks taken: 25.61
+% Variable disagreement count:50056
+% Factor disagreement count:277248
+% Total energy:9.26847e+07
+%  clicks taken: 25.5
+% Variable disagreement count:50094
+% Factor disagreement count:277248
+% Total energy:9.31106e+07
+%  clicks taken: 25.37
+% Variable disagreement count:50108
+% Factor disagreement count:277248
+% Total energy:9.35284e+07
+%  clicks taken: 25.56
+% Variable disagreement count:50071
+% Factor disagreement count:277248
+% Total energy:9.39332e+07
+%  clicks taken: 25.78
+% Variable disagreement count:50051
+% Factor disagreement count:277248
+% Total energy:9.43292e+07
+%  clicks taken: 25.66
+% Variable disagreement count:50016
+% Factor disagreement count:277248
+% Total energy:9.47137e+07
+%  clicks taken: 25.49
+% Variable disagreement count:50034
+% Factor disagreement count:277248
+% Total energy:9.509e+07
+%  clicks taken: 25.66
+% Variable disagreement count:50027
+% Factor disagreement count:277248
+% Total energy:9.54581e+07
+%  clicks taken: 25.72
+% Variable disagreement count:50042
+% Factor disagreement count:277248
+% Total energy:9.58169e+07
+%  clicks taken: 25.72
+% Variable disagreement count:49999
+% Factor disagreement count:277248
+% Total energy:9.61678e+07
+%  clicks taken: 25.58
+% Variable disagreement count:50028
+% Factor disagreement count:277248
+% Total energy:9.65104e+07
+%  clicks taken: 25.38
+% Variable disagreement count:50024
+% Factor disagreement count:277248
+% Total energy:9.68467e+07
+%  clicks taken: 25.88
+% Variable disagreement count:50026
+% Factor disagreement count:277248
+% Total energy:9.7175e+07
+%  clicks taken: 25.53
+% Variable disagreement count:50069
+% Factor disagreement count:277248
+% Total energy:9.74968e+07
+%  clicks taken: 25.51
+% Variable disagreement count:50043
+% Factor disagreement count:277248
+% Total energy:9.78106e+07
+%  clicks taken: 25.34
+% Variable disagreement count:50072
+% Factor disagreement count:277248
+% Total energy:9.812e+07
+%  clicks taken: 25.36
+% Variable disagreement count:50090
+% Factor disagreement count:277248
+% Total energy:9.84218e+07
+%  clicks taken: 25.3
+% Variable disagreement count:50024
+% Factor disagreement count:277248
+% Total energy:9.87182e+07
+%  clicks taken: 25.36
+% Variable disagreement count:50065
+% Factor disagreement count:277248
+% Total energy:9.9008e+07
+%  clicks taken: 25.58
+% Variable disagreement count:50057
+% Factor disagreement count:277248
+% Total energy:9.9294e+07
+%  clicks taken: 25.83
+% Variable disagreement count:50058
+% Factor disagreement count:277248
+% Total energy:9.95734e+07
+%  clicks taken: 25.66
+% Variable disagreement count:50016
+% Factor disagreement count:277248
+% Total energy:9.98475e+07
+%  clicks taken: 25.4
+% Variable disagreement count:50008
+% Factor disagreement count:277248
+% Total energy:1.00118e+08
+%  clicks taken: 25.68
+% Variable disagreement count:50028
+% Factor disagreement count:277248
+% Total energy:1.00382e+08
+%  clicks taken: 25.66
+% Variable disagreement count:50052
+% Factor disagreement count:277248
+% Total energy:1.00643e+08
+%  clicks taken: 25.74
+% Variable disagreement count:50041
+% Factor disagreement count:277248
+% Total energy:1.00898e+08
+%  clicks taken: 25.55
+% Variable disagreement count:50048
+% Factor disagreement count:277248
+% Total energy:1.0115e+08
+%  clicks taken: 25.62
+% Variable disagreement count:50034
+% Factor disagreement count:277248
+% Total energy:1.01396e+08
+%  clicks taken: 25.67
+% Variable disagreement count:50066
+% Factor disagreement count:277248
+% Total energy:1.01639e+08
+%  clicks taken: 25.64
+% Variable disagreement count:50052
+% Factor disagreement count:277248
+% Total energy:1.01878e+08
+%  clicks taken: 25.56
+% Variable disagreement count:49986
+% Factor disagreement count:277248
+% Total energy:1.02113e+08
+%  clicks taken: 25.62
+% Variable disagreement count:50034
+% Factor disagreement count:277248
+% Total energy:1.02345e+08
+%  clicks taken: 25.94
+% Variable disagreement count:50019
+% Factor disagreement count:277248
+% Total energy:1.02573e+08
+%  clicks taken: 25.63
+% Variable disagreement count:49996
+% Factor disagreement count:277248
+% Total energy:1.02797e+08
+%  clicks taken: 25.64
+% Variable disagreement count:49998
+% Factor disagreement count:277248
+% Total energy:1.03017e+08
+%  clicks taken: 25.58
+% Variable disagreement count:49955
+% Factor disagreement count:277248
+% Total energy:1.03234e+08
+%  clicks taken: 25.41
+% Variable disagreement count:49962
+% Factor disagreement count:277248
+% Total energy:1.03448e+08
+%  clicks taken: 25.38
+% Variable disagreement count:50022
+% Factor disagreement count:277248
+% Total energy:1.03659e+08
+%  clicks taken: 25.67
+% Variable disagreement count:49995
+% Factor disagreement count:277248
+% Total energy:1.03867e+08
+%  clicks taken: 25.35
+% Variable disagreement count:49948
+% Factor disagreement count:277248
+% Total energy:1.04072e+08
+%  clicks taken: 25.34
+% Variable disagreement count:50000
+% Factor disagreement count:277248
+% Total energy:1.04273e+08
+%  clicks taken: 25.42
+% Variable disagreement count:49985
+% Factor disagreement count:277248
+% Total energy:1.04472e+08
+%  clicks taken: 26.02
+% Variable disagreement count:50001
+% Factor disagreement count:277248
+% Total energy:1.04667e+08
+%  clicks taken: 25.5
+% Variable disagreement count:49962
+% Factor disagreement count:277248
+% Total energy:1.04861e+08
+%  clicks taken: 25.64
+% Variable disagreement count:49998
+% Factor disagreement count:277248
+% Total energy:1.05051e+08
+%  clicks taken: 25.48
+% Variable disagreement count:49990
+% Factor disagreement count:277248
+% Total energy:1.0524e+08
+%  clicks taken: 25.55
+% Variable disagreement count:49982
+% Factor disagreement count:277248
+% Total energy:1.05425e+08
+%  clicks taken: 25.46
+% Variable disagreement count:50024
+% Factor disagreement count:277248
+% Total energy:1.05609e+08
+%  clicks taken: 26
+% Variable disagreement count:50017
+% Factor disagreement count:277248
+% Total energy:1.05789e+08
+%  clicks taken: 25.43
+% Variable disagreement count:50047
+% Factor disagreement count:277248
+% Total energy:1.05968e+08
+%  clicks taken: 25.39
+% Variable disagreement count:50055
+% Factor disagreement count:277248
+% Total energy:1.06143e+08
+%  clicks taken: 25.44
+% Variable disagreement count:50029
+% Factor disagreement count:277248
+% Total energy:1.06317e+08
+%  clicks taken: 25.65
+% Variable disagreement count:50030
+% Factor disagreement count:277248
+% Total energy:1.06489e+08
+%  clicks taken: 25.56
+% Variable disagreement count:50016
+% Factor disagreement count:277248
+% Total energy:1.06658e+08
+%  clicks taken: 25.51
+% Variable disagreement count:50001
+% Factor disagreement count:277248
+% Total energy:1.06825e+08
+%  clicks taken: 25.82
+% Variable disagreement count:50012
+% Factor disagreement count:277248
+% Total energy:1.06991e+08
+%  clicks taken: 25.54
+% Variable disagreement count:50004
+% Factor disagreement count:277248
+% Total energy:1.07154e+08
+%  clicks taken: 25.57
