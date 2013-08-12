@@ -164,7 +164,7 @@ class DualDecomposition {
   public:
     typedef typename boost::property_traits<Messages>::value_type energy_type;
     typedef boost::unordered_map<vertex_descriptor, energy_type> EnergyMap;
-    typedef std::vector<sample_space_type> BestAssignment;
+    typedef std::vector<energy_type> BestAssignment;
     typedef std::vector<energy_type> VariableEnergy;
 
   private:
@@ -271,19 +271,25 @@ class DualDecomposition {
             var_energy[1 - assign][x] = var_energy[1 - assign][x] + (10000 - fe);
           }
         }
-        clock_t et = clock(); std::cout << " clicks taken: " << ((float)(et - st)) / CLOCKS_PER_SEC << std::endl;
+        clock_t et = clock(); std::cout << "i=" << i << " clicks taken: " << ((float)(et - st)) / CLOCKS_PER_SEC << std::endl;
         std::cout << "Variable disagreement count:" << disagrement_count << std::endl;
         VariableEnergy venergy(num_variables(g));
         BOOST_FOREACH(vertex_descriptor x, variables(g)) {
-          best_assign_[x] = ((var_energy[0][x] < var_energy[1][x])?  0 : 1);
+          best_assign_[x] = ((var_energy[0][x] < var_energy[1][x]) ?  0 
+              : (var_energy[0][x] > var_energy[1][x]) ? 1
+              : 0.5);
           venergy[x] = (var_energy[0][x] / (var_energy[0][x] + var_energy[1][x]));
         }
 
         global_vis2_.setMarginals(best_assign_);
-        global_vis_.setMarginals(venergy);
-        global_vis_.highlightCells(disagreeing_cells);
         global_vis2_.show();
+
+        global_vis_.setMarginals(venergy);
         global_vis_.show();
+
+        global_vis3_.highlightCells(disagreeing_cells);
+        global_vis3_.reset();
+        global_vis3_.show();
       }
     }
 

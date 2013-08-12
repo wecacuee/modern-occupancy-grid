@@ -154,12 +154,12 @@ Fig. \ref{fig:bpresults} shows belief propagation results. In each iteration a r
 We have not yet introduced smoothness factors, which means that the only factors are laser factors and that causes belief propagation to updated beliefs of only relevant areas in the occupancy grid where we have some kind of information available.
 
 \section{Dual decomposition}
-Dual decomposition works by allowing factors to optimize their copy of variable nodes and later resolve the disagreements by passing messages.  Dual decomposition takes about 7 seconds per iteration. Results are shown in Fig \ref{fig:dualdecomposition}. The effect of dual decomposition iterations is not evident at a 100x100 resolution. So I also have results at 500x500 resolution in Fig \ref{fig:dualdecomposition500x500}. Initially the edges are washed out because of noisy observations. After few iterations the edges emerge out. At 500x500 resolution each iteration of dual decomposition takes around 26 seconds. Though the number of Variable disagreement resolved throughout entire routine is pretty low. For 500x500 resolution, the 50911 variables disagree among their respective copies, by the end of 100 iterations the number is reduced to 50007 which is a reduction by ~1.8\% over 100 iterations. 
+Dual decomposition \cite{sontag2011introduction} works by allowing factors to optimize their copy of variable nodes and later resolve the disagreements by passing messages.  Dual decomposition at 100x100 resolution takes about 7 seconds per iteration. Results are shown in Fig \ref{fig:dualdecomposition}. The effect of dual decomposition iterations is not evident at a 100x100 resolution. So I also have results at 500x500 resolution in Fig \ref{fig:dualdecomposition500x500}. Initially the edges are washed out because of noisy observations. After few iterations the edges emerge out. At 500x500 resolution each iteration of dual decomposition takes around 27 seconds. Though the number of Variable disagreement resolved throughout entire routine is pretty low. For 500x500 resolution, the 50925 variables disagree among their respective copies, by the end of 100 iterations the number is reduced to 50007 which is a reduction by 1.8\% over 100 iterations. 
 \subsection{Advantages of dual decomposition}
 \begin{itemize}
   \item When most of the factors agree with each other, we should use dual decomposition as it starts with a reasonable solution in such a case by postponing the disagreements.
 \end{itemize}
-\subsection{Disadvantages of dual decomposition}
+\subsection{Disadvantages of dual decomposition (Subgradient method)}
 \begin{itemize}
   \item Since it solves to get the minimum energy assignment, we do not get marginals for each variable but instead a best assignment. For disagreeing nodes, this assignment can be quite arbitrary.
   \item Convergence of the algorithm can be quite slow and depends on the step size in subgradient descent algorithm.
@@ -175,15 +175,43 @@ Dual decomposition works by allowing factors to optimize their copy of variable 
 \end{figure}
 
 \begin{figure}
-  \includegraphics[width=0.25\textwidth]{dualdecomposition24_500x500.png}%
-  \includegraphics[width=0.25\textwidth]{dualdecomposition49_500x500.png}%
-  \includegraphics[width=0.25\textwidth]{dualdecomposition74_500x500.png}%
+  \includegraphics[width=0.25\textwidth]{dualdecomposition0_200x200.png}%
+  \includegraphics[width=0.25\textwidth]{dualdecomposition33_200x200.png}%
+  \includegraphics[width=0.25\textwidth]{dualdecomposition66_200x200.png}%
+  \includegraphics[width=0.25\textwidth]{dualdecomposition98_200x200.png}
+  \caption{Dual decomposition results at 200x200 after a) 1 iteration b) 34 iterations c) 67 iterations and d) 100 iterations}
+  \label{fig:dualdecomposition200x200}
+\end{figure}
+
+\begin{figure}
+  \includegraphics[width=0.25\textwidth]{dualdecomposition0_500x500.png}%
+  \includegraphics[width=0.25\textwidth]{dualdecomposition33_500x500.png}%
+  \includegraphics[width=0.25\textwidth]{dualdecomposition66_500x500.png}%
   \includegraphics[width=0.25\textwidth]{dualdecomposition99_500x500.png}
-  \caption{Dual decomposition results at 500x500 after a) 25 iteration b) 50 iterations c) 75 iterations and d) 100 iterations}
+  \caption{Dual decomposition results at 500x500 after a) 1 iteration b) 34 iterations c) 67 iterations and d) 100 iterations}
   \label{fig:dualdecomposition500x500}
 \end{figure}
 
 \lstset{language=Bash}
+\begin{lstlisting}
+vikasdhi@redpanda:~/wrk/OccupancyGrid$ bin/dualdecomposition 18 18 .09
+Factor disagreement count:554496
+Total energy:554496
+i=0 clicks taken: 17.68
+Variable disagreement count:14563
+Factor disagreement count:277248
+Total energy:1.85523e+07
+i=1 clicks taken: 11.67
+Variable disagreement count:14557
+...
+... After 100 iterations
+...
+Factor disagreement count:277248
+Total energy:8.9673e+07
+i=99 clicks taken: 11.5
+Variable disagreement count:14483
+\end{lstlisting}
+
 \begin{lstlisting}
 vikasdhi@redpanda:~/wrk/OccupancyGrid$ bin/dualdecomposition 18 18 .036
 Factor disagreement count:554496

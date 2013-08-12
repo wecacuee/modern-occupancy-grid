@@ -8,6 +8,7 @@
 #include <boost/format.hpp>
 #include "LaserFactor.h"
 #include "utility.hpp"
+#include <unistd.h>
 
 static const cv::Vec3f GREEN(0, 255, 0);
 static const cv::Vec3f WHITE(255, 255, 255);
@@ -103,7 +104,7 @@ public:
   }
 
   /// clear the visualization
-  inline void reset() { init(vis_.rows, vis_.cols); }
+  inline void reset() { init(vis_.rows, vis_.cols, window_name_); }
 
   /// Enable visualization with show function
   inline void enable_show() { enable_show_ = true; }
@@ -113,11 +114,12 @@ public:
     if (! enable_show_) return;
     cv::namedWindow(window_name_, cv::WINDOW_NORMAL);
     cv::imshow(window_name_, vis_);
-    boost::format format("/tmp/occgridvis%s-%d.png");
-    cv::imwrite((format % window_name_ % count_++).str(), vis_);
+    boost::format format("/tmp/occgridvis-%d-%s-%d.png");
+    cv::imwrite((format % getpid() % window_name_ % count_++).str(), vis_);
     cv::waitKey(t);
   }
 };
 
 extern Visualiser global_vis_;
 extern Visualiser global_vis2_;
+extern Visualiser global_vis3_;
