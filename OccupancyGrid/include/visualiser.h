@@ -46,9 +46,35 @@ public:
         vis_.at<cv::Vec3b>(i, j) = (occ.at(i*vis_.cols + j) != 0) ? BLACK : WHITE;
   }
 
+  template <typename Map>
+  inline void setMapMarginals(Map& marg) {
+    typedef typename Map::mapped_type T;
+    T max_ele(0);
+    for (int i = 0; i < vis_.rows; i++) {
+      for (int j = 0; j < vis_.cols; j++) {
+        max_ele = std::max(max_ele, marg[i*vis_.cols + j]);
+      }
+    }
+    max_ele = (max_ele == 0) ? 1 : max_ele;
+    std::cout << "max element:" << max_ele << std::endl;
+
+    for (int i = 0; i < vis_.rows; i++) {
+      for (int j = 0; j < vis_.cols; j++) {
+        uint8_t val = occgrid::todouble(marg[i*vis_.cols + j] / max_ele) * 255;
+        val = 255 - val;
+        vis_.at<cv::Vec3b>(i, j) = cv::Vec3b(val, val, val);
+      }
+    }
+  }
+
   template <typename T>
   inline void setMarginals(const std::vector<T>& marg) {
-    T max_ele = *std::max_element(marg.begin(), marg.end());
+    T max_ele(0);
+    for (int i = 0; i < vis_.rows; i++) {
+      for (int j = 0; j < vis_.cols; j++) {
+        max_ele = std::max(max_ele, marg[i*vis_.cols + j]);
+      }
+    }
     for (int i = 0; i < vis_.rows; i++) {
       for (int j = 0; j < vis_.cols; j++) {
         uint8_t val = occgrid::todouble(marg[i*vis_.cols + j] / max_ele) * 255;
