@@ -144,7 +144,9 @@ public:
   }
 
   inline LaserFactorPtr factorFromNodeId(gtsam::Index node_idx) const {
-    return boost::dynamic_pointer_cast<LaserFactor>(factors_[node_idx - cellCount()]);
+    LaserFactorPtr ptr = boost::dynamic_pointer_cast<LaserFactor>(factors_[node_idx - cellCount()]);
+    (void)*ptr;
+    return ptr;
   }
 
   /// Returns the neighbors of a cell in a factor graph

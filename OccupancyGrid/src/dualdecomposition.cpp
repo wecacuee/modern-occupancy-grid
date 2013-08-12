@@ -51,10 +51,6 @@ int main(int argc, const char *argv[])
   typedef typename OccupancyGridGraph::MessageValues Messages;
   typedef SlaveMinimizer<OccupancyGridGraph,
           DDLaserFactor<MultiAssignment, Messages>, Messages, MultiAssignment> SlaveMinimizer_;
-  DualDecomposition<OccupancyGridGraph, SlaveMinimizer_,
-    typename OccupancyGridGraph::SampleSpaceMap,
-    Messages,
-    MultiAssignment > dd;
   OccupancyGridGraph ogg(occupancyGrid);
   MultiAssignmentBaseType multiassignbase;
   MultiAssignment multiassign(multiassignbase);
@@ -62,5 +58,9 @@ int main(int argc, const char *argv[])
   Messages msgs(msg_base);
   SlaveMinimizer_ slvmin(ogg);
   typename OccupancyGridGraph::SampleSpaceMap ssm = get(sample_space_t(), ogg);
-  dd(ogg, slvmin, ssm, 10);
+  DualDecomposition<OccupancyGridGraph, SlaveMinimizer_,
+    typename OccupancyGridGraph::SampleSpaceMap,
+    Messages,
+    MultiAssignment > dd(msgs, multiassign);
+  dd(ogg, slvmin, ssm, 100);
 }

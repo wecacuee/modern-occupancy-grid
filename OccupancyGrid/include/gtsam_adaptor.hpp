@@ -310,8 +310,8 @@ namespace occgrid {
       typedef typename G::vertices_size_type vertices_size_type;
       vertices_size_type nv(num_vertices(g));
       vertices_size_type nf(num_factors(g));
-      return std::make_pair(boost::counting_iterator<vertices_size_type>(nv),
-                            boost::counting_iterator<vertices_size_type>(nv + nf));
+      return std::make_pair(boost::counting_iterator<vertices_size_type>(nv - nf),
+                            boost::counting_iterator<vertices_size_type>(nv));
     }
 
   template <typename G>
@@ -355,6 +355,4 @@ namespace occgrid {
     typename PropertyMap::reference get(PropertyMap& pm, typename PropertyMap::key_type v) {
       return pm.get(v);
     }
-
-
 } // namespace occgrid

@@ -64,7 +64,7 @@ bool disagrees(const Graph& g,
       break;
     }
   }
-  return allsame;
+  return (! allsame);
 }
 
 template <typename Graph, typename Messages, typename MultiAssignment, typename SampleSpaceMap>
@@ -81,11 +81,14 @@ void resolve_disagreement(const Graph& g,
   typedef typename boost::property_traits<SampleSpaceMap>::value_type sample_space_iter_pair;
   typedef typename sample_space_iter_pair::first_type sample_space_iterator;
   typedef typename std::iterator_traits<sample_space_iterator>::value_type sample_space_type;
+
   BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
     messages[msg_key_type(f, x, multi_assignment[std::make_pair(f, x)])] += step;
   }
   BOOST_AUTO(sample_space_size, boost::size(get(sample_space_map, x)));
+
   BOOST_FOREACH(sample_space_type xv, get(sample_space_map, x)) {
+    // normalize so that messages sum up to one
     msg_value_type avg(0);
     BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
       avg += messages[msg_key_type(f, x, xv)];
@@ -115,15 +118,13 @@ class DualDecomposition {
     typedef typename boost::property_traits<Messages>::value_type belief_type;
 
   private:
-    MultiAssignment multi_assignment_;
-    Messages messages_;
-    Messages message_gradients_;
+    Messages& messages_;
+    MultiAssignment& multi_assignment_;
     Disagreement disagrees_;
   public:
-    DualDecomposition() 
-      : multi_assignment_(),
-      messages_(),
-      message_gradients_(),
+    DualDecomposition(Messages& msgs, MultiAssignment& massign) 
+      : messages_(msgs),
+      multi_assignment_(massign),
       disagrees_() {
       }
     void init(const G& g) {
@@ -136,27 +137,31 @@ class DualDecomposition {
         const SampleSpaceMap& sample_space_map,
         size_t max_iter) 
     {
-      bool any_disagreement = true;
-      belief_type step = 50;
-      for (size_t i = 0; (i < max_iter) && any_disagreement; ++i) {
+      init(g);
+      size_t disagrement_count = 1;
+      belief_type step = 100;
+      for (size_t i = 0; (i < max_iter) && (disagrement_count > 0); ++i) {
+        time_t st; time(&st); 
         BOOST_FOREACH(vertex_descriptor f, factors(g)) {
           if (disagrees_[f])
             // minimize_slave_problem(Messages) to update MultiAssignment
             get(slave_minimizer, f)(multi_assignment_, messages_);
         }
         // for each variable in graph:
-        any_disagreement = false;
+        disagrement_count = 0;
         BOOST_FOREACH(vertex_descriptor x, variables(g)) {
           bool disagreement = false;
           if (disagrees(g, x, multi_assignment_)) {
             disagreement = true;
-            any_disagreement = true;
-            resolve_disagreement(g, x, multi_assignment_, messages_, sample_space_map, step / i);
+            disagrement_count += 1;
+            resolve_disagreement(g, x, multi_assignment_, messages_, sample_space_map, step / (i+1));
           }
           BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
             disagrees_[f] = disagreement;
           }
         }
+        time_t et; time(&et); std::cout << " time taken: " << et - st << std::endl;
+        std::cout << "Variable disagreement count:" << disagrement_count << std::endl;
       }
     }
     belief_type marginals(vertex_descriptor v, sample_space_type xv) {

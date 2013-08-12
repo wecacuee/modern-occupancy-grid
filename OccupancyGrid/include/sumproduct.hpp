@@ -236,7 +236,7 @@ template<typename FactorGraph, typename MessageValues,
   typename SampleSpaceMap,
   typename FactorMap,
   typename IsFactorMap>
-void sumproduct(
+void foreach_sample_space(
     typename boost::graph_traits<FactorGraph>::edge_descriptor e,
     const FactorGraph &fg,
     MessageValues &msgs,
@@ -292,7 +292,7 @@ public:
   void operator()(typename boost::graph_traits<FactorGraph>::edge_descriptor e,
       const FactorGraph& fg) {
     //std::cout << "Called for edge" << source(e, fg) << "-" << target(e, fg) << std::endl;
-    sumproduct<FactorGraph, MessageValues, SampleSpaceMap, FactorMap, IsFactorMap>(e, fg, msgs_, cdmap_, fmap_, isfactor_);
+    foreach_sample_space<FactorGraph, MessageValues, SampleSpaceMap, FactorMap, IsFactorMap>(e, fg, msgs_, cdmap_, fmap_, isfactor_);
   }
 };
 

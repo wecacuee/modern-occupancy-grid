@@ -18,9 +18,9 @@ namespace occgrid {
   namespace detail {
       // full template specialization for overriding the sumproduct update
       // mechanism
-      template <>
-      logdouble
-      belief< OccupancyGridGraph,
+      template <> logdouble
+      belief
+      < OccupancyGridGraph,
         typename OccupancyGridGraph::MessageValues,
         typename OccupancyGridGraph::SampleSpaceMap,
         typename OccupancyGridGraph::FactorMap>
