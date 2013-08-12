@@ -36,8 +36,17 @@
 //         for factors in adjacent_vertices(variable):
 //             Disagreement[factor] = disagrees
 //
+#include <boost/graph/graph_traits.hpp>
+#include <boost/foreach.hpp>
+#include <boost/graph/properties.hpp>
+#include <boost/typeof/typeof.hpp>
+#include <boost/range/size.hpp>
+#include <boost/type_traits.hpp>
+#include <boost/unordered_map.hpp>
+#include <boost/utility/result_of.hpp>
+
 template <typename Graph, typename MultiAssignment>
-bool disagreement(const Graph& g, typename
+bool disagreement(const Graph& g,
     typename boost::graph_traits<Graph>::vertex_descriptor x,
     MultiAssignment& multi_assignment)
 {
@@ -50,20 +59,21 @@ bool disagreement(const Graph& g, typename
       f1 = f;
       first_iter = false;
     }
-    if (multi_assignment[std::make_pair(f, x)] != f) {
+    if (multi_assignment[std::make_pair(f, x)] != f1) {
       allsame = false;
       break;
     }
   }
   return allsame;
 }
-template <typename Graph, typename Messages, typename MultiAssignment>
+
+template <typename Graph, typename Messages, typename MultiAssignment, typename SampleSpaceMap>
 void resolve_disagreement(const Graph& g, 
     typename boost::graph_traits<Graph>::vertex_descriptor x,
     const MultiAssignment& multi_assignment,
     Messages& messages,
-    SampleSpaceMap& sample_space_map,
-    typename boost::property_traits<Messages>::value_type& value_type)
+    const SampleSpaceMap& sample_space_map,
+    const typename boost::property_traits<Messages>::value_type step)
 {
   typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex_descriptor;
   typedef typename boost::property_traits<Messages>::key_type msg_key_type;
@@ -74,11 +84,11 @@ void resolve_disagreement(const Graph& g,
   BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
     messages[msg_key_type(f, x, multi_assignment[std::make_pair(f, x)])] += step;
   }
-  BOOST_AUTO_TPL(sample_space_size, size(get(sample_space_size, x)));
+  BOOST_AUTO(sample_space_size, boost::size(get(sample_space_map, x)));
   BOOST_FOREACH(sample_space_type xv, get(sample_space_map, x)) {
     msg_value_type avg(0);
     BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
-      avg += messages[msg_key_type(f, x, xv)]
+      avg += messages[msg_key_type(f, x, xv)];
     }
     avg /= sample_space_size;
     BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
@@ -87,28 +97,23 @@ void resolve_disagreement(const Graph& g,
   }
 }
 
-template <typename G, typename SlaveMinimizer, typename SampleSpaceMap>
+template <typename G, typename SlaveMinimizer, typename SampleSpaceMap, typename Messages, typename MultiAssignment>
 class DualDecomposition {
   private:
+    typedef typename boost::graph_traits<G>::vertex_descriptor vertex_descriptor;
     typedef typename boost::property_traits<SlaveMinimizer>::value_type functor_type;
     typedef typename boost::property_traits<SampleSpaceMap>::value_type sample_space_iter_pair;
     typedef typename sample_space_iter_pair::first_type sample_space_iterator;
+    typedef typename std::iterator_traits<sample_space_iterator>::value_type sample_space_type;
+    typedef typename boost::graph_traits<G>::edge_descriptor edge_descriptor;
     struct message_key_type : public std::pair<edge_descriptor, sample_space_type> {
       message_key_type(edge_descriptor e, sample_space_type xv) 
         : std::pair<edge_descriptor, sample_space_type>(e, xv) {}
-    }
-    //typedef boost::unordered_map<message_key_type, belief_type> Messages;
-    typedef typename boost::function_traits<functor_type>::arg1_type MessagesConstRef;
-    typedef typename boost::remove_cv<typename boost::remove_reference<MessagesConstRef>::type >::type Messages;
-    typedef typename boost::function_traits<functor_type>::arg2_type MultiAssignmentRef;
-    typedef typename boost::remove_cv<typename boost::remove_reference<MultiAssignmentRef>::type >::type MultiAssignment;
-    typedef boost::undirected_map<vertex_descriptor, bool> Disagreement;
+    };
+    typedef boost::unordered_map<vertex_descriptor, bool> Disagreement;
   public:
-    typedef typename boost::graph_traits<G>::vertex_descriptor vertex_descriptor;
-    typedef typename boost::graph_traits<G>::edge_descriptor edge_descriptor;
     typedef typename boost::result_of<functor_type>::type belief_type;
-    typedef typename std::iterator_traits<sample_space_iterator>::value_type sample_space_type;
-    typedef boost::undirected_map<std::pair<vertex_descriptor, sample_space_type>, belief_type> Marginals;
+    typedef boost::unordered_map<std::pair<vertex_descriptor, sample_space_type>, belief_type> Marginals;
 
   private:
     MultiAssignment multi_assignment_;
@@ -124,12 +129,12 @@ class DualDecomposition {
       disagrees_(),
       marginals_() {
       }
-    void init(const Graph& g) {
+    void init(const G& g) {
       BOOST_FOREACH(vertex_descriptor f, factors(g)) {
         disagrees_[f] = true;
       }
     }
-    void operator()(const Graph& g,
+    void operator()(const G& g,
         const SlaveMinimizer& slave_minimizer,
         const SampleSpaceMap& sample_space_map,
         size_t max_iter) 
@@ -143,10 +148,10 @@ class DualDecomposition {
             marginals_[f] = get(slave_minimizer, f)(multi_assignment_, messages_);
         }
         // for each variable in graph:
-        any_disagreement = false
+        any_disagreement = false;
         BOOST_FOREACH(vertex_descriptor x, variables(g)) {
           bool disagreement = false;
-          if disagreement(g, x, multi_assignment_) {
+          if (disagreement(g, x, multi_assignment_)) {
             disagreement = true;
             any_disagreement = true;
             resolve_disagreement(g, x, messages_, sample_space_map, step / i);
@@ -160,8 +165,4 @@ class DualDecomposition {
     belief_type marginals(vertex_descriptor v, sample_space_type xv) {
       return marginals_[v, xv];
     }
-}
-
-int main(int argc, const char *argv[])
-{
-}
+};

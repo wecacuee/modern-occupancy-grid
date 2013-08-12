@@ -58,7 +58,9 @@
 #include <boost/bind.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/iterator/counting_iterator.hpp>
-#include <boost/bind.hpp>
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/bind.hpp>
+#include <boost/lambda/construct.hpp>
 
 namespace occgrid {
   struct gtsam_traversal_category : 
@@ -67,6 +69,7 @@ namespace occgrid {
     public virtual boost::vertex_list_graph_tag {
     };
 
+  // internal property names
   struct sample_space_t {
     typedef boost::vertex_property_tag kind;
   };
@@ -78,8 +81,9 @@ namespace occgrid {
   };
   template <typename gtsamGraph, typename Factor, typename belief_type>
   class G {
-    public:
+    private:
     const gtsamGraph& g_;
+    public:
     typedef belief_type factor_return_type;
     typedef typename Factor::argument_type::mapped_type sample_space_type;
     typedef gtsam::Index vertex_descriptor;
@@ -90,18 +94,6 @@ namespace occgrid {
     typedef size_t degree_size_type;
     typedef typename std::vector<vertex_descriptor>::const_iterator adjacency_iterator;
 
-    template<typename T1, typename T2>
-    class bound_make_pair {
-      private:
-        T1 t1_;
-      public:
-        typedef typename std::pair<T1, T2> result_type;
-        typedef T2 argument_type;
-        bound_make_pair(T1 t1) : t1_(t1) { }
-       result_type operator()(argument_type t2) { 
-        return std::make_pair(t1_, t2); 
-      }
-    };
     typedef boost::function< std::pair<vertex_descriptor, vertex_descriptor> (vertex_descriptor) > Function;
     typedef typename boost::transform_iterator<Function, adjacency_iterator> out_edge_iterator;
     typedef boost::counting_iterator<vertex_descriptor> vertex_iterator;
@@ -120,12 +112,14 @@ namespace occgrid {
       return std::make_pair(g_.getNeighbors(v).begin(), g_.getNeighbors(v).end());
     }
 
-
     std::pair<out_edge_iterator, out_edge_iterator> 
       out_edges(vertex_descriptor v) const
       { 
-        bound_make_pair<vertex_descriptor, vertex_descriptor> pair_make(v);
-        Function f = pair_make;
+        namespace bl = boost::lambda;
+        BOOST_AUTO(f, bl::bind(
+              bl::constructor<std::pair<vertex_descriptor, vertex_descriptor> >(), 
+              v, bl::_1));
+
         return std::make_pair(
             out_edge_iterator(g_.getNeighbors(v).begin(), f),
             out_edge_iterator(g_.getNeighbors(v).end(), f));
@@ -213,13 +207,14 @@ namespace occgrid {
       }
     };
 
+    // needed for dual decomposition
     template <typename Messages, typename MultiAssignment>
     struct SlaveMinimizer {
       private:
         const G& g_;
       public:
         typedef boost::function<typename Messages::value_type (const Messages&, MultiAssignment&)> value_type;
-        typedef const value_type reference;
+        typedef value_type reference;
         typedef vertex_descriptor key_type;
         typedef boost::readable_property_map_tag category;
         SlaveMinimizer(const G& g) : g_(g) { }

@@ -1,14 +1,16 @@
 == Tasks (priority sorted) ==
 * [X] Implement Merali2013icra
 * [X] Make MCMC implementation from Brian faster
-* [O] implement belief propagation
+* [X] implement belief propagation
     * [X] Test summaryOf
     * [X] Write Update functions in terms of FactorGraph
     * [X] Combine to get a belief propagation algorithm
     * [X] Wrap gtsam to boost graph 
-    * [ ] Try belief propagation for total_edge_traversal for 4, 3, 2 sweeps. Does it yields better results than random_edge_traversal with edges / 3 iterations?
-    * [ ] Write a small report on belief propgation results
-        * [ ] estimate 1000
+    * [X] Try belief propagation for total_edge_traversal for 4, 3, 2 sweeps. Does it yields better results than random_edge_traversal with edges / 3 iterations?
+    Results don't look any better
+    * [X] Write a small report on belief propgation results
+        * [X] estimate 1000
+        * [X] took 1025
 * [.] implement dual decomposition
     * [ ] 1500 Understand paper Accelerated dual decomposition
     * [ ] 1530 Read implemented code
