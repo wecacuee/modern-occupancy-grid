@@ -18,6 +18,9 @@
 #include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>
 
+#include "observation2d.h"
+#include "raytrace.hpp"
+
 template <typename T>
 inline int signum(T val) {
     return (T(0) < val) - (val < T(0));
@@ -26,9 +29,14 @@ inline int signum(T val) {
 template <typename real_t, typename int_t>
 class OccupancyGrid2D {
   public:
+    friend class ray_trace_iterator<OccupancyGrid2D<real_t, int_t> >;
+    typedef real_t real_type;
+    typedef int_t integer_type;
     cv::Vec<real_t, 2> min_pt_;
     cv::Vec<real_t, 2> cell_size_;
     cv::Mat og_;
+    std::vector< std::vector < _Observation2D<real_t> > > cell2observations_;
+    bool cell2observations_cached_;
     int counter;
     static const uint8_t OCCUPIED;
     static const uint8_t FREE;
@@ -39,6 +47,8 @@ class OccupancyGrid2D {
       min_pt_(min_x, min_y),
       cell_size_(cell_size_x, cell_size_y),
       og_(ncells_x, ncells_y, CV_8U, cv::Scalar(FREE)),
+      cell2observations_(ncells_x * ncells_y),
+      cell2observations_cached_(false),
       counter(0)
     {
     }
@@ -95,11 +105,19 @@ class OccupancyGrid2D {
         cv::Vec<int_t, 2>& nearest_neighbor);
 
     real_t ray_trace(
-        real_t px, 
-        real_t py,
-        real_t ptheta,
+        const _Observation2D<real_t>& pose,
         real_t max_range,
         cv::Vec<real_t, 2>& final_pos); 
+    ray_trace_iterator<OccupancyGrid2D<real_t, int_t> > begin(
+        const _Observation2D<real_t>& pose,
+        real_t max_range
+        ) {
+      return ray_trace_iterator<OccupancyGrid2D<real_t, int_t> >(*this, pose, max_range);
+    }
+
+    ray_trace_iterator<OccupancyGrid2D<real_t, int_t> > end() {
+      return ray_trace_iterator<OccupancyGrid2D<real_t, int_t> >();
+    }
 
     cv::Point2i
       xy2rc(cv::Vec<real_t, 2> xy) {
@@ -148,6 +166,25 @@ class OccupancyGrid2D {
             scan_count, CV_RGB(255, 0, 0));
         cv::imshow("c", vis);
         cv::waitKey(10);
+    }
+
+    typedef typename std::vector< _Observation2D<real_t> >::const_iterator const_iterator;
+    std::pair<const_iterator, const_iterator>
+      get_related_observations(
+        const std::vector<_Observation2D<real_t> >& observations,
+        real_t max_range,
+        int_t k)
+    {
+      if ( ! cell2observations_cached_) {
+        for (const_iterator it = observations.begin(); it != observations.end(); ++it) {
+          cv::Vec2d final_pos;
+          ray_trace(*it, max_range, final_pos);
+
+        }
+        cell2observations_cached_ = true;
+      }
+      std::vector<_Observation2D<real_t> >& obs = cell2observations_[k];
+      return std::make_pair(obs.begin(), obs.end());
     }
 };
 
