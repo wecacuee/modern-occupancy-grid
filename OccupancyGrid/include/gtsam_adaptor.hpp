@@ -220,10 +220,17 @@ namespace occgrid {
       /// provides default value for a message.
       struct base_type 
         : public boost::unordered_map<key_type, belief_type> {
+          private:
+            belief_type default_msg_;
+          public:
+          base_type() : boost::unordered_map<key_type, belief_type>(),
+                        default_msg_(1 / SampleSpaceMap::size()) {}
+          base_type(belief_type default_msg) 
+            : boost::unordered_map<key_type, belief_type>(), 
+            default_msg_(default_msg) {}
           belief_type& operator[](const key_type& k) const {
-            belief_type default_msg(1. / SampleSpaceMap::size());
             if (this->find(k) == this->end())
-              (const_cast<base_type*>(this))->boost::unordered_map<key_type, belief_type>::operator[](k) = default_msg;
+              (const_cast<base_type*>(this))->boost::unordered_map<key_type, belief_type>::operator[](k) = default_msg_;
             return (const_cast<base_type*>(this))->boost::unordered_map<key_type, belief_type>::operator[](k);
           }
       };

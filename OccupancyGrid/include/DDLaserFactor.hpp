@@ -1,4 +1,5 @@
 #pragma once
+#include "debugflags.h"
 #include "LaserFactor.h"
 template <typename MultiAssignment, typename Messages>
 class DDLaserFactor {
@@ -93,6 +94,13 @@ class DDLaserFactor {
       }
       // compute energies corresponding to each of them
       // 10.O(n)
+      if (DEBUG_DD) {
+      std::cout << "Message contribution f=" << lf_.factor_index_ << ":";
+      for (size_t c = 0; c < lf_.cells_.size(); ++c)
+        std::cout << msgs[msg_key_type(lf_.factor_index_, lf_.cells_[c], lf_.w0_assignment(lf_.cells_[c]))] <<",";
+      std::cout << std::endl;
+      }
+
       value_type w0_energy(lf_.w0_);
       for (size_t c = 0; c < lf_.cells_.size(); ++c)
         w0_energy += msgs[msg_key_type(lf_.factor_index_, lf_.cells_[c], lf_.w0_assignment(lf_.cells_[c]))];

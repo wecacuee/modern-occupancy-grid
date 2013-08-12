@@ -112,14 +112,14 @@ void loadPlayerSim(const string& laser_pose_file,
   loadMat(laser_range, laser_range_file);
   loadMat(scan_angles, scan_angles_file);
 
-  cv::Mat laser_pose_d, laser_range_d, scan_angles_d;
-  // downsample poses, downsample lasers, skip last few observations
-  downsample(laser_pose_d, laser_pose,   2, 1,  0);
-  downsample(laser_range_d, laser_range, 2, 10, 0);
-  downsample(scan_angles_d, scan_angles, 2, 10, 0);
+  // cv::Mat laser_pose_d, laser_range_d, scan_angles_d;
+  // // downsample poses, downsample lasers, skip last few observations
+  // downsample(laser_pose_d, laser_pose,   2, 1,  0);
+  // downsample(laser_range_d, laser_range, 2, 10, 0);
+  // downsample(scan_angles_d, scan_angles, 2, 10, 0);
     
   cvMatToData(
-      laser_pose_d, laser_range_d, scan_angles_d, 
+      laser_pose, laser_range, scan_angles, 
       allposes, allranges, max_dist);
 }
 

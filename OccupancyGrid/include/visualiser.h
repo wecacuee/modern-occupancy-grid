@@ -76,14 +76,16 @@ public:
   template <typename T>
   inline void setMarginals(const std::vector<T>& marg) {
     T max_ele(0);
+    T min_ele(0);
     for (int i = 0; i < vis_.rows; i++) {
       for (int j = 0; j < vis_.cols; j++) {
         max_ele = std::max(max_ele, marg[i*vis_.cols + j]);
+        min_ele = std::min(min_ele, marg[i*vis_.cols + j]);
       }
     }
     for (int i = 0; i < vis_.rows; i++) {
       for (int j = 0; j < vis_.cols; j++) {
-        uint8_t val = occgrid::todouble(marg[i*vis_.cols + j] / max_ele) * 255;
+        uint8_t val = occgrid::todouble((marg[i*vis_.cols + j] - min_ele) / (max_ele - min_ele)) * 255;
         val = 255 - val;
         vis_.at<cv::Vec3b>(i, j) = cv::Vec3b(val, val, val);
       }
@@ -91,9 +93,9 @@ public:
   }
 
   /// Highlight given vector of cells
-  inline void highlightCells(const std::vector<gtsam::Index> & cells) {
-    for (size_t i = 0; i < cells.size(); i++) {
-      gtsam::Index idx = cells[i];
+  template <typename Range>
+  inline void highlightCells(const Range& cells) {
+    BOOST_FOREACH(gtsam::Index idx, cells) {
       size_t x,y;
       idx2xy(idx, x, y);
       vis_.at<cv::Vec3b>(y, x) = GREEN;
@@ -111,8 +113,8 @@ public:
     if (! enable_show_) return;
     cv::namedWindow(window_name_, cv::WINDOW_NORMAL);
     cv::imshow(window_name_, vis_);
-    boost::format format("/tmp/occgridvis%d.png");
-    cv::imwrite((format % count_++).str(), vis_);
+    boost::format format("/tmp/occgridvis%s-%d.png");
+    cv::imwrite((format % window_name_ % count_++).str(), vis_);
     cv::waitKey(t);
   }
 };

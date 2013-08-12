@@ -56,7 +56,7 @@ int main(int argc, const char *argv[])
   OccupancyGridGraph ogg(occupancyGrid);
   MultiAssignmentBaseType multiassignbase;
   MultiAssignment multiassign(multiassignbase);
-  MessagesBaseType msg_base;
+  MessagesBaseType msg_base(0);
   Messages msgs(msg_base);
   SlaveMinimizer_ slvmin(ogg);
   typename OccupancyGridGraph::SampleSpaceMap ssm = get(sample_space_t(), ogg);
@@ -64,5 +64,5 @@ int main(int argc, const char *argv[])
     typename OccupancyGridGraph::SampleSpaceMap,
     Messages,
     MultiAssignment > dd(msgs, multiassign);
-  dd(ogg, slvmin, ssm, 1000);
+  dd(ogg, slvmin, ssm, 10);
 }
