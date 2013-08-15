@@ -66,7 +66,12 @@ struct display_peridically_visitor
     BOOST_FOREACH(vertex_descriptor u, variables(fg)) {
       value_type prod_0(marginal(fg, msgs_, u, 0));
       value_type prod_1(marginal(fg, msgs_, u, 1));
-      margs[count ++] = prod_1 / (prod_0 + prod_1);
+      value_type denom = prod_0 + prod_1;
+      if (denom == value_type(0)) 
+        margs[count ++] = value_type(0);
+      else
+        margs[count ++] = prod_1 / denom;
+
     }
     fg.display(global_vis_, margs);
   }
@@ -106,7 +111,7 @@ int main(int argc, const char *argv[])
     occupancyGrid.addLaser(pose, range); //add laser to grid
   }
 
-  typename OccupancyGridGraph::MessageTypes::base_type msg_values;
+  typename OccupancyGridGraph::MessageTypes::base_type msg_values(logdouble(0.5));
   typename OccupancyGridGraph::MessageValues msgs(msg_values);
   OccupancyGridGraph ogg(occupancyGrid);
   using occgrid::get;
@@ -127,9 +132,9 @@ int main(int argc, const char *argv[])
   display_peridically_visitor<OccupancyGridGraph,
     typename OccupancyGridGraph::MessageValues > display_vis(msgs);
 
-  //BOOST_AUTO(vistor_list, std::make_pair(spvis, display_vis));
-  BOOST_AUTO(n_iter, num_edges(ogg) * 2);
+  BOOST_AUTO(vistor_list, std::make_pair(spvis, display_vis));
+  BOOST_AUTO(n_iter, num_edges(ogg) * 0.3);
   std::cout << "Number of iterations:" << n_iter << std::endl;
-  random_edge_traversal(ogg, spvis, n_iter);
+  random_edge_traversal(ogg, vistor_list, n_iter);
   display_vis.display(ogg);
 }

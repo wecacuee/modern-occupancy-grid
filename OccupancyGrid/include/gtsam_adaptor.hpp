@@ -62,6 +62,7 @@
 #include <boost/lambda/bind.hpp>
 #include <boost/lambda/construct.hpp>
 #include "BPLaserFactor.hpp"
+#include "visualiser.h"
 
 namespace occgrid {
   struct gtsam_traversal_category : 
@@ -224,10 +225,14 @@ namespace occgrid {
             belief_type default_msg_;
           public:
           base_type() : boost::unordered_map<key_type, belief_type>(),
-                        default_msg_(1 / SampleSpaceMap::size()) {}
+                        default_msg_(1 / SampleSpaceMap::size()) {
+                          assert(! isnan(default_msg_));
+                        }
           base_type(belief_type default_msg) 
             : boost::unordered_map<key_type, belief_type>(), 
-            default_msg_(default_msg) {}
+            default_msg_(default_msg) {
+              assert(! isnan(default_msg_));
+            }
           belief_type& operator[](const key_type& k) const {
             if (this->find(k) == this->end())
               (const_cast<base_type*>(this))->boost::unordered_map<key_type, belief_type>::operator[](k) = default_msg_;

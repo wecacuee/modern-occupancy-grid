@@ -34,8 +34,10 @@ void normalize(InputIterator first, InputIterator last, PropertyMap& map) {
   for (;first != last; ++first) 
     normalizer += map[*first];
 
-  for (;first != last; ++first) 
+  for (;first != last; ++first) {
     map[*first] /= normalizer;
+    assert(! isnan(map[*first]));
+  }
 }
 
 namespace detail {
@@ -253,6 +255,7 @@ void foreach_sample_space(
     boost::tie(cd, cd_end) = get(cdmap, var);
     for (boost::tie(cd, cd_end) = get(cdmap, var); cd != cd_end; ++cd) {
       Real sum = belief(e, fg, msgs, cdmap, fmap, is_factor, *cd);
+      assert( ! isnan(sum));
       msgs[typename MessageValues::key_type(factor, var, *cd)] = sum;
     }
 

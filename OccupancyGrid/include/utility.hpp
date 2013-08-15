@@ -96,7 +96,12 @@ class logdouble :
   double todouble() const {
     return std::exp( - neglog_);
   }
+  bool isnan() const {
+    return std::isnan(neglog_);
+  }
 };
+
+bool isnan(const logdouble& ld);
 
 template<typename T>
 T toprobability(double w) {
@@ -125,4 +130,5 @@ public:
   SymReal(std::string exp) : expression_(exp) {}
 };
 
+bool isnan(const SymReal& sr);
 } // namespace occgrid

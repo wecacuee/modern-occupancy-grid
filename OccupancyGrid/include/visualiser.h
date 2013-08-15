@@ -74,25 +74,6 @@ public:
     }
   }
 
-  template <typename T>
-  inline void setMarginals(const std::vector<T>& marg) {
-    T max_ele(0);
-    T min_ele(0);
-    for (int i = 0; i < vis_.rows; i++) {
-      for (int j = 0; j < vis_.cols; j++) {
-        max_ele = std::max(max_ele, marg[i*vis_.cols + j]);
-        min_ele = std::min(min_ele, marg[i*vis_.cols + j]);
-      }
-    }
-    for (int i = 0; i < vis_.rows; i++) {
-      for (int j = 0; j < vis_.cols; j++) {
-        uint8_t val = occgrid::todouble((marg[i*vis_.cols + j] - min_ele) / (max_ele - min_ele)) * 255;
-        val = 255 - val;
-        vis_.at<cv::Vec3b>(i, j) = cv::Vec3b(val, val, val);
-      }
-    }
-  }
-
   /// Highlight given vector of cells
   template <typename Range>
   inline void highlightCells(const Range& cells) {
@@ -100,6 +81,37 @@ public:
       size_t x,y;
       idx2xy(idx, x, y);
       vis_.at<cv::Vec3b>(y, x) = GREEN;
+    }
+  }
+
+
+  template <typename T>
+  inline void setMarginals(const std::vector<T>& marg) {
+    T max_ele(0);
+    assert( ! isnan(max_ele));
+    for (int i = 0; i < vis_.rows; i++) {
+      for (int j = 0; j < vis_.cols; j++) {
+        T mij = marg[i*vis_.cols + j];
+        assert(! isnan(mij));
+        max_ele = std::max(max_ele, mij);
+        assert(! isnan(max_ele));
+      }
+    }
+    for (int i = 0; i < vis_.rows; i++) {
+      for (int j = 0; j < vis_.cols; j++) {
+        T normalized = (marg[i*vis_.cols + j]) / max_ele;
+        double valdouble = occgrid::todouble(normalized);
+        if (! (valdouble <= 1)) {
+          std::cout << "Valdouble:" << valdouble 
+            << "; ij:" << marg[i*vis_.cols + j] << "; max_ele:" << max_ele
+            << std::endl;
+          assert(false);
+        }
+
+        uint8_t val = valdouble * 255;
+        val = 255 - val;
+        vis_.at<cv::Vec3b>(i, j) = cv::Vec3b(val, val, val);
+      }
     }
   }
 

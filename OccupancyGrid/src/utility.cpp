@@ -19,6 +19,9 @@ double todouble<logdouble>(logdouble t) {
   return t.todouble();
 }
 
+bool isnan(const logdouble& ld) {
+  return ld.isnan();
+}
 
 SymReal& operator*=(SymReal& r1, SymReal& r2) {
   if (r2.expression_ == "1") 
@@ -58,5 +61,9 @@ std::ostream& operator << (std::ostream& os, const SymReal& r) {
 
 SymReal& operator/=(SymReal& r1, SymReal& r2) {
   return r1; // cheating. We don't want normalization
+}
+
+bool isnan(const SymReal& ld) {
+  return false;
 }
 }
