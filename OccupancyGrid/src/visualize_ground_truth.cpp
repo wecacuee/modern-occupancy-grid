@@ -1,7 +1,7 @@
 #include <cmath>
 #include <opencv2/opencv.hpp>
 #include <cvmat_serialization.h>
-#include <occgrid.h>
+#include <occgrid.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/format.hpp>
 

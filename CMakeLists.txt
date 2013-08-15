@@ -60,6 +60,7 @@ find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIR})
 
 add_library(merali13icra SHARED
+	OccupancyGrid/src/occgrid.cpp
 	OccupancyGrid/src/forward_sensor_model.cpp
 	OccupancyGrid/src/cvmat_serialization.cpp)
 target_link_libraries(merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES}

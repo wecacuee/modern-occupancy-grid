@@ -74,6 +74,7 @@ class OccupancyGrid2DInverseSensor : public OccupancyGrid2D<real_t, int_t> {
         cv::imshow("c", vis);
         //cv::imwrite((boost::format("out-%d.png") % r).str(), vis);
         cv::waitKey(1);
+        cv::imwrite("/tmp/two_assumption_algo.png", vis);
     }
 };
 
@@ -92,7 +93,7 @@ int main(int argc, char** argv) {
 
     cv::Vec2d min_pt(-9, -9);
     cv::Vec2d range = -2 * min_pt;
-    cv::Vec2i gridsize(500, 500);
+    cv::Vec2i gridsize(100, 100);
     cv::Vec2d cellsize; 
     cv::divide(range, gridsize, cellsize);
     //std::cout << cellsize(0) << cellsize(1) << std::endl;
@@ -123,6 +124,6 @@ int main(int argc, char** argv) {
             map.set_up_ray_trace(pose[0], pose[1], total_angle, ranges[c]);
             map.ray_trace(pose[0], pose[1], total_angle, MAX_RANGE, final_pos);
         }
-        map.show(r);
     }
+    map.show(r);
 }
