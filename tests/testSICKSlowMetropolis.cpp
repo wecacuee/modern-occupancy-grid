@@ -69,5 +69,6 @@ int main(int argc, char *argv[]) {
     fprintf(fptr, "%lf ", occupancyMarginals[i]);
   }
   fclose(fptr);
+  global_vis_.save("/tmp/SICKSlowMetropolis.png");
 }
 

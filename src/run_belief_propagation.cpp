@@ -145,4 +145,5 @@ int main(int argc, const char *argv[])
   std::cout << "Number of iterations:" << n_iter << std::endl;
   random_edge_traversal(ogg, vistor_list, n_iter);
   display_vis.display(ogg);
+  global_vis_.save("/tmp/run_belief_propagation.png");
 }

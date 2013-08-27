@@ -68,7 +68,7 @@ int main(int argc, const char *argv[])
     LaserFactorPtr lf = occupancyGrid.factorFromNodeId(f);
     BOOST_FOREACH(gtsam::Index x, lf->cells_)
       energy[x] += LOG_ODDS_FREE;
-    size_t last_cell_idx = lf->cells_.size() - 1;
+    size_t last_cell_idx = lf->cells_[lf->cells_.size() - 1];
     energy[last_cell_idx] -= LOG_ODDS_FREE;
     energy[last_cell_idx] += LOG_ODDS_OCCUPIED;
   }
@@ -80,8 +80,14 @@ int main(int argc, const char *argv[])
   double Ex = occupancyGrid(best_assign);
   clock_t et = clock();
   std::cout << "<Energy>\t" << ((float)(et - st)) / CLOCKS_PER_SEC << "\t" << Ex << std::endl;
-
-  global_vis_.setMarginals(energy);
+  std::vector<double> probab(energy.size());
+  for (size_t i = 0; i < energy.size(); ++i) {
+    double e = energy[i];
+    double p = std::exp(-e);
+    probab[i] = 1 / (1 + p);
+  }
+  global_vis_.setMarginals(probab);
+  global_vis_.save("/tmp/TwoAssumptionAlgo.png");
   global_vis_.show(2000);
 
   return 0;

@@ -42,8 +42,8 @@ OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t it
 	// compute initial probability of occupancy grid, P(x_t)
 
   double Ex = occupancyGrid(occupancy);
-  global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
-  global_vis_.enable_show();
+  //global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
+  //global_vis_.enable_show();
 
 	for(size_t it = 0; it < marginals.size(); it++)
 		marginals[it] = 0.0;

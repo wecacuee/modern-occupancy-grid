@@ -190,6 +190,7 @@ class DualDecomposition {
       Disagreement disagrees_;
       EnergyMap factor_energy_;
       BestAssignment best_assign_;
+      VariableEnergy average_assign_(num_variables(g));
       // Initialize
       BOOST_FOREACH(vertex_descriptor f, factors(g))
         disagrees_[f] = true;
@@ -238,6 +239,7 @@ class DualDecomposition {
           best_assign_[x] = (count[0] > count[1]) ? 0
             : (count[0] == count[1]) ? ((((double)rand() / RAND_MAX) < 0.5) ? 0 : 1)
             : 1;
+          average_assign_[x] += best_assign_[x];
         }
         clock_t et = clock(); 
         std::cout << "Variable disagreement count:" << disagrement_count << std::endl;
@@ -251,5 +253,8 @@ class DualDecomposition {
         global_vis2_.reset();
         global_vis2_.show();
       }
+      //global_vis_.setMarginals(average_assign_);
+      global_vis_.show();
+      global_vis_.save("/tmp/dualdecomposition.png");
     }
 };

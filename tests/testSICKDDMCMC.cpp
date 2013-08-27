@@ -54,8 +54,8 @@ int main(int argc, char *argv[]){
 	for(size_t i = 0; i < occupancyMarginals.size(); i++){
 		fprintf(fptr, "%lf ", occupancyMarginals[i]);
 	}
-
 	fclose(fptr);
+  global_vis_.save("/tmp/SICKDDMCMC.png");
 }
 
 

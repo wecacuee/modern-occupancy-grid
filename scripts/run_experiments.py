@@ -4,12 +4,13 @@ import subprocess
 import numpy as np
 from script_utils import (save_time_energy, plotdatafname,
                           executables_and_config)
+from multiprocessing import Pool
 
 MAP_SIZE = 18 # in m
 
 def run(executable, resolution):
     cmd = [str(i) 
-         for i in ["time", executable, MAP_SIZE, MAP_SIZE, MAP_SIZE / resolution]]
+         for i in ["time", "-p", executable, MAP_SIZE, MAP_SIZE, MAP_SIZE / resolution]]
     print(" ".join(cmd))
     return subprocess.Popen(
         cmd,
@@ -40,8 +41,11 @@ def run_plot(executable, resolution):
 
 def main():
     resolution = 100
+    pool = Pool(processes=5)
     for exe, conf in executables_and_config():
-         run_plot(exe, resolution)
+        pool.apply_async(run_plot, args=(exe, resolution))
+    pool.close()
+    pool.join()
 
 if __name__ == '__main__':
     main()

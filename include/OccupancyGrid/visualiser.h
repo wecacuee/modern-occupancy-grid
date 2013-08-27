@@ -128,6 +128,10 @@ public:
     cv::imwrite((format % getpid() % window_name_ % count_++).str(), vis_);
     cv::waitKey(t);
   }
+
+  void save(std::string fname) const {
+    cv::imwrite(fname, vis_);
+  }
 };
 
 extern Visualiser global_vis_;
