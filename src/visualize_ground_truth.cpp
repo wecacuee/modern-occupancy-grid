@@ -105,7 +105,9 @@ int main(int argc, char** argv) {
         cv::Vec2d position(pose[0], pose[1]);
         map.draw_lasers(visin, position, robot_angle, angles,
             laser_ranges.ptr<double>(r),
-            scan_angles.cols, CV_RGB(0, 255, 0));
+            laser_reflectance.ptr<uint8_t>(r),
+            scan_angles.cols,
+            CV_RGB(0, 255, 0));
         cv::imshow("c", visin);
         cv::imwrite((in_fmter % r).str(), visin);
 
@@ -113,6 +115,7 @@ int main(int argc, char** argv) {
         cv::Mat vis;
         cv::cvtColor(map.gt_, vis, cv::COLOR_GRAY2BGR);
         map.draw_lasers(vis, position, robot_angle, angles, &ranges[0],
+            laser_reflectance.ptr<uint8_t>(r),
             scan_angles.cols, CV_RGB(0, 255, 0));
         cv::imshow("d", vis);
         cv::imwrite((gt_fmter % r).str(), vis);

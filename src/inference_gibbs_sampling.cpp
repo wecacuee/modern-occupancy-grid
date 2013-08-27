@@ -120,6 +120,7 @@ downsample(cv::Mat_<double>& matd,
 void visualize_input(cv::Mat_<double> laser_pose,
     cv::Mat_<double> laser_range,
     cv::Mat_<double> scan_angles,
+    cv::Mat_<uint8_t> laser_reflectance,
     int grid_size)
 {
     int nrows(grid_size), ncols(grid_size);
@@ -131,6 +132,7 @@ void visualize_input(cv::Mat_<double> laser_pose,
         double* l_pose = laser_pose.ptr<double>(i);
         double* l_range = laser_range.ptr<double>(i);
         double* l_angles = scan_angles.ptr<double>(i);
+        uint8_t* l_reflectance = laser_reflectance.ptr<uint8_t>(i);
         cv::Vec2d position(l_pose[0], l_pose[1]);
         double robot_angle = l_pose[2];
         cv::Mat vis = cv::imread("cave.png");
@@ -148,6 +150,7 @@ void visualize_input(cv::Mat_<double> laser_pose,
         // std::cout << "Current position:(" << position(0) << "," <<
           // position(1) << ")" << std::endl;
         map.draw_lasers(vis2, position, robot_angle, l_angles, l_range,
+            l_reflectance,
             scan_count, CV_RGB(0, 255, 0));
         cv::imshow("c", vis2);
         cv::waitKey(100);

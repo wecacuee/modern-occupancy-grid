@@ -78,16 +78,16 @@ class DDLaserFactor {
       if (lf_.is_same_assignment( boost::bind(&LaserFactor::w0_assignment, lf_, _1),
             other_minimizing_assign)
           ||
-          lf_.is_same_assignment( boost::bind(&LaserFactor::w1_assignment, lf_, _1),
-            other_minimizing_assign) 
+          (lf_.reflectance_ && lf_.is_same_assignment( boost::bind(&LaserFactor::w1_assignment, lf_, _1),
+            other_minimizing_assign) )
          ) {
         other_minimizing_assign[indices[0]] = 1 - other_minimizing_assign[indices[0]];
       }
       if (lf_.is_same_assignment( boost::bind(&LaserFactor::w0_assignment, lf_, _1),
             other_minimizing_assign)
           ||
-          lf_.is_same_assignment( boost::bind(&LaserFactor::w1_assignment, lf_, _1),
-            other_minimizing_assign) 
+          (lf_.reflectance_ && lf_.is_same_assignment( boost::bind(&LaserFactor::w1_assignment, lf_, _1),
+            other_minimizing_assign))
          ) {
         other_minimizing_assign[indices[0]] = 1 - other_minimizing_assign[indices[0]];
         other_minimizing_assign[indices[1]] = 1 - other_minimizing_assign[indices[1]];

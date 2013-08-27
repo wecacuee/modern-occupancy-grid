@@ -114,6 +114,7 @@ class OccupancyGrid2D {
         real_t robot_angle,
         real_t* scan_angles,
         real_t* ranges,
+        uint8_t* reflectances,
         int_t scan_count,
         const cv::Scalar &color) {
 
@@ -123,9 +124,11 @@ class OccupancyGrid2D {
             obs_pt2(0) = cos(laser_angle)* ranges[i] + position(0);
             obs_pt2(1) = sin(laser_angle)* ranges[i] + position(1);
             cv::circle(vis, xy2rc(position), 2, CV_RGB(0, 0, 0), -1);
-            cv::line(vis, xy2rc(position), xy2rc(obs_pt2),
-                color);
-                
+            cv::line(vis, xy2rc(position), xy2rc(obs_pt2), color);
+            if (reflectances[i]) {
+              vis.at<cv::Scalar>(xy2rc(obs_pt2).x, xy2rc(obs_pt2).y) = CV_RGB(0, 0, 0);
+              std::cout << "Reflectance:" << reflectances[i] << std::endl;
+            }
         }
     }
 
@@ -134,6 +137,7 @@ class OccupancyGrid2D {
         real_t* scan_angles,
         real_t* expected_ranges,
         real_t* observed_ranges,
+        uint8_t* reflectances,
         int_t scan_count) {
         cv::Mat vis; 
         cv::cvtColor(og_, vis, cv::COLOR_GRAY2BGR);
@@ -142,10 +146,13 @@ class OccupancyGrid2D {
             robot_angle,
             scan_angles,
             observed_ranges,
+            reflectances,
             scan_count,
             CV_RGB(0, 255, 0));
         draw_lasers(vis, position, robot_angle, scan_angles, expected_ranges,
-            scan_count, CV_RGB(255, 0, 0));
+            reflectances,
+            scan_count,
+            CV_RGB(255, 0, 0));
         cv::imshow("c", vis);
         cv::waitKey(10);
     }
