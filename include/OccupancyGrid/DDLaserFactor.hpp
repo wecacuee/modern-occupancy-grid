@@ -95,10 +95,10 @@ class DDLaserFactor {
       // compute energies corresponding to each of them
       // 10.O(n)
       if (DEBUG_DD) {
-      std::cout << "Message contribution f=" << lf_.factor_index_ << ":";
-      for (size_t c = 0; c < lf_.cells_.size(); ++c)
-        std::cout << msgs[msg_key_type(lf_.factor_index_, lf_.cells_[c], lf_.w0_assignment(lf_.cells_[c]))] <<",";
-      std::cout << std::endl;
+        std::cout << "Message contribution f=" << lf_.factor_index_ << ":";
+        for (size_t c = 0; c < lf_.cells_.size(); ++c)
+          std::cout << msgs[msg_key_type(lf_.factor_index_, lf_.cells_[c], lf_.w0_assignment(lf_.cells_[c]))] <<",";
+        std::cout << std::endl;
       }
 
       value_type w0_energy(lf_.w0_);
@@ -107,8 +107,12 @@ class DDLaserFactor {
 
       // 11.O(n)
       value_type w1_energy(lf_.w1_);
-      for (size_t c = 0; c < lf_.cells_.size(); ++c)
-        w1_energy += msgs[msg_key_type(lf_.factor_index_, lf_.cells_[c], lf_.w1_assignment(lf_.cells_[c]))];
+      if (lf_.reflectance_) {
+        for (size_t c = 0; c < lf_.cells_.size(); ++c)
+          w1_energy += msgs[msg_key_type(lf_.factor_index_, lf_.cells_[c], lf_.w1_assignment(lf_.cells_[c]))];
+      } else {
+        w1_energy = w0_energy;
+      }
 
       // 12.O(n)
       value_type w_otherwise_energy(lf_.w_otherwise_);
@@ -119,12 +123,12 @@ class DDLaserFactor {
       // 13.O(n)
       value_type minimum_energy(0);
       value_type maximum_energy(0);
-      if ((w0_energy < w1_energy) && (w0_energy < w_otherwise_energy)) {
+      if ((w0_energy <= w1_energy) && (w0_energy <= w_otherwise_energy)) {
         for (size_t c = 0; c < lf_.cells_.size(); ++c)
           multi_assignment[std::make_pair(lf_.factor_index_, lf_.cells_[c])] = lf_.w0_assignment(lf_.cells_[c]);
         minimum_energy = w0_energy;
         maximum_energy = std::max(w1_energy, w_otherwise_energy);
-      } else if ((w1_energy < w0_energy) && (w1_energy < w_otherwise_energy)) {
+      } else if ((w1_energy <= w0_energy) && (w1_energy <= w_otherwise_energy)) {
         for (size_t c = 0; c < lf_.cells_.size(); ++c)
           multi_assignment[std::make_pair(lf_.factor_index_, lf_.cells_[c])] = lf_.w1_assignment(lf_.cells_[c]);
         minimum_energy = w1_energy;

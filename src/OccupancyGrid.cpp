@@ -61,11 +61,12 @@ void OccupancyGrid::rayTrace(const gtsam::Pose2 &pose, const double range,
 
     // Get the key of the cell that holds point (x,y)
     key = keyLookup(x, y);
+    if ((key < 0) || (key >= cellCount()))  // must be inside occupancy grid
+      break;
 
     // add cell to list of cells if it is new
-    if (((i == 0 // first element in cells
-            || (key != cells[cells.size() - 1])) // we just added it last time
-          && (key < (cellCount() - 1))))  // must be inside occupancy grid
+    if (i == 0 // first element in cells
+        || (key != cells[cells.size() - 1])) // we just added it last time
     {
       cells.push_back(key);
     }
@@ -73,7 +74,7 @@ void OccupancyGrid::rayTrace(const gtsam::Pose2 &pose, const double range,
 }
 
 void
-OccupancyGrid::addLaser(const Pose2 &pose, double range)
+OccupancyGrid::addLaser(const Pose2 &pose, double range, bool reflectance)
 {
   vector<Index> cells; // list of keys of cells hit by the laser
   Index key;
@@ -88,7 +89,7 @@ OccupancyGrid::addLaser(const Pose2 &pose, double range)
     // also, store some book-keeping info in this class
     pose_.push_back(pose);
     range_.push_back(range);
-    push_back(make_laser(cells));
+    push_back(make_laser(cells, reflectance));
   }
 }
 

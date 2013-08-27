@@ -62,11 +62,12 @@ private:
 
   /// Generate a node id for this factor
   LaserFactorPtr make_laser(
-      const std::vector<gtsam::Index> cells	///cells in which laser passes through
+      const std::vector<gtsam::Index> cells,	///cells in which laser passes through
+      bool reflectance /// whether laser was reflected (or it faded out)
       ) {
     gtsam::Index node_idx(cellCount() + factors_.size());
     LaserFactorPtr f  = boost::make_shared<LaserFactor>(
-        cells, node_idx);
+        cells, node_idx, reflectance);
     factors_.push_back(f);
 
     for (size_t i = 0; i < cells.size(); i++) {
@@ -104,7 +105,7 @@ public:
 	void addPrior(gtsam::Index cell, double prior);
 
 	/// Add a laser measurement
-	virtual void addLaser(const gtsam::Pose2 &pose, double range);
+	virtual void addLaser(const gtsam::Pose2 &pose, double range, bool reflectance);
 
 	/// Returns the number of cells in the grid
 	inline size_t cellCount() const {

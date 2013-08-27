@@ -1,5 +1,5 @@
 #include "OccupancyGrid/cvmat_serialization.h"
-#include "OccupancyGrid/occgrid.h"
+#include "OccupancyGrid/occgrid.hpp"
 #include <cmath>
 #include <opencv2/opencv.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -33,6 +33,11 @@ class OccupancyGrid2DGT : public OccupancyGrid2D<real_t, int_t> {
 };
 
 int main(int argc, char** argv) {
+  if ((argc != 5)  && (argc != 6)) {
+    std::cout << "Sample usage (from Data/player_sim_with_reflectance):"
+      << "../../bin/visualize_ground_truth laser_pose_all.bin laser_range_all.bin scan_angles_all.bin ../player_worlds/bitmaps/cave-rotated.png laser_reflectance_all.bin";
+    return 1;
+  }
     cv::Mat laser_pose;
     loadMat(laser_pose, argv[1]);
     cv::Mat laser_ranges;
@@ -40,6 +45,9 @@ int main(int argc, char** argv) {
     cv::Mat scan_angles;
     loadMat(scan_angles, argv[3]);
     cv::Mat floorplan = cv::imread(argv[4], cv::IMREAD_GRAYSCALE);
+    cv::Mat laser_reflectance;
+    if (argc == 6)
+      loadMat(laser_reflectance, argv[5]);
     cv::Vec2d min_pt(-9, -9);
     cv::Vec2d size_bitmap(16, 16);
     cv::Vec2i gridsize(floorplan.size[0], floorplan.size[1]);
@@ -64,15 +72,13 @@ int main(int argc, char** argv) {
     printf("(%d, %d) <-> (%d, %d)\n", min_bitmap(0), min_bitmap(1), max_bitmap(0), max_bitmap(1));
     cv::Mat roi = map.og_(cv::Range(min_bitmap(0), max_bitmap(1)),
       cv::Range(min_bitmap(1), max_bitmap(1)));
-    map.og_ = map.OCCUPIED;
+    map.og_ = cv::Scalar(map.OCCUPIED);
     floorplan.copyTo(roi);
 
     for (cv::MatIterator_<uint8_t> it = map.gt_.begin();
         it != map.gt_.end();
         it++) {
-        double rand_val = ((double)rand() / RAND_MAX);
-        uint8_t val = (rand_val > 0.5) ? map.OCCUPIED : map.FREE ;
-        *it = val;
+        *it = 127;
     }
     
     double MAX_RANGE = 8;

@@ -11,12 +11,14 @@ void loadDataFromTxt(const std::string& odometry_fname,
 void cvMatToData(const cv::Mat& laser_pose,
     const cv::Mat& laser_range,
     const cv::Mat& scan_angles,
+    const cv::Mat& laser_reflectance,
     std::vector<gtsam::Pose2>& allposes,
     std::vector<double>& allranges,
-    double& max_dist) ;
+    std::vector<uint8_t>& allreflectance);
 void loadPlayerSim(const std::string& laser_pose_file,
     const std::string& laser_range_file,
     const std::string& scan_angles_file,
+    const std::string& laser_reflectance_file,
     std::vector<gtsam::Pose2>& allposes,
     std::vector<double>& allranges,
-    double& max_dist) ;
+    std::vector<uint8_t>& allreflectance);

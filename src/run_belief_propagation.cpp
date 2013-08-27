@@ -98,17 +98,19 @@ int main(int argc, const char *argv[])
   global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
   vector<Pose2> allposes;
   vector<double> allranges;
-  double max_dist;
+  vector<uint8_t> allreflectance;
   loadPlayerSim(
       "Data/player_sim/laser_pose_all.bin",
       "Data/player_sim/laser_range_all.bin",
       "Data/player_sim/scan_angles_all.bin",
-      allposes, allranges, max_dist);
+      "Data/player_sim/laser_reflectance_all.bin",
+      allposes, allranges, allreflectance);
   for (size_t i = 0; i < allranges.size(); i++) {
     const Pose2& pose = allposes[i];
     const double range = allranges[i];
+    const uint8_t reflectance = allreflectance[i];
     // this is where factors are added into the factor graph
-    occupancyGrid.addLaser(pose, range); //add laser to grid
+    occupancyGrid.addLaser(pose, range, reflectance); //add laser to grid
   }
 
   typename OccupancyGridGraph::MessageTypes::base_type msg_values(logdouble(0.5));
@@ -132,9 +134,9 @@ int main(int argc, const char *argv[])
   display_peridically_visitor<OccupancyGridGraph,
     typename OccupancyGridGraph::MessageValues > display_vis(msgs);
 
-  BOOST_AUTO(vistor_list, std::make_pair(spvis, display_vis));
+  //BOOST_AUTO(vistor_list, std::make_pair(spvis, display_vis));
   BOOST_AUTO(n_iter, num_edges(ogg) * 0.3);
   std::cout << "Number of iterations:" << n_iter << std::endl;
-  random_edge_traversal(ogg, vistor_list, n_iter);
+  random_edge_traversal(ogg, spvis, n_iter);
   display_vis.display(ogg);
 }

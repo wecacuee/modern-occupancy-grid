@@ -60,20 +60,22 @@ void loadDataFromTxt(const std::string& odometry_fname,
 void cvMatToData(const cv::Mat& laser_pose,
     const cv::Mat& laser_range,
     const cv::Mat& scan_angles,
+    const cv::Mat& laser_reflectance,
     vector<Pose2>& allposes,
     vector<double>& allranges,
-    double& max_dist) 
+    vector<uint8_t>& allreflectance)
 {
-  max_dist = 8; // constant, not good
   for (int i = 0; i < laser_range.rows; i ++) {
     const double* pose = laser_pose.ptr<double>(i);
     const double* ranges = laser_range.ptr<double>(i);
     const double* angles = scan_angles.ptr<double>(i);
+    const uint8_t* reflectance = laser_reflectance.ptr<uint8_t>(i);
     for (int j = 0; j < laser_range.cols; j++) {
       double theta = pose[2] + angles[j];
       Pose2 p(pose[0], pose[1], theta);
       allposes.push_back(p);
       allranges.push_back(ranges[j]);
+      allreflectance.push_back(reflectance[j]);
     }
   }
 }
@@ -100,17 +102,19 @@ downsample(cv::Mat& matout,
     }
 }
 
-void loadPlayerSim(const string& laser_pose_file,
-    const string& laser_range_file,
-    const string& scan_angles_file,
-    vector<Pose2>& allposes,
-    vector<double>& allranges,
-    double& max_dist) 
+void loadPlayerSim(const std::string& laser_pose_file,
+    const std::string& laser_range_file,
+    const std::string& scan_angles_file,
+    const std::string& laser_reflectance_file,
+    std::vector<gtsam::Pose2>& allposes,
+    std::vector<double>& allranges,
+    std::vector<uint8_t>& allreflectance)
 {
-  cv::Mat laser_pose, laser_range, scan_angles;
+  cv::Mat laser_pose, laser_range, scan_angles, laser_reflectance;
   loadMat(laser_pose, laser_pose_file);
   loadMat(laser_range, laser_range_file);
   loadMat(scan_angles, scan_angles_file);
+  loadMat(laser_reflectance, laser_reflectance_file);
 
   // cv::Mat laser_pose_d, laser_range_d, scan_angles_d;
   // // downsample poses, downsample lasers, skip last few observations
@@ -119,7 +123,7 @@ void loadPlayerSim(const string& laser_pose_file,
   // downsample(scan_angles_d, scan_angles, 2, 10, 0);
     
   cvMatToData(
-      laser_pose, laser_range, scan_angles, 
-      allposes, allranges, max_dist);
+      laser_pose, laser_range, scan_angles, laser_reflectance,
+      allposes, allranges, allreflectance);
 }
 

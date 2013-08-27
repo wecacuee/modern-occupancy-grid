@@ -32,23 +32,26 @@ int main(int argc, char *argv[]) {
   global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
   vector<Pose2> allposes;
   vector<double> allranges;
-  double max_dist;
+  vector<uint8_t> allreflectance;
+  //double max_dist;
   // loadDataFromTxt(
   //     "Data/SICK_Odometry.txt",
   //     "Data/SICK_Snapshot.txt",
   //     allposes, allranges,
   //     max_dist);
   loadPlayerSim(
-      "Data/player_sim/laser_pose_all.bin",
-      "Data/player_sim/laser_range_all.bin",
-      "Data/player_sim/scan_angles_all.bin",
-      allposes, allranges, max_dist);
+      "Data/player_sim_with_reflectance/laser_pose_all.bin",
+      "Data/player_sim_with_reflectance/laser_range_all.bin",
+      "Data/player_sim_with_reflectance/scan_angles_all.bin",
+      "Data/player_sim_with_reflectance/laser_reflectance_all.bin",
+      allposes, allranges, allreflectance);
 
   for (size_t i = 0; i < allranges.size(); i++) {
     const Pose2& pose = allposes[i];
     const double range = allranges[i];
+    const uint8_t reflectance = allreflectance[i];
     // this is where factors are added into the factor graph
-    occupancyGrid.addLaser(pose, range); //add laser to grid
+    occupancyGrid.addLaser(pose, range, reflectance); //add laser to grid
   }
   occupancyGrid.saveLaser("Data/lasers.lsr");
 

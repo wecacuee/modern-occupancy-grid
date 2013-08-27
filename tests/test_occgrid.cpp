@@ -1,4 +1,4 @@
-#include "occgrid.hpp"
+#include "OccupancyGrid/occgrid.hpp"
 #include <gtest/gtest.h>
 
 ///////////////////////////////////////////////////

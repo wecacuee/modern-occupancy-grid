@@ -28,7 +28,9 @@ double LaserFactor::operator()(const Values &vals) const {
   if (is_same_assignment(
         boost::bind(&LaserFactor::w0_assignment, this, _1), vals))
     return w0_;
-  else if (is_same_assignment(
+  else if (
+      reflectance_ && // w1 assignment is not valid for reflectance case
+      is_same_assignment(
         boost::bind(&LaserFactor::w1_assignment, this, _1), vals))
     return w1_;
   else

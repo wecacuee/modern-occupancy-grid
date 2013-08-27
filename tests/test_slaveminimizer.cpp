@@ -29,7 +29,7 @@ int main(int argc, const char *argv[])
     msgs[msg_key_type(lf_idx, c, 0)] = 0;
     msgs[msg_key_type(lf_idx, c, 1)] = 0;
   }
-  LaserFactor lf(cells, lf_idx);
+  LaserFactor lf(cells, lf_idx, true);
   DDLaserFactor<MultiAssignment, MessageType> ddlf(lf);
   ddlf(massign, msgs);
   std::cout << "massign:";
