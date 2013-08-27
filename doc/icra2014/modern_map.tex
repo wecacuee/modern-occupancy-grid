@@ -1,0 +1,153 @@
+\documentclass[letterpaper, 10 pt, conference]{ieeeconf} % letterpaper/a4paper 
+% ieeeconf IEEEtran
+\IEEEoverridecommandlockouts   % Needed if you want to use the \thanks command
+\overrideIEEEmargins
+
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\hvect}[1]{\bar{\vect{#1}}}
+\newcommand{\uvect}[1]{\hat{\vect{#1}}}
+\newcommand{\field}[1]{\mathbb{#1}}
+\newcommand{\Real}[0]{\field{R}}
+
+
+\title{Modern MAP methods for accurate and faster occupancy grid mapping}
+\author{Vikas Dhiman, Brian, Jason J. Corso, Abhijit Kundu, Frank Dallert}
+\begin{document}
+\maketitle
+\begin{abstract}
+  Most occupancy grid mapping algorithms have been using two assumption
+  algorithm.  \cite{merali2013icra} showed that belief maximization methods
+  produce better maps than the traditional two assumption algorithm.  In this
+  paper, we show that we can go beyond methods like MCMC Gibbs sampling and
+  obtain faster convergence by using modern methods like Sum Product algorithm
+  and Dual Decomposition.
+\end{abstract}
+\section{Problem definition and Notation}
+A robot equipped with a laser scanner and accurate odometry moves in a static
+environment, problem is to figure out an optimal occupancy grid map. For the
+purpose of ground robots often 2D maps are enough for path planning and
+exploration. 
+\section{Two assumption algorithm}
+\section{Dropping the assumption}
+\section{Representation as factor graph}
+The problem of Occupancy grid mapping can be expressed as energy minimization
+over a factor graph. Let all cells in the map be the variable nodes $X$ and all
+the laser measurements be factor nodes $F$. Each cell $x \in X$ takes value
+from a discrete set $S(x) = \{0, 1\}$, where $0$ (respectively $1$) means that
+the cell is free (respectively occupied). Let us call the sample space all the cells in the map
+as $\Phi(X) = \prod_{x \in X} S(x)$.
+Each laser measurement $f$ is a
+function that depends only on the state of the cells $\vect{x}_f \subseteq X$
+that the laser passes through and evaluates to an \emph{energy} value that
+corresponds to negative
+log likelihood of the given state being the correct state according to that
+laser measurement. Mathematically, $f : \vect{x}_f \rightarrow \Real$. There
+exists an undirected edge $(x, f) : x \in X, f \in F$, if and only if the laser
+measurement $f$ passes through the cell $x$. Let $E$ represent the set of all
+such edges. The occupancy grid factor graph can be represented as $G = (X, F,
+E)$. In this formulation, we seek to determine the occupancy of cells that
+maximizes the total likelihood across all measurement, which is equivalent to
+minimizing the total \emph{energy} over all factors.
+\begin{align}
+  \min_{X \in \Phi(X)} \sum_{f \in F} f(\vect{x}_f)
+\end{align}
+\section{Metropolis hastings}
+\section2{Heat map}
+\section{Sum product}
+\cite{kschischang2001factor} introduced the algorithm.
+\subsection{Efficient sum product}
+\section{Dual decomposition}
+\newcommand{\msg}[3]{\mu_{#1#2}(#3)}
+\newcommand{\assign}{\leftarrow}
+\newcommand{\Sx}{S(x)}
+\cite{sontag2011introduction} explains the algorithm in detail. For
+completeness, we will describe the algorithm here.
+\begin{algorithm}
+  \dontprintsemicolon
+  \KwData{\;
+  Factor Graph $G = (X, F, E)$ where $X$ are the variable nodes, $F$ are the factor nodes and $E$ are edges between them.\;
+  Sample space $\Sx$, of each variable $x$.\;
+  Step size $\alpha > 0$\;
+  Maximum number of iterations $N$\;
+  }
+  \KwResult{Minimizing Assignment $\{a_x\}$ for all $x$}
+
+  \tcc{Initialize messages with zero}
+  $\msg{x}{f}{s_x} \assign 0$\;
+  $\msg{x}{x}{s_x} \assign 0$\tcc*{Self messages}\;
+  $d_f \assign \text{true}$\tcc*{Disagreement flag}\;
+  \While{$i < N$} {
+    \For{$f \in F : d_f \text{ is true}$} {
+      \tcc{Solve each sub problem}
+      $\vect{x}^f \assign \argmin\limits_{\vect{x}^f} \left( f(\vect{x}^f) + \sum\limits_{x \in n(f)}\msg{x}{f}{x^f} \right)$\;
+      $d_f \assign false$\;
+    }
+    \For{$x \in X$} {
+      \tcc{if there is disagreement}
+      \If{$\exists f, f' : x^{f'} \ne x^f$}{
+        \tcc{Resolve disagreement}
+        \For{$f \in n(X)$}{
+          $d_f \assign true$\;
+          $\msg{x}{f}{x^f} \assign \msg{x}{f}{x^f} + \frac{\alpha}{i}$\;
+          $\msg{x}{x}{x^f} \assign \msg{x}{x}{x^f} - \frac{\alpha}{i}$\;
+        }
+        \tcc{Compute best assignment}
+        $a_x \assign \argmin\limits_{s_x \in \Sx} \msg{x}{x}{s_x}$\;
+      } \Else {
+        \tcc{Take agreed assignment}
+        $a_x \assign x^f$\;
+      }
+    }
+    $i \leftarrow i + 1$\;
+  }
+  \label{alg:dualdecompostion}
+  \caption{Dual decomposition}
+\end{algorithm}
+\subsection{Efficient slave minimization}
+Minimizing slave problem can be done efficiently for specific kinds of functions, for example, piecewise constant functions. We have used the following energy function for each laser measurement.
+\begin{align}
+  f(\vect{x}_f) &= \begin{cases}
+              0 & \text{ if } \vect{x}_f = [0, 0 \dots 0, 1]^\top\\
+            900 & \text{ if } \vect{x}_f = [0, 0 \dots 0, 0]^\top\\
+           1000 & \text{ otherwise}
+  \end{cases}
+\end{align}
+The problem is to minimize the energy function along with the received messages.
+\begin{align}
+  \min_{\vect{x}^f} \left( f(\vect{x}^f) + \sum_{x \in n(f)}\msg{x}{f}{x^f} \right)
+\end{align}
+A general minimization algorithm will take time of the order that is exponential in the number of cells a laser passes through. We can make use of the fact that the piecewise function needs to look for only two patterns. We should compute the total function value for these two patterns and the minimum value for the \emph{otherwise} case. 
+\begin{align}
+  \min f(\vect{x}_f) = \min \left(\right.&\\
+                                         &0 + \sum_{x \in n(f), \vect{x}^f = [0, 0 \dots 0, 1]^\top}\msg{x}{f}{x^f},\\
+                                         &900 + \sum_{x \in n(f), \vect{x}^f = [0, 0 \dots 0, 0]^\top}\msg{x}{f}{x^f},\\
+                                         &1000 + \min_{\vect{x}^f \in \text{ otherwise}} \sum_{x \in n(f)}\msg{x}{f}{x^f}\\
+  \left.\right)
+\end{align}
+where $\min_{\vect{x}^f \in \text{ otherwise}}$ denotes minimization over all
+possible $\vect{x}^f$ except the cases already covered i.e. $\vect{x}_f = \{[0,
+0 \dots 0, 1]^\top, [0, 0 \dots 0, 0]^\top\}$. 
+The third term can be easily minimized by choosing the minimizing state for
+each $x$ over all possible $\vect{x}_f$.
+
+\subsection{Selection of step size}
+\section{Experiments} 
+Sampling algorithms are liable to getting stuck in a local minima because we flip only one cell at a time.
+
+Dual decomposition converges better because it only focuses on disagreements.
+
+\bibliographystyle{IEEEtran}
+\newcommand{\bibdatabase}{/home/vikasdhi/wrk/biblib/bibdb}
+\IfFileExists{\bibdatabase.bib}{
+  \bibliography{\bibdatabase}
+}{
+  \bibliography{modern_map}
+}
+  
+\end{document}
+
