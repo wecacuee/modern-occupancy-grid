@@ -8,7 +8,6 @@ using namespace gtsam;
 Visualiser global_vis_;
 
 int main(int argc, char *argv[]){
-
 	if(argc != 4){
 		printf("ERROR [USAGE]: executable width height resolution");
 		exit(1);
@@ -45,7 +44,7 @@ int main(int argc, char *argv[]){
   occupancyGrid.saveHeatMap("Data/HeatMap.ppm");
 
 	//run metropolis
-	OccupancyGrid::Marginals occupancyMarginals = runDDMCMC(occupancyGrid, 40000);
+	OccupancyGrid::Marginals occupancyMarginals = runDDMCMC(occupancyGrid, 800000);
 
 	char marginalsOutput[1000];
 			sprintf(marginalsOutput, "Data/DDMCMC_Marginals.txt");

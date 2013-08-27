@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
 
   //run metropolis
   OccupancyGrid::Marginals occupancyMarginals = runSlowMetropolis(occupancyGrid,
-      100000);
+      200000);
 
   // write the result
   char marginalsOutput[1000];

@@ -141,7 +141,7 @@ int main(int argc, const char *argv[])
     typename OccupancyGridGraph::MessageValues > display_vis(msgs);
 
   BOOST_AUTO(vistor_list, std::make_pair(spvis, display_vis));
-  BOOST_AUTO(n_iter, num_edges(ogg) * 0.3);
+  BOOST_AUTO(n_iter, num_edges(ogg) * 0.5);
   std::cout << "Number of iterations:" << n_iter << std::endl;
   random_edge_traversal(ogg, vistor_list, n_iter);
   display_vis.display(ogg);
