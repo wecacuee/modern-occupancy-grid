@@ -10,18 +10,17 @@
 
 Visualiser global_vis_;
 Visualiser global_vis2_;
-Visualiser global_vis3_;
 
 using namespace std;
 using namespace boost;
 using namespace gtsam;
 using namespace occgrid;
 
+
 int main(int argc, const char *argv[])
 {
   global_vis_.enable_show();
   global_vis2_.enable_show();
-  global_vis3_.enable_show();
   // parse arguments
   if (argc != 4) {
     printf("ERROR [USAGE]: executable <width (in m)> <height (in m)> <resolution (in m)>");
@@ -35,7 +34,6 @@ int main(int argc, const char *argv[])
   OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
   global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
   global_vis2_.init(occupancyGrid.height(), occupancyGrid.width(), "d");
-  global_vis3_.init(occupancyGrid.height(), occupancyGrid.width(), "e");
   vector<Pose2> allposes;
   vector<double> allranges;
   vector<uint8_t> allreflectance;
@@ -70,5 +68,5 @@ int main(int argc, const char *argv[])
     typename OccupancyGridGraph::SampleSpaceMap,
     Messages,
     MultiAssignment > dd(msgs, multiassign);
-  dd(ogg, slvmin, ssm, 20);
+  dd(ogg, slvmin, ssm, 100);
 }

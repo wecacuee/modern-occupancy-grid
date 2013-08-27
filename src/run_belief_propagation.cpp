@@ -48,10 +48,10 @@ struct display_peridically_visitor
 : public boost::base_visitor<display_peridically_visitor<FactorGraph, MessageValues> >
 {
   typedef boost::on_examine_edge event_filter;
-  display_peridically_visitor(const MessageValues& msgs) : msgs_(msgs), count_(0) {}
+  display_peridically_visitor(const MessageValues& msgs) : msgs_(msgs), count_(0), clock_start_(clock()) {}
   void operator()(typename boost::graph_traits<FactorGraph>::edge_descriptor e,
       const FactorGraph& fg) {
-    if ((count_ % 10000 == 0) && (count_ > 50000)) {
+    if ((count_ % 500000 == 0)) {
       std::cout << "Iterations:" << count_ << std::endl;
       display(fg);
     }
@@ -62,22 +62,28 @@ struct display_peridically_visitor
     typedef typename boost::graph_traits<FactorGraph>::vertex_descriptor vertex_descriptor;
     typedef typename boost::property_traits<MessageValues>::value_type value_type;
     std::vector<value_type> margs(num_variables(fg));
+    gtsam::Assignment<gtsam::Index> best_assign;
     size_t count = 0;
     BOOST_FOREACH(vertex_descriptor u, variables(fg)) {
       value_type prod_0(marginal(fg, msgs_, u, 0));
       value_type prod_1(marginal(fg, msgs_, u, 1));
       value_type denom = prod_0 + prod_1;
       if (denom == value_type(0)) 
-        margs[count ++] = value_type(0);
+        margs[count] = value_type(0);
       else
-        margs[count ++] = prod_1 / denom;
-
+        margs[count] = prod_1 / denom;
+      best_assign[count] = (margs[count] < value_type(0.5)) ? 0 : 1;
+      ++count;
     }
     fg.display(global_vis_, margs);
+    double energy = fg.g_(best_assign);
+    clock_t et = clock();
+    std::cout << "<Energy>\t" << ((float)(et - clock_start_)) / CLOCKS_PER_SEC << "\t" << energy << std::endl;
   }
   private:
   const MessageValues& msgs_;
   int count_;
+  clock_t clock_start_;
 };
 
 int main(int argc, const char *argv[])
@@ -100,10 +106,10 @@ int main(int argc, const char *argv[])
   vector<double> allranges;
   vector<uint8_t> allreflectance;
   loadPlayerSim(
-      "Data/player_sim/laser_pose_all.bin",
-      "Data/player_sim/laser_range_all.bin",
-      "Data/player_sim/scan_angles_all.bin",
-      "Data/player_sim/laser_reflectance_all.bin",
+      "Data/player_sim_with_reflectance/laser_pose_all.bin",
+      "Data/player_sim_with_reflectance/laser_range_all.bin",
+      "Data/player_sim_with_reflectance/scan_angles_all.bin",
+      "Data/player_sim_with_reflectance/laser_reflectance_all.bin",
       allposes, allranges, allreflectance);
   for (size_t i = 0; i < allranges.size(); i++) {
     const Pose2& pose = allposes[i];
@@ -134,9 +140,9 @@ int main(int argc, const char *argv[])
   display_peridically_visitor<OccupancyGridGraph,
     typename OccupancyGridGraph::MessageValues > display_vis(msgs);
 
-  //BOOST_AUTO(vistor_list, std::make_pair(spvis, display_vis));
+  BOOST_AUTO(vistor_list, std::make_pair(spvis, display_vis));
   BOOST_AUTO(n_iter, num_edges(ogg) * 0.3);
   std::cout << "Number of iterations:" << n_iter << std::endl;
-  random_edge_traversal(ogg, spvis, n_iter);
+  random_edge_traversal(ogg, vistor_list, n_iter);
   display_vis.display(ogg);
 }

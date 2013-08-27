@@ -1,12 +1,16 @@
 == Tasks (priority sorted) ==
-* [ ] Consider ways of making belief propagation/dual decomposition faster
-    * [ ] Treat maxed out lasers correctly so that all the empty space is in agreement.
+* [ ] Quantitative comparison of algorithms
+    * [ ] Compute energy in algorithms
+       * [ ] Probabilistic difference of marginals from ground truth.
+* [ ] Write down the description of algorithms in the way I implemented them. (especially dual decomposition)
+* [o] Consider ways of making belief propagation/dual decomposition faster
+    * [X] Treat maxed out lasers correctly so that all the empty space is in agreement.
+       * [ ] Implement other methods of dual decomposition like Block gradient descent.
     * [ ] Consider changing the size of laser factors to the disagreeing part only ??
 * [ ] Implement Gaussian measurement model for
     * [ ] metropolis hastings
     * [ ] belief propagation ??
     * [ ] dual decomposition ??
-* [ ] Quantitative comparison of algorithms
 * [ ] Tree Re-weighted Belief propagation ??
 * [ ] Try algorithms on sonar data
 * [ ] Learn the factors by using training data. It would be interesting to explore learning on sonar data, but not that much on laser data.

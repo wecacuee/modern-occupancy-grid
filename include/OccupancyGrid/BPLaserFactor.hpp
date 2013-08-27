@@ -40,7 +40,7 @@ class BPLaserFactor {
 
     // Case 2
     value_type w1_prob(0);
-    if (lf_.w1_assignment(cell) == cell_value) {
+    if (lf_.reflectance_ && (lf_.w1_assignment(cell) == cell_value)) {
       w1_prob = value_type(1);
       for (BOOST_AUTO(it, fi_begin);it != fi_end; ++it)
         w1_prob *= msgs[msg_key_type(*it, lf_.factor_index_, lf_.w1_assignment(*it))];

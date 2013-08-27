@@ -38,10 +38,10 @@ class LaserFactor : public gtsam::DiscreteFactor{
 public:
   typedef gtsam::DiscreteFactor::Values Occupancy;
   typedef typename Occupancy::mapped_type cell_value_type;
-private:
 	const std::vector<gtsam::Index> cells_;	///cells in which laser passes through
   const gtsam::Index factor_index_;
   const bool reflectance_;
+private:
 
   /** Piecewise constant function 
    * Energy = 

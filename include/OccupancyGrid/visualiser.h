@@ -53,27 +53,6 @@ public:
         vis_.at<cv::Vec3b>(i, j) = (occ.at(i*vis_.cols + j) != 0) ? BLACK : WHITE;
   }
 
-  template <typename Map>
-  inline void setMapMarginals(Map& marg) {
-    typedef typename Map::mapped_type T;
-    T max_ele(0);
-    for (int i = 0; i < vis_.rows; i++) {
-      for (int j = 0; j < vis_.cols; j++) {
-        max_ele = std::max(max_ele, marg[i*vis_.cols + j]);
-      }
-    }
-    max_ele = (max_ele == 0) ? 1 : max_ele;
-    std::cout << "max element:" << max_ele << std::endl;
-
-    for (int i = 0; i < vis_.rows; i++) {
-      for (int j = 0; j < vis_.cols; j++) {
-        uint8_t val = occgrid::todouble(marg[i*vis_.cols + j] / max_ele) * 255;
-        val = 255 - val;
-        vis_.at<cv::Vec3b>(i, j) = cv::Vec3b(val, val, val);
-      }
-    }
-  }
-
   /// Highlight given vector of cells
   template <typename Range>
   inline void highlightCells(const Range& cells) {
@@ -84,35 +63,54 @@ public:
     }
   }
 
+  template <typename Map, typename T>
+    void _setMarginals(Map& marg) {
+      T max_ele(0);
+      assert( ! isnan(max_ele));
+      for (int i = 0; i < vis_.rows; i++) {
+        for (int j = 0; j < vis_.cols; j++) {
+          T mij = marg[i*vis_.cols + j];
+          assert(! isnan(mij));
+          max_ele = std::max(max_ele, mij);
+          assert(! isnan(max_ele));
+        }
+      }
+      if (max_ele == T(0))
+        max_ele = T(1);
+      for (int i = 0; i < vis_.rows; i++) {
+        for (int j = 0; j < vis_.cols; j++) {
+          T normalized = (marg[i*vis_.cols + j]) / max_ele;
+          double valdouble = occgrid::todouble(normalized);
+          if (! (valdouble <= 1)) {
+            std::cout << "Valdouble:" << valdouble 
+              << "; ij:" << marg[i*vis_.cols + j] << "; max_ele:" << max_ele
+              << std::endl;
+            assert(false);
+          }
+
+          uint8_t val = valdouble * 255;
+          val = 255 - val;
+          vis_.at<cv::Vec3b>(i, j) = cv::Vec3b(val, val, val);
+        }
+      }
+    }
+
+  template <typename Map>
+  inline void setMapMarginals(Map& marg) {
+    _setMarginals<Map, typename Map::mapped_type>(marg);
+  }
+
+  template <typename Map>
+    inline 
+    typename boost::disable_if<boost::is_void<typename Map::mapped_type>, void>::type
+    setMarginals(Map& marg) {
+      typedef typename Map::mapped_type T;
+      _setMarginals<Map, T>(marg);
+    }
 
   template <typename T>
   inline void setMarginals(const std::vector<T>& marg) {
-    T max_ele(0);
-    assert( ! isnan(max_ele));
-    for (int i = 0; i < vis_.rows; i++) {
-      for (int j = 0; j < vis_.cols; j++) {
-        T mij = marg[i*vis_.cols + j];
-        assert(! isnan(mij));
-        max_ele = std::max(max_ele, mij);
-        assert(! isnan(max_ele));
-      }
-    }
-    for (int i = 0; i < vis_.rows; i++) {
-      for (int j = 0; j < vis_.cols; j++) {
-        T normalized = (marg[i*vis_.cols + j]) / max_ele;
-        double valdouble = occgrid::todouble(normalized);
-        if (! (valdouble <= 1)) {
-          std::cout << "Valdouble:" << valdouble 
-            << "; ij:" << marg[i*vis_.cols + j] << "; max_ele:" << max_ele
-            << std::endl;
-          assert(false);
-        }
-
-        uint8_t val = valdouble * 255;
-        val = 255 - val;
-        vis_.at<cv::Vec3b>(i, j) = cv::Vec3b(val, val, val);
-      }
-    }
+    _setMarginals<const std::vector<T>, T>(marg);
   }
 
   /// clear the visualization

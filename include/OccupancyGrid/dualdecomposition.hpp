@@ -47,6 +47,8 @@
 #include "debugflags.h"
 #include "visualiser.h"
 
+#include "gtsam/discrete/Assignment.h"
+
 template <typename Graph, typename MultiAssignment>
 bool disagrees(const Graph& g,
     typename boost::graph_traits<Graph>::vertex_descriptor x,
@@ -164,33 +166,20 @@ class DualDecomposition {
   public:
     typedef typename boost::property_traits<Messages>::value_type energy_type;
     typedef boost::unordered_map<vertex_descriptor, energy_type> EnergyMap;
-    typedef std::vector<energy_type> BestAssignment;
+    typedef gtsam::Assignment<sample_space_type> BestAssignment;
     typedef std::vector<energy_type> VariableEnergy;
 
   private:
     Messages& messages_;
     MultiAssignment& multi_assignment_;
-    Disagreement disagrees_;
-    EnergyMap factor_energy_;
-    BestAssignment best_assign_;
   public:
     DualDecomposition(Messages& msgs, MultiAssignment& massign) 
       : messages_(msgs),
-      multi_assignment_(massign),
-      disagrees_(),
-      factor_energy_(),
-      best_assign_()
+      multi_assignment_(massign)
       {
       }
 
     void init(const G& g) {
-      BOOST_FOREACH(vertex_descriptor f, factors(g)) {
-        disagrees_[f] = true;
-      }
-      best_assign_.resize(num_variables(g));
-      BOOST_FOREACH(vertex_descriptor x, variables(g)) {
-        best_assign_[x] = 0;
-      }
     }
 
     void operator()(const G& g,
@@ -198,102 +187,69 @@ class DualDecomposition {
         const SampleSpaceMap& sample_space_map,
         size_t max_iter) 
     {
-      init(g);
+      Disagreement disagrees_;
+      EnergyMap factor_energy_;
+      BestAssignment best_assign_;
+      // Initialize
+      BOOST_FOREACH(vertex_descriptor f, factors(g))
+        disagrees_[f] = true;
+
+      BOOST_FOREACH(vertex_descriptor x, variables(g))
+        best_assign_[x] = 0;
+
       size_t disagrement_count = 1;
       energy_type step = 50;
+      // main loop
+      clock_t st = clock();
       for (size_t i = 0; (i < max_iter) && (disagrement_count > 0); ++i) {
-        clock_t st = clock(); 
-        size_t fact_disagreement = 0;
-        energy_type total_energy = 0;
+
         BOOST_FOREACH(vertex_descriptor f, factors(g)) {
           if (disagrees_[f]) {
             // minimize_slave_problem(Messages) to update MultiAssignment
-            global_vis2_.highlightCells(adjacent_vertices(f, g));
             factor_energy_[f] = get(slave_minimizer, f)(multi_assignment_, messages_);
             assert(! isinf(factor_energy_[f]));
-            ++fact_disagreement;
-            total_energy += factor_energy_[f];
           }
           disagrees_[f] = false; // reset disagreement, we will look for disagreement again
         }
-        std::cout << "Factor disagreement count:" << fact_disagreement << std::endl;
-        std::cout << "Total energy:" << total_energy << std::endl;
         // for each variable in graph:
         disagrement_count = 0;
         std::vector<vertex_descriptor> disagreeing_cells;
-        VariableEnergy var_occ_energy(num_variables(g), 1);
-        VariableEnergy var_free_energy(num_variables(g), 1);
-        VariableEnergy var_energy[2];
-        var_energy[0] = var_free_energy;
-        var_energy[1] = var_occ_energy;
         BOOST_FOREACH(vertex_descriptor x, variables(g)) {
           bool disagreement = false;
           if (disagrees(g, x, multi_assignment_)) {
             disagreement = true;
             disagrement_count += 1;
             disagreeing_cells.push_back(x);
-            if (DEBUG_DD && (i > 1)) {
-              std::cout << "i=" << i << "+++++++++++++++++++" << std::endl;
-              std::cout << "For v=" << x << ":";
-              BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g))
-                std::cout << "f=" << f << " says " << multi_assignment_[std::make_pair(f, x)] << " with energy " << factor_energy_[f] << std::endl;
-              std::cout << "+++++++++++++++++++" << std::endl;
-            }
-
-            if (DEBUG_DD)
-              print_multiassignment(multi_assignment_, g, x);
 
             resolve_disagreement(g, x, multi_assignment_, messages_, sample_space_map, step / (i+1));
-
-            if (DEBUG_DD)
-              print_messages(messages_, g, x, sample_space_map);
-            if (LOG_DD) {
-              BOOST_FOREACH(sample_space_type xv, get(sample_space_map, x)) {
-                std::cout << x << "\t" << xv << "\t" << i << "\t";
-                BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g))
-                  std::cout << messages_[msg_key_type(f, x, xv)] << "\t";
-                BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g))
-                  std::cout << ((multi_assignment_[std::make_pair(f, x)] == xv) ? factor_energy_[f] : 0)
-                    << "\t";
-                std::cout << "\n";
-              }
-            }
           }
 
+          std::vector<energy_type> var_energy(num_variables(g),
+              std::numeric_limits<energy_type>::infinity());
+          sample_space_type assign = 0;
+          size_t count[2] = {0, 0};
           BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
             disagrees_[f] = (disagrees_[f] || disagreement); // any disagreement is total disagreement
             assert(! isinf(factor_energy_[f]));
-            BOOST_AUTO(assign, multi_assignment_[std::make_pair(f, x)]);
+            assign = multi_assignment_[std::make_pair(f, x)];
             assert((assign == 0) || (assign == 1));
-            energy_type fe = factor_energy_[f];
-            assert(fe < 10000);
-            var_energy[assign][x] = var_energy[assign][x] + fe;
-            var_energy[1 - assign][x] = var_energy[1 - assign][x] + (10000 - fe);
+            count[assign] += 1;
           }
+          best_assign_[x] = (count[0] > count[1]) ? 0
+            : (count[0] == count[1]) ? ((((double)rand() / RAND_MAX) < 0.5) ? 0 : 1)
+            : 1;
         }
-        clock_t et = clock(); std::cout << "i=" << i << " clicks taken: " << ((float)(et - st)) / CLOCKS_PER_SEC << std::endl;
+        clock_t et = clock(); 
         std::cout << "Variable disagreement count:" << disagrement_count << std::endl;
-        VariableEnergy venergy(num_variables(g));
-        BOOST_FOREACH(vertex_descriptor x, variables(g)) {
-          best_assign_[x] = ((var_energy[0][x] < var_energy[1][x]) ?  0 
-              : (var_energy[0][x] > var_energy[1][x]) ? 1
-              : 0.5);
-          venergy[x] = (var_energy[0][x] / (var_energy[0][x] + var_energy[1][x]));
-        }
+        double energy = g.g_(best_assign_);
+        std::cout << "<Energy>\t" << ((float)(et - st)) / CLOCKS_PER_SEC << "\t" << energy << std::endl;
 
-        global_vis2_.setMarginals(best_assign_);
-        global_vis2_.show();
-
-        global_vis_.setMarginals(venergy);
+        global_vis_.setMarginals(best_assign_);
         global_vis_.show();
 
-        global_vis3_.highlightCells(disagreeing_cells);
-        global_vis3_.reset();
-        global_vis3_.show();
+        global_vis2_.highlightCells(disagreeing_cells);
+        global_vis2_.reset();
+        global_vis2_.show();
       }
-    }
-
-    sample_space_type assignment(vertex_descriptor x) {
-      return best_assign_[x];
     }
 };

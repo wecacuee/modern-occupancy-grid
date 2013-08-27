@@ -51,9 +51,12 @@ OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t it
 
 	vector<double> energy;
 
+  clock_t st = clock();
 	for(size_t it = 0; it < iterations; it++){
 		energy.push_back(Ex);
 		if ( it%100 == 0 ) {
+      clock_t et = clock();
+      std::cout << "<Energy>\t" << ((float)(et - st)) / CLOCKS_PER_SEC << "\t" << Ex << std::endl;
       printf("%lf\n", (double)it/(double)iterations);
       if (it % 10000) {
         global_vis_.reset();

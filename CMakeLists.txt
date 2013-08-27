@@ -6,6 +6,7 @@ cmake_policy(SET CMP0015 NEW)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(CMAKE_CXX_FLAGS_SYNTAX "-x c++ -fsyntax-only")
 set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Werror -O0 -ggdb")
+set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE} -lprofiler")
 
 ###################################################################################
 # Find dependencies via installed packages
@@ -64,6 +65,10 @@ add_library(merali13icra SHARED
 	src/cvmat_serialization.cpp)
 target_link_libraries(merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
+
+add_executable(TwoAssumptionAlgorithm
+	src/TwoAssumptionAlgorithm.cpp)
+target_link_libraries(TwoAssumptionAlgorithm occupancy_grid_graph ${OpenCV_LIBS})
 
 add_executable(simulateddata
 	src/simulateddata.cpp)
