@@ -30,5 +30,5 @@ if __name__ == '__main__':
     ax = plt.gca()
     ax.set_xlabel("Time (clock seconds)")
     ax.set_ylabel("Total energy of the graph")
-    #plt.savefig('doc/figures/relativeconvergence.pdf')
+    plt.savefig('doc/figures/relativeconvergence.pdf')
     plt.show()

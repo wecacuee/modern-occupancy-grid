@@ -31,7 +31,7 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
 
   // Initialize randum number generator
   size_t nrows = occupancyGrid.height();
-  size_t ncols = occupancyGrid.width();
+  //size_t ncols = occupancyGrid.width();
   boost::mt19937 rng;
   boost::uniform_int < Index > random_cell(0, size - 1);
   double sigma = 0.05 * nrows ; // next sample point will be within 2*5 cells (95% of the times)
@@ -59,7 +59,7 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
   vector<double> energy;
 
   // Choose a random cell
-  Index x = random_cell(rng);
+  //Index x_;// = random_cell(rng);
 
   // run Metropolis for the requested number of operations
   for (size_t it = 0; it < iterations; it++) {
@@ -121,11 +121,11 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
     //printf("%lu : %lu; accepted: %d\n", x_prime, occupancy.at(x_prime), accept);
     if (accept) {
       Ex += deltaEx;
-      x = x_prime;
+      //x_ = x_prime;
       // we accept: flip it !
       occupancy[x_prime] = 1 - occupancy[x_prime];
     } else {
-      x = random_cell(rng);
+      //x_ = random_cell(rng);
     }
 
     //increment the number of iterations each cell has been on

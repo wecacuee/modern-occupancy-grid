@@ -128,7 +128,7 @@ double OccupancyGrid::operator()(const LaserFactor::Occupancy &occupancy) const 
 double OccupancyGrid::computeDelta(LaserFactor::Occupancy &occupancy,
     const Index &cellidx, size_t newValue) const
 {
-  vector< gtsam::Index > recomputefactors = cell2factors_[cellidx];
+  vector< gtsam::Index > recomputefactors = cell2factors_.at(cellidx);
   double oldEnergy = 0;
   for (vector< gtsam::Index >::iterator it = recomputefactors.begin();
       it != recomputefactors.end(); it++)

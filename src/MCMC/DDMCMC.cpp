@@ -26,12 +26,12 @@ OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t it
 
 	//create a pdf map to sample from
 		vector<Index> map;
-		Index cdf = 0;
+    assert(heatMap.size() == occupancyGrid.cellCount());
 		for(size_t i = 0; i < heatMap.size(); i++){
-			for(size_t j = 0; j < heatMap[i]; j++)
+			for(size_t j = 0; j < heatMap[i]; j++) {
+        assert(i < occupancyGrid.cellCount());
 				map.push_back(i);
-
-			cdf += heatMap[i];
+      }
 		}
 
 	//set up random number generator
@@ -39,15 +39,15 @@ OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t it
 		OccupancyGrid::Marginals marginals(size);
 
 		boost::mt19937 rng;
-		boost::uniform_int<Index> random_cell(0,cdf);
+		boost::uniform_int<Index> random_cell(0, map.size() - 1);
 
 
 	// run Metropolis for the requested number of operations
 	// compute initial probability of occupancy grid, P(x_t)
 
   double Ex = occupancyGrid(occupancy);
-  //global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
-  //global_vis_.enable_show();
+  global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
+  global_vis_.enable_show();
 
 	for(size_t it = 0; it < marginals.size(); it++)
 		marginals[it] = 0.0;
@@ -57,23 +57,23 @@ OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t it
 
 	for(size_t it = 0; it < iterations; it++){
 		energy.push_back(Ex);
-		if ( it%100 == 0 ) {
+    if (it % 2000 == 0) {
+      printf("%lf\n", (double)it/(double)iterations);
       clock_t et = clock();
       std::cout << "<Energy>\t" << ((float)(et - st)) / CLOCKS_PER_SEC << "\t" << Ex << std::endl;
-      printf("%lf\n", (double)it/(double)iterations);
-      if (it % 10000) {
-        global_vis_.reset();
-        global_vis_.setMarginals(marginals);
-        global_vis_.show();
-      }
+      global_vis_.reset();
+      global_vis_.setMarginals(marginals);
+      global_vis_.show();
     }
 		//choose a random cell
 		Index j = random_cell(rng);
 
 		//compute probability of new occupancy grid, P(x')
 		//by summing over all LaserFactor::operator()
+    Index cellidx = map.at(j);
+    assert(cellidx < occupancyGrid.cellCount());
     double deltaEx = 
-      occupancyGrid.computeDelta(occupancy, map[j], 1 - occupancy[map[j]]);
+      occupancyGrid.computeDelta(occupancy, cellidx, 1 - occupancy[cellidx]);
 
     // Calculate acceptance ratio, a
     // See e.g. MacKay 96 "Intro to Monte Carlo Methods"
@@ -91,7 +91,7 @@ OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t it
     //	printf(" %.3lf %.3lf\t", Px, Px_prime);
     if(accept) {
       Ex += deltaEx; 
-      occupancy[map[j]] = 1 - occupancy[map[j]];
+      occupancy[cellidx] = 1 - occupancy[cellidx];
     }
 
     //increment the number of iterations each cell has been on

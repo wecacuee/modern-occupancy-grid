@@ -43,8 +43,7 @@ def main():
     resolution = 100
     pool = Pool(processes=5)
     for exe, conf in executables_and_config():
-        if "dualdecomposition" in exe:
-            pool.apply_async(run_plot, args=(exe, resolution))
+        pool.apply_async(run_plot, args=(exe, resolution))
     pool.close()
     pool.join()
 

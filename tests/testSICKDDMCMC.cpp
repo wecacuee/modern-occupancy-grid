@@ -44,7 +44,7 @@ int main(int argc, char *argv[]){
   occupancyGrid.saveHeatMap("Data/HeatMap.ppm");
 
 	//run metropolis
-	OccupancyGrid::Marginals occupancyMarginals = runDDMCMC(occupancyGrid, 800000);
+	OccupancyGrid::Marginals occupancyMarginals = runDDMCMC(occupancyGrid, 70000);
 
 	char marginalsOutput[1000];
 			sprintf(marginalsOutput, "Data/DDMCMC_Marginals.txt");
