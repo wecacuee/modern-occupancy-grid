@@ -12,33 +12,32 @@ set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Werror -O0 -ggdb")
 find_package(GTSAM REQUIRED NO_MODULE) 
 include_directories(${GTSAM_INCLUDE_DIR})
 
-find_package( OpenCV REQUIRED )
+find_package( OpenCV 2.4 REQUIRED core imgproc highgui)
 include_directories(${OpenCV_INCLUDE_DIR})
 
 ###################################################################################
 # Brian's code
 # run in toplevel dir, for example "bin/SICKSlowMetropolis 18 18 0.18"
 # after that, DisplayMarginals should display ?? But source is missing
-include_directories(OccupancyGrid/include)
+include_directories(include/)
 
 add_library(occupancy_grid_graph SHARED
-			OccupancyGrid/src/OccupancyGrid.cpp
-			OccupancyGrid/src/LaserFactor.cpp
-			OccupancyGrid/src/cvmat_serialization.cpp
-			OccupancyGrid/src/loadData.cpp
-			OccupancyGrid/src/utility.cpp
+			src/OccupancyGrid.cpp
+			src/LaserFactor.cpp
+			src/cvmat_serialization.cpp
+			src/loadData.cpp
+			src/utility.cpp
 			)
-target_link_libraries (occupancy_grid_graph gtsam-shared)
+target_link_libraries (occupancy_grid_graph gtsam-shared ${OpenCV_LIBS})
 
 add_executable(SICKSlowMetropolis
-			OccupancyGrid/src/MCMC/Metropolis.cpp
-			tests/testSICKSlowMetropolis.cpp
-			)
-target_link_libraries (SICKSlowMetropolis occupancy_grid_graph gtsam-shared
-			${OpenCV_LIBS})
+	src/MCMC/Metropolis.cpp
+	tests/testSICKSlowMetropolis.cpp
+	)
+target_link_libraries (SICKSlowMetropolis occupancy_grid_graph ${OpenCV_LIBS})
 
 add_executable(SICK_DDMCMC
-			OccupancyGrid/src/MCMC/DDMCMC.cpp
+			src/MCMC/DDMCMC.cpp
 			tests/testSICKDDMCMC.cpp
 			)
 target_link_libraries (SICK_DDMCMC occupancy_grid_graph gtsam-shared
@@ -60,14 +59,13 @@ find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIR})
 
 add_library(merali13icra SHARED
-	OccupancyGrid/src/occgrid.cpp
-	OccupancyGrid/src/forward_sensor_model.cpp
-	OccupancyGrid/src/cvmat_serialization.cpp)
+	src/forward_sensor_model.cpp
+	src/cvmat_serialization.cpp)
 target_link_libraries(merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
 
 add_executable(dualdecomposition
-	OccupancyGrid/src/dualdecomposition.cpp)
+	src/dualdecomposition.cpp)
 target_link_libraries(dualdecomposition occupancy_grid_graph ${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(test_slaveminimizer
@@ -75,51 +73,50 @@ add_executable(test_slaveminimizer
 target_link_libraries(test_slaveminimizer occupancy_grid_graph ${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(run_belief_propagation
-	OccupancyGrid/src/run_belief_propagation.cpp)
+	src/run_belief_propagation.cpp)
 target_link_libraries(run_belief_propagation occupancy_grid_graph ${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(test_utility
-	OccupancyGrid/src/utility.cpp
+	src/utility.cpp
 	tests/test_utility.cpp)
 target_link_libraries(test_utility 
 	${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
 
 add_executable(test_sumproduct
-	OccupancyGrid/src/utility.cpp
+	src/utility.cpp
 	tests/test_sumproduct.cpp)
 target_link_libraries(test_sumproduct 
 	${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
 
 add_executable(test_cartesian_product
-	OccupancyGrid/src/utility.cpp
+	src/utility.cpp
 	tests/test_cartesian_product.cpp)
 target_link_libraries(test_cartesian_product 
 	${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
 
 add_executable(test_occgrid 
-	OccupancyGrid/include/occgrid.hpp
-	OccupancyGrid/src/forward_sensor_model.cpp
+	src/forward_sensor_model.cpp
 	tests/test_occgrid.cpp)
 target_link_libraries(test_occgrid  merali13icra
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
 
 add_executable(inference_gibbs_sampling 
-	OccupancyGrid/src/inference_gibbs_sampling.cpp)
+	src/inference_gibbs_sampling.cpp)
 target_link_libraries(inference_gibbs_sampling merali13icra ${OpenCV_LIBS})
 
 add_executable(visualize_ground_truth 
-	OccupancyGrid/src/visualize_ground_truth.cpp)
+	src/visualize_ground_truth.cpp)
 target_link_libraries(visualize_ground_truth merali13icra ${OpenCV_LIBS})
 
 add_executable(two_assumption_alg 
-	OccupancyGrid/src/two_assumption_alg.cpp)
+	src/two_assumption_alg.cpp)
 target_link_libraries(two_assumption_alg merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES})
 
 add_executable(displayMarginals
-	OccupancyGrid/src/displayMarginals.cpp)
+	src/displayMarginals.cpp)
 target_link_libraries(displayMarginals ${OpenCV_LIBS})
 
 # find pkgconfig modules
@@ -130,8 +127,8 @@ IF( PLAYER_FOUND )
   link_directories( ${PLAYER_LIBRARY_DIRS} )
   include_directories( ${PLAYER_INCLUDE_DIRS} )
   add_executable(captureplayerdata
-	  OccupancyGrid/src/captureplayerdata.cpp 
-	  OccupancyGrid/src/cvmat_serialization.cpp)
+	  src/captureplayerdata.cpp 
+	  src/cvmat_serialization.cpp)
   target_link_libraries(captureplayerdata ${OpenCV_LIBS} ${PLAYER_LIBRARIES}
 	  ${Boost_LIBRARIES})
 ELSE( PLAYER_FOUND )
