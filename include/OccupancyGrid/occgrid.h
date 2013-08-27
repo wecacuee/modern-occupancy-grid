@@ -99,7 +99,8 @@ class OccupancyGrid2D {
         real_t py,
         real_t ptheta,
         real_t max_range,
-        cv::Vec<real_t, 2>& final_pos); 
+        cv::Vec<real_t, 2>& final_pos,
+        bool& reflectances); 
 
     cv::Point2i
       xy2rc(cv::Vec<real_t, 2> xy) {
@@ -126,8 +127,7 @@ class OccupancyGrid2D {
             cv::circle(vis, xy2rc(position), 2, CV_RGB(0, 0, 0), -1);
             cv::line(vis, xy2rc(position), xy2rc(obs_pt2), color);
             if (reflectances[i]) {
-              vis.at<cv::Scalar>(xy2rc(obs_pt2).x, xy2rc(obs_pt2).y) = CV_RGB(0, 0, 0);
-              std::cout << "Reflectance:" << reflectances[i] << std::endl;
+              cv::circle(vis, xy2rc(obs_pt2), 1, CV_RGB(0, 0, 0), -1);
             }
         }
     }

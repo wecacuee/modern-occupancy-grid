@@ -65,6 +65,10 @@ add_library(merali13icra SHARED
 target_link_libraries(merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
 
+add_executable(simulateddata
+	src/simulateddata.cpp)
+target_link_libraries(simulateddata merali13icra 
+	${OpenCV_LIBS} ${Boost_LIBRARIES})
 add_executable(test_raytrace
 	tests/test_raytrace.cpp)
 target_link_libraries(test_raytrace 

@@ -90,7 +90,8 @@ real_t OccupancyGrid2D<real_t, int_t>::ray_trace(
     real_t py,
     real_t ptheta,
     real_t max_range,
-    cv::Vec<real_t, 2>& final_pos) 
+    cv::Vec<real_t, 2>& final_pos,
+    bool& reflectance) 
 {
   real_t dx = cos(ptheta);
   real_t dy = sin(ptheta);
@@ -125,9 +126,11 @@ real_t OccupancyGrid2D<real_t, int_t>::ray_trace(
 
           real_t disp_x = final_pos(0) - px;
           real_t disp_y = final_pos(1) - py;
+          reflectance = true;
           return sqrt(disp_x * disp_x + disp_y * disp_y);
       }
   }
+  reflectance = false;
   return max_range;
 }
 

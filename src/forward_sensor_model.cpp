@@ -49,8 +49,9 @@ double log_odds_observation_given_map_and_pose(
     assert(! std::isnan(direction(1)));
     assert(! std::isnan(direction(0)));
     cv::Vec2d final_pos;
+    bool reflectance;
     expected_range = map.ray_trace(observation.px, observation.py,
-        observation.ptheta, LASER_MAX_RANGE, final_pos);
+        observation.ptheta, LASER_MAX_RANGE, final_pos, reflectance);
     //if (expected_range == LASER_MAX_RANGE) {
         // laser didn't strike any wall
         // but that doesn't matter, because our input observations also

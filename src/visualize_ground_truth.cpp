@@ -97,7 +97,8 @@ int main(int argc, char** argv) {
             double total_angle = robot_angle + angles[c];
 
             cv::Vec2d final_pos;
-            ranges[c] = map.ray_trace(pose[0], pose[1], total_angle, MAX_RANGE, final_pos);
+            bool reflectance;
+            ranges[c] = map.ray_trace(pose[0], pose[1], total_angle, MAX_RANGE, final_pos, reflectance);
         }
         // draw input 
         cv::Mat visin;

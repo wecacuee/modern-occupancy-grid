@@ -36,8 +36,10 @@ class OccupancyGrid2DTest : public ::testing::Test {
 
 TEST_F(OccupancyGrid2DTest, testFirstQuadrant) {
     cv::Vec<double, 2> final_pos;
+    bool reflectance;
     double range = og_.ray_trace(position_(0), position_(1), angle_, 100,
-        final_pos);
+        final_pos, reflectance);
+    ASSERT_TRUE(reflectance);
     ASSERT_DOUBLE_EQ(2.5, final_pos(0));
     ASSERT_DOUBLE_EQ(0.5, final_pos(1));
     ASSERT_DOUBLE_EQ(sqrt(2.5*2.5 + 0.5*0.5), range);
@@ -45,8 +47,10 @@ TEST_F(OccupancyGrid2DTest, testFirstQuadrant) {
 
 TEST_F(OccupancyGrid2DTest, testFourthQuadrant) {
     cv::Vec<double, 2> final_pos;
+    bool reflectance;
     double range = og_.ray_trace(position_(0), position_(1), 
-        - angle_, 100, final_pos);
+        - angle_, 100, final_pos, reflectance);
+    ASSERT_TRUE(reflectance);
     ASSERT_DOUBLE_EQ(final_pos(0), 2.5);
     ASSERT_DOUBLE_EQ(final_pos(1), -0.5);
     ASSERT_DOUBLE_EQ(range, sqrt(2.5*2.5 + 0.5*0.5));
@@ -55,10 +59,12 @@ TEST_F(OccupancyGrid2DTest, testFourthQuadrant) {
 
 TEST_F(OccupancyGrid2DTest, testThirdQuadrant) {
     cv::Vec<double, 2> final_pos;
+    bool reflectance;
     double range = og_.ray_trace(position_(0), position_(1),
         angle_ - bconst::pi<double>(),
 	100,
-	final_pos);
+	final_pos, reflectance);
+    ASSERT_TRUE(reflectance);
     double epsilon = 1e-10;
     ASSERT_NEAR(final_pos(0), -1.5, epsilon);
     ASSERT_NEAR(final_pos(1), -0.3, epsilon);
@@ -67,10 +73,12 @@ TEST_F(OccupancyGrid2DTest, testThirdQuadrant) {
 
 TEST_F(OccupancyGrid2DTest, testSecondQuadrant) {
     cv::Vec<double, 2> final_pos;
+    bool reflectance;
     double range = og_.ray_trace(position_(0), position_(1),
         bconst::pi<double>() - angle_,
 	100,
-	final_pos);
+	final_pos, reflectance);
+    ASSERT_TRUE(reflectance);
     double eps = 1e-10;
     ASSERT_NEAR(final_pos(0), -1.5, eps);
     ASSERT_NEAR(final_pos(1), 0.3, eps);
@@ -79,10 +87,12 @@ TEST_F(OccupancyGrid2DTest, testSecondQuadrant) {
 
 TEST_F(OccupancyGrid2DTest, testHorizontal) {
     cv::Vec<double, 2> final_pos;
+    bool reflectance;
     double range = og_.ray_trace(position_(0), position_(1) ,
         0,
 	100,
-	final_pos);
+	final_pos, reflectance);
+    ASSERT_TRUE(reflectance);
     ASSERT_DOUBLE_EQ(final_pos(0), 3);
     ASSERT_DOUBLE_EQ(final_pos(1), 0);
     ASSERT_DOUBLE_EQ(range, 3);
