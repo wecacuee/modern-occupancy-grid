@@ -7,6 +7,7 @@
 
 #include "OccupancyGrid/OccupancyGrid.h"
 #include "OccupancyGrid/visualiser.h"
+#include "OccupancyGrid/TwoAssumptionAlgorithm.h"
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
 
@@ -43,10 +44,13 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
   // double dheight = floor(sqrt(dsize));
   // size_t height  = static_cast<size_t>(dheight);
   // size_t width   = static_cast<size_t>(floor(dsize/dheight));
+  clock_t st = clock();
 
   // Create empty occupancy as initial state and
   // compute initial neg log-probability of occupancy grid, - log P(x_t)
   LaserFactor::Occupancy occupancy = occupancyGrid.emptyOccupancy();
+  std::vector<double> two_energy(occupancyGrid.cellCount());
+  two_assumption_algorithm(occupancyGrid, occupancy, two_energy); 
 
   double Ex = occupancyGrid(occupancy);
   global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
@@ -58,7 +62,6 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
   Index x = random_cell(rng);
 
   // run Metropolis for the requested number of operations
-  clock_t st = clock();
   for (size_t it = 0; it < iterations; it++) {
 
     // Log and print
@@ -83,17 +86,18 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
     // algorithm as the space we are working is a 100x100 dimensional space
     // rather than a 2D space. But some of the properties of this 2D space can
     // be made use of. This idea is similar to that of a heat map.
-    double col = x % ncols;
-    double row = x / ncols;
-    row += var_nor();
-    col += var_nor();
-    Index row_lu = (row < 0) ? 0
-      : (row >= nrows) ? nrows - 1
-      : static_cast<Index>(row);
-    Index col_lu = (col < 0) ? 0
-      : (col >= ncols) ? ncols - 1
-      : static_cast<Index>(col);
-    Index x_prime = row_lu * occupancyGrid.width() + col_lu;
+    // double col = x % ncols;
+    // double row = x / ncols;
+    // row += var_nor();
+    // col += var_nor();
+    // Index row_lu = (row < 0) ? 0
+    //   : (row >= nrows) ? nrows - 1
+    //   : static_cast<Index>(row);
+    // Index col_lu = (col < 0) ? 0
+    //   : (col >= ncols) ? ncols - 1
+    //   : static_cast<Index>(col);
+    // Index x_prime = row_lu * occupancyGrid.width() + col_lu;
+    Index x_prime = random_cell(rng);
 
 
     // Compute neg log-probability of new occupancy grid, -log P(x')

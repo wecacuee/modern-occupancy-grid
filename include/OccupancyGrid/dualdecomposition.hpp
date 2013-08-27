@@ -134,15 +134,17 @@ void resolve_disagreement(const Graph& g,
   // print_messages(messages, g, x, sample_space_map);
   BOOST_FOREACH(sample_space_type xv, get(sample_space_map, x)) {
     // normalize so that messages sum up to zero
-    msg_value_type avg(0);
-    BOOST_AUTO(av, adjacent_vertices(x, g));
-    BOOST_FOREACH(vertex_descriptor f, av)
-      avg += messages[msg_key_type(f, x, xv)];
+    msg_value_type cum(0);
+    BOOST_AUTO(adj_vert, adjacent_vertices(x, g));
+    BOOST_FOREACH(vertex_descriptor f, adj_vert)
+      cum += messages[msg_key_type(f, x, xv)];
+    messages[msg_key_type(x, x, xv)] = cum;
 
-    avg /= out_degree(x, g);
-    av = adjacent_vertices(x, g);
-    BOOST_FOREACH(vertex_descriptor f, av)
-      messages[msg_key_type(f, x, xv)] -= avg;
+    // msg_key_type avg = cum / out_degree(x, g);
+    // av = adjacent_vertices(x, g);
+    // BOOST_FOREACH(vertex_descriptor f, adj_vert)
+    //   messages[msg_key_type(f, x, xv)] -= avg;
+    //
   }
   // std::cout << "after stepping up and normalization" << std::endl;
   // print_messages(messages, g, x, sample_space_map);
@@ -225,20 +227,19 @@ class DualDecomposition {
             resolve_disagreement(g, x, multi_assignment_, messages_, sample_space_map, step / (i+1));
           }
 
-          std::vector<energy_type> var_energy(num_variables(g),
-              std::numeric_limits<energy_type>::infinity());
-          sample_space_type assign = 0;
-          size_t count[2] = {0, 0};
+          sample_space_type assign((((double)rand() / RAND_MAX) < 0.5) ? 0 : 1);
           BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
             disagrees_[f] = (disagrees_[f] || disagreement); // any disagreement is total disagreement
             assert(! isinf(factor_energy_[f]));
             assign = multi_assignment_[std::make_pair(f, x)];
-            assert((assign == 0) || (assign == 1));
-            count[assign] += 1;
           }
-          best_assign_[x] = (count[0] > count[1]) ? 0
-            : (count[0] == count[1]) ? ((((double)rand() / RAND_MAX) < 0.5) ? 0 : 1)
-            : 1;
+          if (disagreement) {
+            size_t count[2] = {messages_[msg_key_type(x, x, 0)], messages_[msg_key_type(x, x, 1)]};
+            best_assign_[x] = (count[0] > count[1]) ? 0
+              : (count[0] == count[1]) ? ((((double)rand() / RAND_MAX) < 0.5) ? 0 : 1)
+              : 1;
+          } else 
+            best_assign_[x] = assign;
           average_assign_[x] += best_assign_[x];
         }
         clock_t et = clock(); 
@@ -247,11 +248,11 @@ class DualDecomposition {
         std::cout << "<Energy>\t" << ((float)(et - st)) / CLOCKS_PER_SEC << "\t" << energy << std::endl;
 
         global_vis_.setMarginals(best_assign_);
-        global_vis_.show();
+        global_vis_.show(1);
 
         global_vis2_.highlightCells(disagreeing_cells);
         global_vis2_.reset();
-        global_vis2_.show();
+        global_vis2_.show(1);
       }
       //global_vis_.setMarginals(average_assign_);
       global_vis_.show();

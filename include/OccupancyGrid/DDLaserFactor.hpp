@@ -65,8 +65,9 @@ class DDLaserFactor {
       // 4.O(n)
       std::copy(
           boost::counting_iterator<size_t>(0),
-          boost::counting_iterator<size_t>(lf_.cells_.size()),
+          boost::counting_iterator<size_t>(lf_.cells_.size() - 1),
           std::back_inserter(indices));
+      assert(indices.size() == lf_.cells.size());
       // 5.O(n)
       std::nth_element(indices.begin(), boost::next(indices.begin(), 2),
           indices.end(),

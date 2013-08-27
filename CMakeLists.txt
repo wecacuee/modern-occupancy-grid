@@ -33,14 +33,16 @@ target_link_libraries (occupancy_grid_graph gtsam-shared ${OpenCV_LIBS})
 
 add_executable(SICKSlowMetropolis
 	src/MCMC/Metropolis.cpp
+	src/TwoAssumptionAlgorithm.cpp
 	tests/testSICKSlowMetropolis.cpp
 	)
 target_link_libraries (SICKSlowMetropolis occupancy_grid_graph ${OpenCV_LIBS})
 
 add_executable(SICK_DDMCMC
-			src/MCMC/DDMCMC.cpp
-			tests/testSICKDDMCMC.cpp
-			)
+	src/MCMC/DDMCMC.cpp
+	src/TwoAssumptionAlgorithm.cpp
+	tests/testSICKDDMCMC.cpp
+	)
 target_link_libraries (SICK_DDMCMC occupancy_grid_graph gtsam-shared
 			${OpenCV_LIBS})
 
@@ -67,7 +69,8 @@ target_link_libraries(merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
 
 add_executable(TwoAssumptionAlgorithm
-	src/TwoAssumptionAlgorithm.cpp)
+	src/TwoAssumptionAlgorithm.cpp
+	src/run_TwoAssumptionAlgorithm.cpp)
 target_link_libraries(TwoAssumptionAlgorithm occupancy_grid_graph ${OpenCV_LIBS})
 
 add_executable(simulateddata
@@ -88,6 +91,7 @@ add_executable(test_slaveminimizer
 target_link_libraries(test_slaveminimizer occupancy_grid_graph ${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(run_belief_propagation
+	src/TwoAssumptionAlgorithm.cpp
 	src/run_belief_propagation.cpp)
 target_link_libraries(run_belief_propagation occupancy_grid_graph ${Boost_LIBRARIES} ${OpenCV_LIBS})
 

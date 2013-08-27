@@ -31,17 +31,17 @@ LaserFactor::Occupancy OccupancyGrid::emptyOccupancy() const {
   return occupancy;
 }
 
-/*****************************************************************************/
-void OccupancyGrid::addPrior(Index cell, double prior) {
-  size_t numStates = 2;
-  DiscreteKey key(cell, numStates);
-
-  //add a factor
-  vector<double> table(2);
-  table[0] = 1 - prior;
-  table[1] = prior;
-  add(key, table);
-}
+// /*****************************************************************************/
+// void OccupancyGrid::addPrior(Index cell, double prior) {
+//   size_t numStates = 2;
+//   DiscreteKey key(cell, numStates);
+// 
+//   //add a factor
+//   vector<double> table(2);
+//   table[0] = 1 - prior;
+//   table[1] = prior;
+//   add(key, table);
+// }
 
 void OccupancyGrid::rayTrace(const gtsam::Pose2 &pose, const double range,
     vector<gtsam::Index>& cells,

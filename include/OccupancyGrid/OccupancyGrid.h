@@ -102,7 +102,7 @@ public:
 	HeatMap heatMap() const { return heat_map_; }
 
 	/// Add a prior
-	void addPrior(gtsam::Index cell, double prior);
+	//void addPrior(gtsam::Index cell, double prior);
 
 	/// Add a laser measurement
 	virtual void addLaser(const gtsam::Pose2 &pose, double range, bool reflectance);

@@ -6,6 +6,7 @@
  */
 
 #include "OccupancyGrid/OccupancyGrid.h"
+#include "OccupancyGrid/TwoAssumptionAlgorithm.h"
 #include "OccupancyGrid/visualiser.h"
 
 using namespace std;
@@ -17,7 +18,10 @@ using namespace gtsam;
  * @return  vector of marginal probabilities.
  */
 OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t iterations){
+  clock_t st = clock();
 	LaserFactor::Occupancy occupancy = occupancyGrid.emptyOccupancy();
+  std::vector<double> two_energy(occupancyGrid.cellCount());
+  two_assumption_algorithm(occupancyGrid, occupancy, two_energy); 
 	OccupancyGrid::HeatMap heatMap = occupancyGrid.heatMap();
 
 	//create a pdf map to sample from
@@ -51,7 +55,6 @@ OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t it
 
 	vector<double> energy;
 
-  clock_t st = clock();
 	for(size_t it = 0; it < iterations; it++){
 		energy.push_back(Ex);
 		if ( it%100 == 0 ) {

@@ -5,6 +5,9 @@
 #include "OccupancyGrid/loadData.h"
 #include "OccupancyGrid/OccupancyGrid.h"
 #include "OccupancyGrid/BPLaserFactor.hpp"
+#include "OccupancyGrid/TwoAssumptionAlgorithm.h"
+#include <boost/foreach.hpp>
+#include <boost/typeof/typeof.hpp>
 
 #include <opencv2/opencv.hpp>
 
@@ -127,7 +130,23 @@ int main(int argc, const char *argv[])
   OccupancyGridGraph::FactorMap fmap = get(factor_map_t(), ogg);
   OccupancyGridGraph::IsFactorMap is_factor = get(is_factor_t(), ogg);
 
-  // getting num_edges(ogg)
+  display_peridically_visitor<OccupancyGridGraph,
+    typename OccupancyGridGraph::MessageValues > display_vis(msgs);
+
+  // initialize belief propagation by two assumption algorithm
+  typedef typename boost::graph_traits<OccupancyGridGraph>::vertex_descriptor vertex_descriptor;
+  typedef typename boost::property_traits<OccupancyGridGraph::MessageValues>::value_type msg_value_type;
+  LaserFactor::Occupancy occupancy = occupancyGrid.emptyOccupancy();
+  std::vector<double> energy(occupancyGrid.cellCount());
+  two_assumption_algorithm(occupancyGrid, occupancy, energy);
+  using boost::adjacency_iterator;
+  BOOST_FOREACH(vertex_descriptor x, variables(ogg)) {
+    BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, ogg)) {
+      gtsam::Index value =  occupancy[x];
+      msgs[typename OccupancyGridGraph::MessageValues::key_type(x, f, value)] = msg_value_type(0.9);
+      msgs[typename OccupancyGridGraph::MessageValues::key_type(x, f, 1 - value)] = msg_value_type(0.1);
+    }
+  }
 
   sumproduct_visitor<
     OccupancyGridGraph,
@@ -137,11 +156,10 @@ int main(int argc, const char *argv[])
     OccupancyGridGraph::IsFactorMap>
       spvis (msgs, cdmap, fmap, is_factor);
 
-  display_peridically_visitor<OccupancyGridGraph,
-    typename OccupancyGridGraph::MessageValues > display_vis(msgs);
 
   BOOST_AUTO(vistor_list, std::make_pair(spvis, display_vis));
-  BOOST_AUTO(n_iter, num_edges(ogg) * 0.5);
+  // getting num_edges(ogg)
+  BOOST_AUTO(n_iter, num_edges(ogg) * 0.7);
   std::cout << "Number of iterations:" << n_iter << std::endl;
   random_edge_traversal(ogg, vistor_list, n_iter);
   display_vis.display(ogg);
