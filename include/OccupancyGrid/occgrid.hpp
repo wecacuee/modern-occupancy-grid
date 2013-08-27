@@ -15,6 +15,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "OccupancyGrid/occgrid.h"
+#include "OccupancyGrid/raytrace.hpp"
 
 #undef DEBUG
 
@@ -91,51 +92,12 @@ real_t OccupancyGrid2D<real_t, int_t>::ray_trace(
     real_t max_range,
     cv::Vec<real_t, 2>& final_pos) 
 {
-  // shift coordinates so that we are always in first quadrant
-  px = px - min_pt_(0);
-  py = py - min_pt_(1);
-
   real_t dx = cos(ptheta);
   real_t dy = sin(ptheta);
-  int_t dirx = signum(dx);
-  dirx = (dirx == 0) ? 1 : dirx;
 
-  int_t diry = signum(dy);
-  diry = (diry == 0) ? 1 : diry;
-
-  int_t i = static_cast<int_t>(floor(px / cell_size_(0)));
-
-  int_t j = static_cast<int_t>(floor(py / cell_size_(1)));
-
-  // distance to nearest grid line
-  int_t floor_or_ceilx = (dirx > 0) ? 1 : 0;
-  int_t floor_or_ceily = (diry > 0) ? 1 : 0;
-#ifdef DEBUG
-      printf("cell: (%i, %i), dxdy:(%f, %f)\n", i, j, dx, dy);
-      //std::cout << "cell size:" << cell_size_ << "pos:" << position << std::endl;
-#endif
-  real_t ex = dirx * ((i + floor_or_ceilx) * cell_size_(0) - px);
-  real_t ey = diry * ((j + floor_or_ceily) * cell_size_(1) - py);
-
-  // time to collision from one grid line to another
-  real_t Tx = cell_size_(0) / fabs(dx);
-  real_t Ty = cell_size_(1) / fabs(dy);
-
-  // time to collision
-  real_t tx = ex / fabs(dx);
-  real_t ty = ey / fabs(dy);
-  // assert(tx >= 0); // time is always positive (for me, for now)
-  if ( ! ((tx >= 0) && (ty >= 0))) {
-
-      printf("direction:(%f, %f), position:(%f, %f), cell:(%d, %d), cellsize:(%f, %f)\n", 
-          dx, dy, px, py, i, j, cell_size_(0), cell_size_(1));
-      throw std::logic_error("tx < 0 or ty < 0");
-  }
-  assert(tx >= 0);
-  assert(ty >= 0);
-
-  // real_t min_cell_size = 
-  //   (cell_size_(0) < cell_size_(1)) ?  cell_size_(0) : cell_size_(1);
+  occgrid::ray_trace_iterator<real_t, int_t> ray_trace_it(
+      px, py, dx, dy, min_pt_(0), min_pt_(1),
+      cell_size_(0), cell_size_(1));
 
   real_t dirmag = sqrt(dx*dx + dy*dy); 
   real_t n = floor(max_range * fabs(dx) / dirmag / cell_size_(0)) 
@@ -143,38 +105,26 @@ real_t OccupancyGrid2D<real_t, int_t>::ray_trace(
   int maxsizex = og_.size[0];
   int maxsizey = og_.size[1];
 
-  while (n > 0) {
-      n --;
+  for (;n > 0; --n, ++ray_trace_it) {
+
+      int i = ray_trace_it->first;
+      int j = ray_trace_it->second;
 
 #ifdef DEBUG
-        printf("(%d, %d), (%f, %f)\n", i, j, tx, ty);
+      printf("(%d, %d), (%f, %f)\n", i, j, tx, ty);
 #endif
-
-      if (tx < ty) {
-          i += dirx;
-          ty = ty - tx;
-          tx = Tx;
-      } else {
-          j += diry;
-          tx = tx - ty;
-          ty = Ty;
-      }
 
 
       if (i < 0 ||  j < 0 || i >= maxsizex || j >= maxsizey ||
           //(og_.at<uint8_t>(i, j) != FREE)) 
           is_occupied(i, j))
         {
-          real_t txdx = (dx == 0) ? ex : tx * dx;
-          real_t posx = (i +  floor_or_ceilx) * cell_size_(0) - txdx;
-          final_pos(0) = posx + min_pt_(0);
+          std::pair<real_t, real_t> final_pos_pair = ray_trace_it.real_position();
+          final_pos(0) = final_pos_pair.first;
+          final_pos(1) = final_pos_pair.second;
 
-          real_t tydy = (dy == 0) ? ey : ty * dy;
-          real_t posy = (j +  floor_or_ceily) * cell_size_(1) - tydy;
-          final_pos(1) = posy + min_pt_(1);
-
-          real_t disp_x = posx - px;
-          real_t disp_y = posy - py;
+          real_t disp_x = final_pos(0) - px;
+          real_t disp_y = final_pos(1) - py;
           return sqrt(disp_x * disp_x + disp_y * disp_y);
       }
   }

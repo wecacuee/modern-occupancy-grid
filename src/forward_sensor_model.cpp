@@ -107,7 +107,7 @@ TEST_F(ForwardSensorModelTest, test1) {
           exp_range);
 
     ASSERT_NEAR(
-        log_gaussian1d(noise, 0, NOISE_VARIANCE * range_observation),
+        log_gaussian1d(noise, 0, NOISE_VARIANCE * (range_observation - noise)),
         lodds, 
         0.002);
 }

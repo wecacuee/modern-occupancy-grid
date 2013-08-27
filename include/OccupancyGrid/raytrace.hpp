@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cassert>
 #include <stdexcept>
+#include <limits>
 
 namespace occgrid {
 template <typename T>
@@ -42,6 +43,7 @@ class ray_trace_iterator
 
       // intermediate variables for faster computation
       int_t dirx_, diry_; /// (-1, 0, 1) integral steps (direction)
+      real_t ex_, ey_; /// distance to the nearest grid line
       real_t Tx_, Ty_; /// Maximum time to collision (from one grid line to next)
 
       // State of iterator
@@ -82,6 +84,7 @@ class ray_trace_iterator
 
         // whether the grid line we are going to hit is floor() or ceil()
         // depends on the direction ray is moving
+        // using the fact that ceil() = floor() + 1
         int_t floor_or_ceilx = (dirx_ > 0) ? 1 : 0;
         int_t floor_or_ceily = (diry_ > 0) ? 1 : 0;
 #ifdef DEBUG
@@ -89,20 +92,20 @@ class ray_trace_iterator
         //std::cout << "cell size:" << cell_size_ << "pos:" << position << std::endl;
 #endif
         // distance to nearest grid line
-        real_t ex = fabs((i_ + floor_or_ceilx) * cell_size_x - px);
-        real_t ey = fabs((j_ + floor_or_ceily) * cell_size_y - py);
+        ex_ = fabs((i_ + floor_or_ceilx) * cell_size_x - px);
+        ey_ = fabs((j_ + floor_or_ceily) * cell_size_y - py);
 
         // (max) time to collision from one grid line to another
-        Tx_ = cell_size_x / fabs(dx);
-        Ty_ = cell_size_y / fabs(dy);
+        Tx_ = (dx == 0) ? std::numeric_limits<real_t>::infinity() : cell_size_x / fabs(dx);
+        Ty_ = (dy == 0) ? std::numeric_limits<real_t>::infinity() : cell_size_y / fabs(dy);
 
         // time to collision from this position
-        tx_ = ex / fabs(dx);
-        ty_ = ey / fabs(dy);
+        tx_ = (dx == 0) ? std::numeric_limits<real_t>::infinity() : ex_ / fabs(dx);
+        ty_ = (dy == 0) ? std::numeric_limits<real_t>::infinity() : ey_ / fabs(dy);
 
         if ( ! ((tx_ >= 0) && (ty_ >= 0))) {
-          printf("direction:(%f, %f), position:(%f, %f), cell:(%d, %d), cellsize:(%f, %f)\n", 
-              dx, dy, px, py, i_, j_, cell_size_x, cell_size_y);
+          printf("t:(%f, %f), direction:(%f, %f), position:(%f, %f), cell:(%d, %d), cellsize:(%f, %f)\n", 
+              tx_, ty_, dx, dy, px, py, i_, j_, cell_size_x, cell_size_y);
           throw std::logic_error("tx < 0 or ty < 0");
         }
 
@@ -134,20 +137,21 @@ class ray_trace_iterator
           }
       }
 
-      std::pair<real_t, real_t>&
-        real_position(std::pair<int_t, int_t> ij) const {
-          int_t i = ij.first, j = ij.second;
-
-          // distance to nearest grid line
-          real_t ex = fabs(dx_) * tx_, ey = fabs(dy_) * ty_;
+      std::pair<real_t, real_t>
+        real_position() const {
 
           // whether the grid line we are going to hit is floor() or ceil()
           // depends on the direction ray is moving
           int_t floor_or_ceilx = (dirx_ > 0) ? 1 : 0;
           int_t floor_or_ceily = (diry_ > 0) ? 1 : 0;
 
-          real_t px = (i + floor_or_ceilx) * cell_size_x_ - ex * dirx_;
-          real_t py = (j + floor_or_ceily) * cell_size_y_ - ey * diry_;
+          real_t ex = (dx_ == 0) ? ex_ // error is same as starting point
+            : tx_ * fabs(dx_);
+          real_t ey = (dy_ == 0) ? ey_ 
+            : ty_ * fabs(dy_);
+
+          real_t px = (i_ + floor_or_ceilx) * cell_size_x_ - ex * dirx_;
+          real_t py = (j_ + floor_or_ceily) * cell_size_y_ - ey * diry_;
 
           // shift coordinates 
           px = px + origin_x_;

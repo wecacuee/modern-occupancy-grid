@@ -38,18 +38,18 @@ TEST_F(OccupancyGrid2DTest, testFirstQuadrant) {
     cv::Vec<double, 2> final_pos;
     double range = og_.ray_trace(position_(0), position_(1), angle_, 100,
         final_pos);
-    ASSERT_DOUBLE_EQ(sqrt(2.5*2.5 + 0.5*0.5), range);
     ASSERT_DOUBLE_EQ(2.5, final_pos(0));
     ASSERT_DOUBLE_EQ(0.5, final_pos(1));
+    ASSERT_DOUBLE_EQ(sqrt(2.5*2.5 + 0.5*0.5), range);
 }
 
 TEST_F(OccupancyGrid2DTest, testFourthQuadrant) {
     cv::Vec<double, 2> final_pos;
     double range = og_.ray_trace(position_(0), position_(1), 
         - angle_, 100, final_pos);
-    ASSERT_DOUBLE_EQ(range, sqrt(2.5*2.5 + 0.5*0.5));
     ASSERT_DOUBLE_EQ(final_pos(0), 2.5);
     ASSERT_DOUBLE_EQ(final_pos(1), -0.5);
+    ASSERT_DOUBLE_EQ(range, sqrt(2.5*2.5 + 0.5*0.5));
 }
 
 
