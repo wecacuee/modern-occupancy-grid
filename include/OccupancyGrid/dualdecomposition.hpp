@@ -123,31 +123,11 @@ void resolve_disagreement(const Graph& g,
   typedef typename sample_space_iter_pair::first_type sample_space_iterator;
   typedef typename std::iterator_traits<sample_space_iterator>::value_type sample_space_type;
 
-  //print_multiassignment(multi_assignment, g, x);
-
-  // std::cout << "Before stepping up" << std::endl;
-  // print_messages(messages, g, x, sample_space_map);
-  BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g))
+  BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
     messages[msg_key_type(f, x, multi_assignment[std::make_pair(f, x)])] += step;
-
-  // std::cout << "after stepping up and before normalization" << std::endl;
-  // print_messages(messages, g, x, sample_space_map);
-  BOOST_FOREACH(sample_space_type xv, get(sample_space_map, x)) {
-    // normalize so that messages sum up to zero
-    msg_value_type cum(0);
-    BOOST_AUTO(adj_vert, adjacent_vertices(x, g));
-    BOOST_FOREACH(vertex_descriptor f, adj_vert)
-      cum += messages[msg_key_type(f, x, xv)];
-    messages[msg_key_type(x, x, xv)] = cum;
-
-    // msg_key_type avg = cum / out_degree(x, g);
-    // av = adjacent_vertices(x, g);
-    // BOOST_FOREACH(vertex_descriptor f, adj_vert)
-    //   messages[msg_key_type(f, x, xv)] -= avg;
-    //
+    messages[msg_key_type(x, x, multi_assignment[std::make_pair(f, x)])] -= step;
   }
-  // std::cout << "after stepping up and normalization" << std::endl;
-  // print_messages(messages, g, x, sample_space_map);
+
 }
 
 template <typename G, typename SlaveMinimizer, typename SampleSpaceMap, typename Messages, typename MultiAssignment>
@@ -201,7 +181,7 @@ class DualDecomposition {
         best_assign_[x] = 0;
 
       size_t disagrement_count = 1;
-      energy_type step = 50;
+      energy_type step = 500;
       // main loop
       clock_t st = clock();
       for (size_t i = 0; (i < max_iter) && (disagrement_count > 0); ++i) {
@@ -218,28 +198,37 @@ class DualDecomposition {
         disagrement_count = 0;
         std::vector<vertex_descriptor> disagreeing_cells;
         BOOST_FOREACH(vertex_descriptor x, variables(g)) {
-          bool disagreement = false;
+          sample_space_type assign = (((double)rand() / RAND_MAX) < 0.5) ? 0 : 1;
           if (disagrees(g, x, multi_assignment_)) {
-            disagreement = true;
             disagrement_count += 1;
             disagreeing_cells.push_back(x);
 
-            resolve_disagreement(g, x, multi_assignment_, messages_, sample_space_map, step / (i+1));
+            BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g))
+              disagrees_[f] = true; // any disagreement is total disagreement
+
+            //resolve_disagreement(g, x, multi_assignment_, messages_, sample_space_map, step / (i+1));
+            energy_type step_i_x = step / (i + 1);
+            BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
+              messages_[msg_key_type(f, x, multi_assignment_[std::make_pair(f, x)])] += step_i_x;
+              messages_[msg_key_type(x, x, multi_assignment_[std::make_pair(f, x)])] -= step_i_x;
+            }
+
+            // minimum energy assignment
+            energy_type min_energy = messages_[msg_key_type(x, x, assign)];
+            BOOST_FOREACH(sample_space_type xv, get(sample_space_map, x)) {
+              energy_type xv_energy = messages_[msg_key_type(x, x, xv)];
+              assign = (min_energy <= xv_energy) ?  assign : xv;
+            }
+
+          } else {
+            // There is agreement, take any agreed assignment
+            BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
+              assign = multi_assignment_[std::make_pair(f, x)];
+              break;
+            }
           }
 
-          sample_space_type assign((((double)rand() / RAND_MAX) < 0.5) ? 0 : 1);
-          BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
-            disagrees_[f] = (disagrees_[f] || disagreement); // any disagreement is total disagreement
-            assert(! isinf(factor_energy_[f]));
-            assign = multi_assignment_[std::make_pair(f, x)];
-          }
-          if (disagreement) {
-            size_t count[2] = {messages_[msg_key_type(x, x, 0)], messages_[msg_key_type(x, x, 1)]};
-            best_assign_[x] = (count[0] > count[1]) ? 0
-              : (count[0] == count[1]) ? ((((double)rand() / RAND_MAX) < 0.5) ? 0 : 1)
-              : 1;
-          } else 
-            best_assign_[x] = assign;
+          best_assign_[x] = assign;
           average_assign_[x] += best_assign_[x];
         }
         clock_t et = clock(); 

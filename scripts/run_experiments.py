@@ -2,8 +2,8 @@
 from __future__ import division
 import subprocess
 import numpy as np
-from script_utils import (save_time_energy, plotdatafname,
-                          executables_and_config)
+from script_utils import (save_time_energy, plotdatafname)
+from convergence_experiment import executables
 from multiprocessing import Pool
 
 MAP_SIZE = 18 # in m
@@ -35,17 +35,23 @@ def parse_time_energy(lines):
 
 
 def run_plot(executable, resolution):
-    pipe = run(executable, resolution)
+    pipe = run(executable.exe(), resolution)
     times, energy = parse_time_energy(grep_energy_lines(pipe.stdout))
     save_time_energy(open(plotdatafname(executable), 'w'), times, energy)
 
-def main():
+def main(toexec=None):
     resolution = 100
-    pool = Pool(processes=5)
-    for exe, conf in executables_and_config():
-        pool.apply_async(run_plot, args=(exe, resolution))
+    pool = Pool(processes=(5 if (toexec is None) else 1))
+    for exe in executables():
+        if (toexec is None) or (toexec in exe.exe()):
+            pool.apply_async(run_plot, args=(exe, resolution))
     pool.close()
     pool.join()
 
 if __name__ == '__main__':
-    main()
+    import sys
+    if len(sys.argv) > 1:
+        toexec = sys.argv[1]
+    else:
+        toexec = None
+    main(toexec)
