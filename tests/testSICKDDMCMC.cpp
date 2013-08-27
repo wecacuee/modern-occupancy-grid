@@ -1,7 +1,7 @@
-#include "../OccupancyGrid/include/OccupancyGrid.h"
-#include "../OccupancyGrid/include/MCMC.h"
-#include "../OccupancyGrid/include/visualiser.h"
-#include "../OccupancyGrid/include/loadData.h"
+#include "OccupancyGrid/OccupancyGrid.h"
+#include "OccupancyGrid/MCMC.h"
+#include "OccupancyGrid/visualiser.h"
+#include "OccupancyGrid/loadData.h"
 
 using namespace std;
 using namespace gtsam;

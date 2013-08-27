@@ -1,10 +1,10 @@
-#include "gtsam_adaptor.hpp"
-#include "sumproduct.hpp"
-#include "../OccupancyGrid/include/cvmat_serialization.h"
-#include "../OccupancyGrid/include/visualiser.h"
-#include "../OccupancyGrid/include/loadData.h"
-#include "../OccupancyGrid/include/OccupancyGrid.h"
-#include "../OccupancyGrid/include/BPLaserFactor.hpp"
+#include "OccupancyGrid/gtsam_adaptor.hpp"
+#include "OccupancyGrid/sumproduct.hpp"
+#include "OccupancyGrid/cvmat_serialization.h"
+#include "OccupancyGrid/visualiser.h"
+#include "OccupancyGrid/loadData.h"
+#include "OccupancyGrid/OccupancyGrid.h"
+#include "OccupancyGrid/BPLaserFactor.hpp"
 
 #include <opencv2/opencv.hpp>
 

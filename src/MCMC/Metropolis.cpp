@@ -5,8 +5,8 @@
  *      @author Frank Dellaert
  */
 
-#include "OccupancyGrid.h"
-#include "visualiser.h"
+#include "OccupancyGrid/OccupancyGrid.h"
+#include "OccupancyGrid/visualiser.h"
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
 

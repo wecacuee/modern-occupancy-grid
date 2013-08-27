@@ -14,7 +14,7 @@
 #include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>
 
-#include <occgrid.h>
+#include "OccupancyGrid/occgrid.h"
 
 #undef DEBUG
 

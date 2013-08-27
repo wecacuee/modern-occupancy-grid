@@ -2,7 +2,7 @@
 #define FORWARD_SENSOR_MODEL_H
 
 #include <opencv2/opencv.hpp>
-#include <occgrid.hpp>
+#include "OccupancyGrid/occgrid.hpp"
 
 // from stage/examples/ctrl/lasernoise.cc
 #define NOISE_VARIANCE 0.05 // ratio to range

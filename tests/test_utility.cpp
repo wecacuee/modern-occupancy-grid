@@ -1,4 +1,4 @@
-#include "utility.hpp"
+#include "OccupancyGrid/utility.hpp"
 #include <gtest/gtest.h>
 
 using namespace occgrid;

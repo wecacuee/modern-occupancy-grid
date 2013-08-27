@@ -1,4 +1,4 @@
-#include "utility.hpp"
+#include "OccupancyGrid/utility.hpp"
 
 namespace occgrid {
 std::ostream& operator << (std::ostream& os, const logdouble& r) {

@@ -5,7 +5,7 @@
  *      @author Frank Dellaert
  */
 
-#include "OccupancyGrid.h"
+#include "OccupancyGrid/OccupancyGrid.h"
 #include <cassert>
 
 using namespace std;

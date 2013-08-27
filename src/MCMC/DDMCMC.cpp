@@ -5,8 +5,8 @@
  *      @author Frank Dellaert
  */
 
-#include "OccupancyGrid.h"
-#include "visualiser.h"
+#include "OccupancyGrid/OccupancyGrid.h"
+#include "OccupancyGrid/visualiser.h"
 
 using namespace std;
 using namespace gtsam;

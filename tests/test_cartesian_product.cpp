@@ -4,7 +4,7 @@
  * @date: Wed July 11 2013
  */
 
-#include "cartesian_product.hpp"
+#include "OccupancyGrid/cartesian_product.hpp"
 
 #include <boost/bind.hpp>
 #include <cstdio>

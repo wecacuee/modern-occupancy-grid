@@ -1,6 +1,6 @@
-#include "loadData.h"
+#include "OccupancyGrid/loadData.h"
+#include "OccupancyGrid/cvmat_serialization.h"
 #include <cstdio>
-#include <cvmat_serialization.h>
 
 using namespace std;
 using namespace gtsam;

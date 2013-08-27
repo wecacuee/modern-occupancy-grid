@@ -1,6 +1,6 @@
-#include <occgrid.hpp>
+#include "OccupancyGrid/occgrid.hpp"
+#include "OccupancyGrid/cvmat_serialization.h"
 #include <opencv2/opencv.hpp>
-#include <cvmat_serialization.h>
 #include <boost/format.hpp>
 
 /// Override class to override is_occupied function so that it can copy the

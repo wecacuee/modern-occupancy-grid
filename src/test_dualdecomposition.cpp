@@ -1,4 +1,4 @@
-#include "dualdecomposition.hpp"
+#include "OccupancyGrid/dualdecomposition.hpp"
 #include "boost/graph/adjacency_list.hpp"
 
 using namespace occgrid;

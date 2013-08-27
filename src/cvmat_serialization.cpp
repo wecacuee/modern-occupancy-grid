@@ -15,7 +15,7 @@
 
 #include <opencv2/opencv.hpp>
 
-#include <cvmat_serialization.h>
+#include "OccupancyGrid/cvmat_serialization.h"
 
  
 ////////////////////////////

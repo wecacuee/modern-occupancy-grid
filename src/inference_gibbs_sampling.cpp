@@ -2,8 +2,8 @@
 
 #include <sstream>
 #include <cstdlib>
-#include <cvmat_serialization.h>
-#include <forward_sensor_model.h>
+#include "OccupancyGrid/cvmat_serialization.h"
+#include "OccupancyGrid/forward_sensor_model.h"
 
 // constant prior for now
 //double prior_occpupied_to_free(

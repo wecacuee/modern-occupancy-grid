@@ -5,8 +5,8 @@
  *      @author Frank Dellaert
  */
 
-#include "LaserFactor.h"
-#include "visualiser.h"
+#include "OccupancyGrid/LaserFactor.h"
+#include "OccupancyGrid/visualiser.h"
 
 #include <vector>
 #include <stdlib.h>

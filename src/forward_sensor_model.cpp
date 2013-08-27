@@ -15,10 +15,8 @@
 #include <opencv2/opencv.hpp>
 
 // local
-#include <occgrid.hpp>
-
-// me
-#include <forward_sensor_model.h>
+#include "OccupancyGrid/occgrid.hpp"
+#include "OccupancyGrid/forward_sensor_model.h"
 
 namespace bconst = boost::math::constants;
 namespace brand = boost::random;

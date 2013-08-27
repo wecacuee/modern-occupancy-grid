@@ -1,11 +1,12 @@
-#include "OccupancyGrid.h"
-#include "loadData.h"
-#include "dualdecomposition.hpp"
-#include "visualiser.h"
+#include "OccupancyGrid/OccupancyGrid.h"
+#include "OccupancyGrid/loadData.h"
+#include "OccupancyGrid/dualdecomposition.hpp"
+#include "OccupancyGrid/visualiser.h"
+#include "OccupancyGrid/gtsam_adaptor.hpp"
+#include "OccupancyGrid/slaveminimizer.hpp"
+#include "OccupancyGrid/DDLaserFactor.hpp"
+
 #include <gtsam/geometry/Pose2.h>
-#include "gtsam_adaptor.hpp"
-#include "slaveminimizer.hpp"
-#include "DDLaserFactor.hpp"
 
 Visualiser global_vis_;
 Visualiser global_vis2_;

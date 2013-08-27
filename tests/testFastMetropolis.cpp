@@ -1,5 +1,5 @@
-#include "../OccupancyGrid/include/OccupancyGrid.h"
-#include "../OccupancyGrid/include/MCMC.h"
+#include "OccupancyGrid/OccupancyGrid.h"
+#include "OccupancyGrid/MCMC.h"
 
 
 int main(int argc, char *argv[]){

@@ -4,7 +4,7 @@
 #include <libplayerinterface/player.h>
 #include <libplayerc++/playerc++.h>
 
-#include <cvmat_serialization.h>
+#include "OccupancyGrid/cvmat_serialization.h"
 
 namespace pc = PlayerCc;
 

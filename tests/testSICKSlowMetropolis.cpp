@@ -3,10 +3,11 @@
  * @author Brian Peasley
  * @date   ?
  */
-#include "../OccupancyGrid/include/MCMC.h"
-#include "../OccupancyGrid/include/cvmat_serialization.h"
-#include "../OccupancyGrid/include/visualiser.h"
-#include "../OccupancyGrid/include/loadData.h"
+#include "OccupancyGrid/MCMC.h"
+#include "OccupancyGrid/cvmat_serialization.h"
+#include "OccupancyGrid/visualiser.h"
+#include "OccupancyGrid/loadData.h"
+#include <opencv2/opencv.hpp>
 
 using namespace std;
 using namespace gtsam;

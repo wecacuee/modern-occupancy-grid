@@ -1,5 +1,5 @@
 #include <boost/unordered_map.hpp>
-#include "DDLaserFactor.hpp"
+#include "OccupancyGrid/DDLaserFactor.hpp"
 typedef size_t vertex_descriptor;
 typedef std::pair<size_t, size_t> edge_descriptor;
 typedef double energy_type;
