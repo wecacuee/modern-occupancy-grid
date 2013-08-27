@@ -1,131 +1,113 @@
 
 #pragma once
 #include <boost/iterator/iterator_facade.hpp>
-#include <cmath>
-#include <cstdio>
-#include <cassert>
-#include <stdexcept>
-#include <limits>
+#include "observation2d.h"
+#include "occgrid.h"
 
-namespace occgrid {
-template <typename T>
-inline int signum(T val) {
-    return (T(0) < val) - (val < T(0));
-}
-
-template <typename real_t, typename int_t>
+template <typename Map>
 class ray_trace_iterator
   : public 
     boost::iterator_facade<
-    ray_trace_iterator<real_t, int_t>
-    , std::pair<int_t, int_t>
+    ray_trace_iterator<Map>
+    , std::pair<typename Map::int_t, typename Map::int_t>
     , boost::forward_traversal_tag
-    , std::pair<int_t, int_t>
     > 
 {
     private:
-      typedef typename boost::iterator_facade<
-        ray_trace_iterator<real_t, int_t>
-        , std::pair<int_t, int_t>
-        , boost::forward_traversal_tag
-        , std::pair<int_t, int_t>
-        > super_t;
-      // Input arguments
-      real_t 
-        px_,
-        py_,
-        dx_, 
-        dy_,
-        origin_x_,
-        origin_y_,
-        cell_size_x_, 
-        cell_size_y_;
-
-      // intermediate variables for faster computation
-      int_t dirx_, diry_; /// (-1, 0, 1) integral steps (direction)
-      real_t ex_, ey_; /// distance to the nearest grid line
-      real_t Tx_, Ty_; /// Maximum time to collision (from one grid line to next)
-
-      // State of iterator
-      int_t i_, j_; /// Grid index
-      real_t tx_, ty_; /// time to collision to next grid line
+      const Map& map_;
+      typedef typename Map::real_type real_t;
+      typedef typename Map::integer_type int_t;
+      const _Observation2D<real_t>& pose_;
+      real_t max_range_;
+      int_t i_, j_;
+      real_t tx_, ty_;
+      int_t dirx_, diry_;
+      real_t Tx_, Ty_;
+      int_t maxsizex_, maxsizey_;
+      int_t n_;
     public:
-      ray_trace_iterator(
-          real_t px,
-          real_t py,
-          real_t dx,
-          real_t dy,
-          real_t origin_x,
-          real_t origin_y,
-          real_t cell_size_x, 
-          real_t cell_size_y
-          ) : 
-        px_(px),
-        py_(py),
-        dx_(dx),
-        dy_(dy),
-        origin_x_(origin_x),
-        origin_y_(origin_y),
-        cell_size_x_(cell_size_x),
-        cell_size_y_(cell_size_y)
-      {
-        using std::floor;
-        using std::fabs;
-        // shift coordinates 
-        px = px - origin_x;
-        py = py - origin_y;
+      ray_trace_iterator() {};
 
-        // current grid cell
-        i_ = static_cast<int_t>(floor(px / cell_size_x));
-        j_ = static_cast<int_t>(floor(py / cell_size_y));
+      ray_trace_iterator(const Map& map,
+          const Observation2D& pose,
+          real_t max_range) : map_(map), pose_(pose), max_range_(max_range) {
+        real_t px(pose.px);
+        real_t py(pose.py);
+        real_t ptheta(pose.ptheta);
+        // shift coordinates so that we are always in first quadrant
+        px = px - map_.min_pt_(0);
+        py = py - map_.min_pt_(1);
 
-        dirx_ = signum(dx);
-        diry_ = signum(dy);
+        real_t dx = cos(ptheta);
+        real_t dy = sin(ptheta);
+        int_t dirx = signum(dx);
+        dirx = (dirx == 0) ? 1 : dirx;
 
-        // whether the grid line we are going to hit is floor() or ceil()
-        // depends on the direction ray is moving
-        // using the fact that ceil() = floor() + 1
-        int_t floor_or_ceilx = (dirx_ > 0) ? 1 : 0;
-        int_t floor_or_ceily = (diry_ > 0) ? 1 : 0;
+        int_t diry = signum(dy);
+        diry = (diry == 0) ? 1 : diry;
+        int_t i = static_cast<int_t>(floor(px / map_.cell_size_(0)));
+
+        int_t j = static_cast<int_t>(floor(py / map_.cell_size_(1)));
+
+        // distance to nearest grid line
+        int_t floor_or_ceilx = (dirx > 0) ? 1 : 0;
+        int_t floor_or_ceily = (diry > 0) ? 1 : 0;
 #ifdef DEBUG
         printf("cell: (%i, %i), dxdy:(%f, %f)\n", i, j, dx, dy);
         //std::cout << "cell size:" << cell_size_ << "pos:" << position << std::endl;
 #endif
-        // distance to nearest grid line
-        ex_ = fabs((i_ + floor_or_ceilx) * cell_size_x - px);
-        ey_ = fabs((j_ + floor_or_ceily) * cell_size_y - py);
+        real_t ex = dirx * ((i + floor_or_ceilx) * map_.cell_size_(0) - px);
+        real_t ey = diry * ((j + floor_or_ceily) * map_.cell_size_(1) - py);
 
-        // (max) time to collision from one grid line to another
-        Tx_ = (dx == 0) ? std::numeric_limits<real_t>::infinity() : cell_size_x / fabs(dx);
-        Ty_ = (dy == 0) ? std::numeric_limits<real_t>::infinity() : cell_size_y / fabs(dy);
+        // time to collision from one grid line to another
+        real_t Tx = map_.cell_size_(0) / fabs(dx);
+        real_t Ty = map_.cell_size_(1) / fabs(dy);
 
-        // time to collision from this position
-        tx_ = (dx == 0) ? std::numeric_limits<real_t>::infinity() : ex_ / fabs(dx);
-        ty_ = (dy == 0) ? std::numeric_limits<real_t>::infinity() : ey_ / fabs(dy);
+        // time to collision
+        real_t tx = ex / fabs(dx);
+        real_t ty = ey / fabs(dy);
+        // assert(tx >= 0); // time is always positive (for me, for now)
+        if ( ! ((tx >= 0) && (ty >= 0))) {
 
-        if ( ! ((tx_ >= 0) && (ty_ >= 0))) {
-          printf("t:(%f, %f), direction:(%f, %f), position:(%f, %f), cell:(%d, %d), cellsize:(%f, %f)\n", 
-              tx_, ty_, dx, dy, px, py, i_, j_, cell_size_x, cell_size_y);
+          printf("direction:(%f, %f), position:(%f, %f), cell:(%d, %d), cellsize:(%f, %f)\n", 
+              dx, dy, px, py, i, j, map_.cell_size_(0), map_.cell_size_(1));
           throw std::logic_error("tx < 0 or ty < 0");
         }
+        assert(tx >= 0);
+        assert(ty >= 0);
 
-        // time is always positive 
-        assert(tx_ >= 0);
-        assert(ty_ >= 0);
+        real_t dirmag = sqrt(dx*dx + dy*dy); 
+        real_t n = floor(max_range * fabs(dx) / dirmag / map_.cell_size_(0)) 
+          + floor(max_range * fabs(dy) / dirmag / map_.cell_size_(1));
+        maxsizex_ = map_.og_.size[0];
+        maxsizey_ = map_.og_.size[1];
+        i_ = i;
+        j_ = j;
+        tx_ = tx;
+        ty_ = ty;
+        Tx_ = Tx;
+        Ty_ = Ty;
+        dirx_ = dirx;
+        diry_ = diry_;
+        n_ = n;
       }
 
-      typename super_t::reference dereference() const {
+      static ray_trace_iterator end_iterator() {
+        return ray_trace_iterator();
+      }
+
+      std::pair<int_t, int_t> dereference() {
         return std::make_pair(i_, j_);
       }
-
-      bool equal(ray_trace_iterator it) const {
-        return ((it.i_ == i_) && (it.j_ == j_) &&
-          (it.tx_ == tx_) && (it.ty_ == ty_) &&
-          (it.Tx_ == Tx_) && (it.Ty_ == Ty_) &&
-          (it.dirx_ == dirx_) && (it.diry_ == diry_));
+      bool equal(ray_trace_iterator it) {
+        return (it.i_ == i_) && (it.j_ == j_) &&
+          (it.map_ == map_) && (it.pose_ == pose_) && (it.max_range_ == max_range_);
       }
 
       void increment() {
+        if (n_ > 0) {
+          n_--;
+
           if (tx_ < ty_) {
             i_ += dirx_;
             ty_ = ty_ - tx_;
@@ -135,29 +117,13 @@ class ray_trace_iterator
             tx_ = tx_ - ty_;
             ty_ = Ty_;
           }
-      }
 
-      std::pair<real_t, real_t>
-        real_position() const {
-
-          // whether the grid line we are going to hit is floor() or ceil()
-          // depends on the direction ray is moving
-          int_t floor_or_ceilx = (dirx_ > 0) ? 1 : 0;
-          int_t floor_or_ceily = (diry_ > 0) ? 1 : 0;
-
-          real_t ex = (dx_ == 0) ? ex_ // error is same as starting point
-            : tx_ * fabs(dx_);
-          real_t ey = (dy_ == 0) ? ey_ 
-            : ty_ * fabs(dy_);
-
-          real_t px = (i_ + floor_or_ceilx) * cell_size_x_ - ex * dirx_;
-          real_t py = (j_ + floor_or_ceily) * cell_size_y_ - ey * diry_;
-
-          // shift coordinates 
-          px = px + origin_x_;
-          py = py + origin_y_;
-
-          return std::make_pair(px, py);
+          if (i_ < 0 ||  j_ < 0 || i_ >= maxsizex_ || j_ >= maxsizey_ ||
+              map_.is_occupied(i_, j_))
+          {
+            *this = end_iterator();
+          }
+        } 
+        *this = end_iterator();
       }
 };
-} // namespace occgrid
