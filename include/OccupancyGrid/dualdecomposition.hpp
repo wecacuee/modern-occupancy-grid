@@ -107,29 +107,6 @@ void print_messages(const Messages& msgs,
   }
 }
 
-
-template <typename Graph, typename Messages, typename MultiAssignment, typename SampleSpaceMap>
-void resolve_disagreement(const Graph& g, 
-    typename boost::graph_traits<Graph>::vertex_descriptor x,
-    const MultiAssignment& multi_assignment,
-    Messages& messages,
-    const SampleSpaceMap& sample_space_map,
-    const typename boost::property_traits<Messages>::value_type step)
-{
-  typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex_descriptor;
-  typedef typename boost::property_traits<Messages>::key_type msg_key_type;
-  typedef typename boost::property_traits<Messages>::value_type msg_value_type;
-  typedef typename boost::property_traits<SampleSpaceMap>::value_type sample_space_iter_pair;
-  typedef typename sample_space_iter_pair::first_type sample_space_iterator;
-  typedef typename std::iterator_traits<sample_space_iterator>::value_type sample_space_type;
-
-  BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
-    messages[msg_key_type(f, x, multi_assignment[std::make_pair(f, x)])] += step;
-    messages[msg_key_type(x, x, multi_assignment[std::make_pair(f, x)])] -= step;
-  }
-
-}
-
 template <typename G, typename SlaveMinimizer, typename SampleSpaceMap, typename Messages, typename MultiAssignment>
 class DualDecomposition {
   private:
@@ -181,7 +158,7 @@ class DualDecomposition {
         best_assign_[x] = 0;
 
       size_t disagrement_count = 1;
-      energy_type step = 500;
+      energy_type step = 50;
       // main loop
       clock_t st = clock();
       for (size_t i = 0; (i < max_iter) && (disagrement_count > 0); ++i) {
@@ -206,7 +183,6 @@ class DualDecomposition {
             BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g))
               disagrees_[f] = true; // any disagreement is total disagreement
 
-            //resolve_disagreement(g, x, multi_assignment_, messages_, sample_space_map, step / (i+1));
             energy_type step_i_x = step / (i + 1);
             BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
               messages_[msg_key_type(f, x, multi_assignment_[std::make_pair(f, x)])] += step_i_x;
