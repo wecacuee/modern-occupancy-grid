@@ -161,7 +161,7 @@ int main(int argc, const char *argv[])
   // getting num_edges(ogg)
   BOOST_AUTO(n_iter, num_edges(ogg) * 0.7);
   std::cout << "Number of iterations:" << n_iter << std::endl;
-  random_edge_traversal(ogg, vistor_list, n_iter);
+  random_edge_traversal(ogg, spvis, n_iter);
   display_vis.display(ogg);
   global_vis_.save("/tmp/run_belief_propagation.png");
 }
