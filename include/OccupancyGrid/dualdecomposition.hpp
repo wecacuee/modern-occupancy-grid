@@ -124,9 +124,7 @@ class DualDecomposition {
     typedef typename boost::property_traits<Messages>::key_type msg_key_type;
   public:
     typedef typename boost::property_traits<Messages>::value_type energy_type;
-    typedef boost::unordered_map<vertex_descriptor, energy_type> EnergyMap;
     typedef gtsam::Assignment<sample_space_type> BestAssignment;
-    typedef std::vector<energy_type> VariableEnergy;
 
   private:
     Messages& messages_;
@@ -138,24 +136,16 @@ class DualDecomposition {
       {
       }
 
-    void init(const G& g) {
-    }
-
     void operator()(const G& g,
         const SlaveMinimizer& slave_minimizer,
         const SampleSpaceMap& sample_space_map,
         size_t max_iter) 
     {
-      Disagreement disagrees_;
-      EnergyMap factor_energy_;
-      BestAssignment best_assign_;
-      VariableEnergy average_assign_(num_variables(g));
+      Disagreement disagreeing_factors;
+      BestAssignment best_assign;
       // Initialize
       BOOST_FOREACH(vertex_descriptor f, factors(g))
-        disagrees_[f] = true;
-
-      BOOST_FOREACH(vertex_descriptor x, variables(g))
-        best_assign_[x] = 0;
+        disagreeing_factors[f] = true;
 
       size_t disagrement_count = 1;
       energy_type step = 50;
@@ -164,12 +154,11 @@ class DualDecomposition {
       for (size_t i = 0; (i < max_iter) && (disagrement_count > 0); ++i) {
 
         BOOST_FOREACH(vertex_descriptor f, factors(g)) {
-          if (disagrees_[f]) {
+          if (disagreeing_factors[f]) {
             // minimize_slave_problem(Messages) to update MultiAssignment
-            factor_energy_[f] = get(slave_minimizer, f)(multi_assignment_, messages_);
-            assert(! isinf(factor_energy_[f]));
+            get(slave_minimizer, f)(multi_assignment_, messages_);
           }
-          disagrees_[f] = false; // reset disagreement, we will look for disagreement again
+          disagreeing_factors[f] = false; // reset disagreement, we will look for disagreement again
         }
         // for each variable in graph:
         disagrement_count = 0;
@@ -181,7 +170,7 @@ class DualDecomposition {
             disagreeing_cells.push_back(x);
 
             BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g))
-              disagrees_[f] = true; // any disagreement is total disagreement
+              disagreeing_factors[f] = true; // any disagreement is total disagreement
 
             energy_type step_i_x = step / (i + 1);
             BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g)) {
@@ -204,22 +193,20 @@ class DualDecomposition {
             }
           }
 
-          best_assign_[x] = assign;
-          average_assign_[x] += best_assign_[x];
+          best_assign[x] = assign;
         }
         clock_t et = clock(); 
         std::cout << "Variable disagreement count:" << disagrement_count << std::endl;
-        double energy = g.g_(best_assign_);
+        double energy = g.g_(best_assign);
         std::cout << "<Energy>\t" << ((float)(et - st)) / CLOCKS_PER_SEC << "\t" << energy << std::endl;
 
-        global_vis_.setMarginals(best_assign_);
+        global_vis_.setMarginals(best_assign);
         global_vis_.show(1);
 
         global_vis2_.highlightCells(disagreeing_cells);
         global_vis2_.reset();
         global_vis2_.show(1);
       }
-      //global_vis_.setMarginals(average_assign_);
       global_vis_.show();
       global_vis_.save("/tmp/dualdecomposition.png");
     }
