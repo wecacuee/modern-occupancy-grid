@@ -56,8 +56,7 @@ int main(int argc, char *argv[]) {
       datadirectory + "/laser_reflectance_all.bin",
       allposes, allranges, allreflectance);
   double width, height;
-  shiftPoses(*std::max_element(allranges.begin(), allranges.end()),
-      allposes, width, height);
+  shiftPoses(allranges, allposes, width, height);
 
   // Create the occupancy grid data structure
   OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle

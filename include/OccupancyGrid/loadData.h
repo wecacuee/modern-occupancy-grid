@@ -24,7 +24,7 @@ void loadPlayerSim(const std::string& laser_pose_file,
     std::vector<uint8_t>& allreflectance);
 
 void shiftPoses(
-    double max_range,
+    const std::vector<double>& allranges,
     std::vector<gtsam::Pose2>& allposes,
     double& width,
     double& height);

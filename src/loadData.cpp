@@ -129,32 +129,36 @@ void loadPlayerSim(const std::string& laser_pose_file,
 }
 
 void shiftPoses(
-    double max_range,
+    const std::vector<double>& allranges,
     std::vector<gtsam::Pose2>& allposes,
     double& width,
     double& height) 
 {
-  BOOST_AUTO(it, allposes.begin());
+  BOOST_AUTO(pose, allposes.begin());
+  BOOST_AUTO(range, allranges.begin());
   double min_x = std::numeric_limits<double>::infinity(),
          max_x = - std::numeric_limits<double>::infinity(),
          min_y = std::numeric_limits<double>::infinity(),
          max_y = - std::numeric_limits<double>::infinity();
-  for (; it != allposes.end(); ++it) {
-    min_x = std::min(it->x(), min_x);
-    min_y = std::min(it->y(), min_y);
-    max_x = std::max(it->x(), max_x);
-    max_y = std::max(it->y(), max_y);
+  for (; pose != allposes.end() && range != allranges.end(); ++pose, ++range) 
+  {
+    double end_x = pose->x() + *range * cos(pose->theta()),
+           end_y = pose->y() + *range * sin(pose->theta());
+    min_x = std::min(std::min(end_x, min_x), pose->x());
+    min_y = std::min(std::min(end_y, min_y), pose->y());
+    max_x = std::max(std::max(end_x, max_x), pose->x());
+    max_y = std::max(std::max(end_y, max_y), pose->y());
   }
-  double margin_x = 1 + max_range, margin_y = 1 + max_range;
+  double margin_x = 1, margin_y = 1;
   max_x += margin_x;
   max_y += margin_y;
   min_x -= margin_x;
   min_y -= margin_y;
   double mid_x = (max_x + min_x) / 2;
   double mid_y = (max_y + min_y) / 2;
-  it = allposes.begin();
-  for (; it != allposes.end(); ++it) {
-    *it = gtsam::Pose2( it->x() - mid_x, it->y() - mid_y, it->theta());
+  pose = allposes.begin();
+  for (; pose != allposes.end(); ++pose) {
+    *pose = gtsam::Pose2( pose->x() - mid_x, pose->y() - mid_y, pose->theta());
   }
   width = max_x - min_x;
   height = max_y - min_y;
