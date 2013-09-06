@@ -29,31 +29,21 @@ int main(int argc, const char *argv[])
   po::options_description desc("Run dual decomposition");
   desc.add_options()
     ("help", "produce help message")
-    ("width", po::value<double>()->required(), "Width of map")
-    ("height", po::value<double>()->required(), "Height of map")
     ("resolution", po::value<double>()->required(), "Size of square cell in the map")
     ("dir", po::value<std::string>()->default_value("Data/player_sim_with_reflectance"), "Data directory")
 ;
 
   po::positional_options_description pos;
-  pos.add("width", 1)
-    .add("height", 1)
-    .add("resolution", 1);
+  pos.add("resolution", 1);
 
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
   po::notify(vm);    
 
-  double width = vm["width"].as<double>();
-  double height = vm["height"].as<double>();
   double resolution = vm["resolution"].as<double>();
   std::string datadirectory = vm["dir"].as<std::string>();
   // end of parse arguments ////////////////////////////////////
   
-  // Create the occupancy grid data structure
-  OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
-  global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
-  global_vis_.enable_show();
   vector<Pose2> allposes;
   vector<double> allranges;
   vector<uint8_t> allreflectance;
@@ -70,7 +60,14 @@ int main(int argc, const char *argv[])
       datadirectory + "/scan_angles_all.bin",
       datadirectory + "/laser_reflectance_all.bin",
       allposes, allranges, allreflectance);
+  double width, height;
+  shiftPoses(*std::max_element(allranges.begin(), allranges.end()),
+      allposes, width, height);
 
+  // Create the occupancy grid data structure
+  OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
+  global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
+  global_vis_.enable_show();
   for (size_t i = 0; i < allranges.size(); i++) {
     const Pose2& pose = allposes[i];
     const double range = allranges[i];

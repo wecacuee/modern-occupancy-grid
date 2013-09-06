@@ -1,7 +1,7 @@
 from __future__ import division
 from script_utils import ExecutableConfig
 
-def executables(width, height, dir):
+def executables(dir):
     args = [
         ("bin/run_belief_propagation",
          {"legend" : "Belief Propagation"}),
@@ -15,6 +15,6 @@ def executables(width, height, dir):
          {"legend" : "Two Assumption Algorithm"})
     ] 
     for k, conf in args:
-        conf['args'] = [width, height, .18, "--dir=%s" % dir]
+        conf['args'] = [.18, "--dir=%s" % dir]
     return [ExecutableConfig(*args) for args in args]
 

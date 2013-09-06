@@ -31,7 +31,7 @@ if __name__ == '__main__':
         legend_names.append(exe.legend())
     plt.legend(plot_obj, legend_names)
     ax = plt.gca()
-    ax.set_ylim([2.78e8, 2.90e8])
+    #ax.set_ylim([2.78e8, 2.90e8])
     ax.set_xlabel("Time (clock seconds)")
     ax.set_ylabel("Total energy of the graph")
     #plt.savefig('doc/figures/relativeconvergence.pdf')
