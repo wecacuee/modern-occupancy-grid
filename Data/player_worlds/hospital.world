@@ -16,5 +16,5 @@ resolution 0.02
 
 
 #include "cave.inc"
-#include "hospital.inc"
-include "hospital_section.inc"
+include "hospital.inc"
+#include "hospital_section.inc"
