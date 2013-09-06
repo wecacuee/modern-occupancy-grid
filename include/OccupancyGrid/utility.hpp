@@ -206,4 +206,6 @@ template <typename M>
     pm.put(k, v);
   }
 
+  struct factor_graph_tag { };
+
 } // namespace occgrid

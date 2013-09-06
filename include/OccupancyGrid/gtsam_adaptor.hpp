@@ -68,7 +68,8 @@ namespace occgrid {
   struct gtsam_traversal_category : 
     public virtual boost::adjacency_graph_tag, 
     public virtual boost::incidence_graph_tag,
-    public virtual boost::vertex_list_graph_tag {
+    public virtual boost::vertex_list_graph_tag,
+    public virtual occgrid::factor_graph_tag {
     };
 
   // internal property names
