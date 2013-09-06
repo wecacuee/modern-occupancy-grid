@@ -67,6 +67,6 @@ int main(int argc, const char *argv[])
   DualDecomposition<OccupancyGridGraph, SlaveMinimizer_,
     typename OccupancyGridGraph::SampleSpaceMap,
     Messages,
-    MultiAssignment > dd(msgs, multiassign);
-  dd(ogg, slvmin, ssm, 70);
+    MultiAssignment > dd(ogg, slvmin, ssm, msgs, multiassign, 50);
+  dd(70);
 }
