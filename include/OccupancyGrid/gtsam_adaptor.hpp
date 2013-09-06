@@ -260,15 +260,6 @@ namespace occgrid {
   };
 
   template <typename G>
-    struct _MultiAssignment {
-      typedef typename G::sample_space_type sample_space_type;
-      typedef typename G::vertex_descriptor vertex_descriptor;
-      typedef std::pair<vertex_descriptor, vertex_descriptor> key_type;
-      typedef boost::unordered_map<key_type, sample_space_type> base_type;
-      typedef boost::associative_property_map<base_type> property_map_type;
-    };
-
-  template <typename G>
   std::pair<typename G::adjacency_iterator, typename G::adjacency_iterator> 
   adjacent_vertices(typename G::vertex_descriptor v, const G& g) 
   {
@@ -305,6 +296,11 @@ namespace occgrid {
     typename G::vertices_size_type
     num_factors(const G& g) {
       return g.num_factors();
+    }
+
+  template <typename G>
+    bool is_factor(typename boost::graph_traits<G>::vertex_descriptor x, const G& g) {
+      return g.is_factor(x);
     }
 
   template <typename G>
@@ -363,8 +359,4 @@ namespace occgrid {
     return typename G::FactorMap(g);
   }
 
-  template <typename PropertyMap>
-    typename PropertyMap::reference get(PropertyMap& pm, typename PropertyMap::key_type v) {
-      return pm.get(v);
-    }
 } // namespace occgrid

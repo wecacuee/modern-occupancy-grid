@@ -5,6 +5,9 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/utility/result_of.hpp>
 #include <boost/assert.hpp>
+#include <boost/unordered_map.hpp>
+#include <boost/property_map/property_map.hpp>
+#include <boost/typeof/typeof.hpp>
 
 #include <cmath>
 
@@ -131,4 +134,76 @@ public:
 };
 
 bool isnan(const SymReal& sr);
+
+template <typename key_type, typename mapped_type>
+struct default_unordered_map
+  : public boost::unordered_map<key_type, mapped_type> {
+    typedef boost::unordered_map<key_type, mapped_type> super_type;
+
+    default_unordered_map(const mapped_type& default_value) 
+    : default_value_(default_value) 
+    {
+    }
+    
+    mapped_type& operator[](const key_type& k) {
+      if (this->find(k) == this->end())
+        this->super_type::operator[](k) = default_value_;
+      return this->super_type::operator[](k);
+    }
+
+    private:
+    const mapped_type& default_value_;
+};
+
+template <typename key_t, typename mapped_type>
+struct hash_property_map {
+  typedef key_t key_type;
+  typedef mapped_type value_type;
+  typedef mapped_type& reference;
+  typedef boost::writable_property_map_tag category;
+
+  hash_property_map(mapped_type default_value) : map_(default_value)
+  {
+  }
+
+  const reference get(key_type k) const {
+    return const_cast<default_unordered_map<key_t, mapped_type>&>(map_)[k];
+  }
+
+  void put(key_type k, value_type v) {
+    map_[k] = v;
+  }
+
+  const reference operator[](key_type k) const {
+    return const_cast<default_unordered_map<key_t, mapped_type>&>(map_)[k];
+  }
+
+  reference operator[](key_type k) {
+    return map_[k];
+  }
+
+  private:
+  default_unordered_map<key_t, mapped_type> map_;
+};
+
+// Compiles only if second template argument is an instance of first
+template <typename T, T>
+struct if_instance { };
+
+template <typename M>
+  typename M::reference get(const M& pm, typename M::key_type v
+      // M::get should exist and be of the mentioned type
+      , if_instance<typename M::reference (M::*)(typename M::key_type) const, &M::get>* = 0
+      ) {
+    return pm.get(v);
+  }
+
+template <typename M>
+  void put(M& pm, typename M::key_type k, typename M::value_type v,
+      // M::put should exist and be of the mentioned type 
+      if_instance<void (M::*)(typename M::key_type, typename M::value_type), &M::put>* = 0
+      ) {
+    pm.put(k, v);
+  }
+
 } // namespace occgrid

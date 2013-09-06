@@ -21,7 +21,8 @@ class DDLaserFactor {
       namespace bl = boost::lambda;
       typedef typename boost::property_traits<Messages>::value_type value_type;
       typedef typename boost::property_traits<Messages>::key_type msg_key_type;
-      typedef typename boost::property_traits<MultiAssignment>::value_type sample_space_type;
+      //typedef typename boost::property_traits<MultiAssignment>::value_type sample_space_type;
+      typedef typename MultiAssignment::value_type sample_space_type;
       // compute assignment that minimizes energy
 
       // TODO: check if all the messages are zero or equal then return simply
@@ -65,7 +66,7 @@ class DDLaserFactor {
       // 4.O(n)
       std::copy(
           boost::counting_iterator<size_t>(0),
-          boost::counting_iterator<size_t>(lf_.cells_.size() - 1),
+          boost::counting_iterator<size_t>(lf_.cells_.size()),
           std::back_inserter(indices));
       assert(indices.size() == lf_.cells_.size());
       // 5.O(n)
@@ -124,19 +125,20 @@ class DDLaserFactor {
       // 13.O(n)
       value_type minimum_energy(0);
       value_type maximum_energy(0);
+      using boost::put;
       if ((w0_energy <= w1_energy) && (w0_energy <= w_otherwise_energy)) {
         for (size_t c = 0; c < lf_.cells_.size(); ++c)
-          multi_assignment[std::make_pair(lf_.factor_index_, lf_.cells_[c])] = lf_.w0_assignment(lf_.cells_[c]);
+          put(multi_assignment, std::make_pair(lf_.factor_index_, lf_.cells_[c]), lf_.w0_assignment(lf_.cells_[c]));
         minimum_energy = w0_energy;
         maximum_energy = std::max(w1_energy, w_otherwise_energy);
       } else if ((w1_energy <= w0_energy) && (w1_energy <= w_otherwise_energy)) {
         for (size_t c = 0; c < lf_.cells_.size(); ++c)
-          multi_assignment[std::make_pair(lf_.factor_index_, lf_.cells_[c])] = lf_.w1_assignment(lf_.cells_[c]);
+          put(multi_assignment, std::make_pair(lf_.factor_index_, lf_.cells_[c]), lf_.w1_assignment(lf_.cells_[c]));
         minimum_energy = w1_energy;
         maximum_energy = std::max(w0_energy, w_otherwise_energy);
       } else {
         for (size_t c = 0; c < lf_.cells_.size(); ++c)
-          multi_assignment[std::make_pair(lf_.factor_index_, lf_.cells_[c])] = other_minimizing_assign[c];
+          put(multi_assignment, std::make_pair(lf_.factor_index_, lf_.cells_[c]), other_minimizing_assign[c]);
         minimum_energy = w_otherwise_energy;
         maximum_energy = std::max(w0_energy, w1_energy);
       }

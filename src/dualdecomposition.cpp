@@ -5,6 +5,7 @@
 #include "OccupancyGrid/gtsam_adaptor.hpp"
 #include "OccupancyGrid/slaveminimizer.hpp"
 #include "OccupancyGrid/DDLaserFactor.hpp"
+#include "OccupancyGrid/utility.hpp"
 
 #include <gtsam/geometry/Pose2.h>
 
@@ -50,23 +51,24 @@ int main(int argc, const char *argv[])
     // this is where factors are added into the factor graph
     occupancyGrid.addLaser(pose, range, reflectance); //add laser to grid
   }
-  typedef G<OccupancyGrid, double, gtsam::Index, size_t> OccupancyGridGraph;
-  typedef _MultiAssignment<OccupancyGridGraph>::base_type MultiAssignmentBaseType;
-  typedef _MultiAssignment<OccupancyGridGraph>::property_map_type MultiAssignment;
-  typedef typename OccupancyGridGraph::MessageTypes::base_type MessagesBaseType;
-  typedef typename OccupancyGridGraph::MessageValues Messages;
+  typedef double EnergyType;
+  typedef gtsam::Index SampleSpaceType;
+  typedef gtsam::Index vertex_descriptor;
+  typedef G<OccupancyGrid, EnergyType, SampleSpaceType, vertex_descriptor> OccupancyGridGraph;
+  typedef hash_property_map< std::pair<vertex_descriptor, vertex_descriptor>, SampleSpaceType> MultiAssignment;
+  typedef DisagreementTracker<OccupancyGridGraph, MultiAssignment> DisagreementMap;
+  typedef hash_property_map< typename OccupancyGridGraph::MessageTypes::key_type, EnergyType> Messages;
   typedef SlaveMinimizer<OccupancyGridGraph,
-          DDLaserFactor<MultiAssignment, Messages>, Messages, MultiAssignment> SlaveMinimizer_;
+          DDLaserFactor<DisagreementMap, Messages>, Messages, DisagreementMap> SlaveMinimizer_;
   OccupancyGridGraph ogg(occupancyGrid);
-  MultiAssignmentBaseType multiassignbase;
-  MultiAssignment multiassign(multiassignbase);
-  MessagesBaseType msg_base(0);
-  Messages msgs(msg_base);
   SlaveMinimizer_ slvmin(ogg);
-  typename OccupancyGridGraph::SampleSpaceMap ssm = get(sample_space_t(), ogg);
-  DualDecomposition<OccupancyGridGraph, SlaveMinimizer_,
-    typename OccupancyGridGraph::SampleSpaceMap,
-    Messages,
-    MultiAssignment > dd(ogg, slvmin, ssm, msgs, multiassign, 50);
-  dd(70);
+  typedef typename OccupancyGridGraph::SampleSpaceMap SampleSpaceMap;
+  SampleSpaceMap ssm = get(sample_space_t(), ogg);
+  Messages messages(0);
+  MultiAssignment multiassign(0);
+  DisagreementMap disagreement_map(ogg, multiassign);
+  typedef SubgradientDualDecomposition<OccupancyGridGraph, SlaveMinimizer_,
+          SampleSpaceMap, DisagreementMap, Messages, SampleSpaceType, EnergyType> SubgradientDualDecompositionType;
+  SubgradientDualDecompositionType subg_dd(ogg, slvmin, ssm, disagreement_map, messages, 50);
+  iterate_dualdecomposition<OccupancyGridGraph, SubgradientDualDecompositionType, DisagreementMap, SampleSpaceType>(ogg, subg_dd, disagreement_map, 70);
 }
