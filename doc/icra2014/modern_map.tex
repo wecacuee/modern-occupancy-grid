@@ -6,6 +6,8 @@
 \usepackage[ruled,vlined]{algorithm2e}
 \usepackage{amsmath}
 \usepackage{amsfonts}
+\usepackage{graphicx}
+
 \DeclareMathOperator*{\argmin}{arg\,min}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \newcommand{\vect}[1]{\mathbf{#1}}
@@ -36,26 +38,73 @@ exploration.
 \section{Dropping the assumption}
 \section{Representation as factor graph}
 The problem of Occupancy grid mapping can be expressed as energy minimization
-over a factor graph. Let all cells in the map be the variable nodes $X$ and all
-the laser measurements be factor nodes $F$. Each cell $x \in X$ takes value
-from a discrete set $S(x) = \{0, 1\}$, where $0$ (respectively $1$) means that
-the cell is free (respectively occupied). Let us call the sample space all the cells in the map
-as $\Phi(X) = \prod_{x \in X} S(x)$.
-Each laser measurement $f$ is a
-function that depends only on the state of the cells $\vect{x}_f \subseteq X$
-that the laser passes through and evaluates to an \emph{energy} value that
-corresponds to negative
-log likelihood of the given state being the correct state according to that
-laser measurement. Mathematically, $f : \vect{x}_f \rightarrow \Real$. There
-exists an undirected edge $(x, f) : x \in X, f \in F$, if and only if the laser
-measurement $f$ passes through the cell $x$. Let $E$ represent the set of all
-such edges. The occupancy grid factor graph can be represented as $G = (X, F,
-E)$. In this formulation, we seek to determine the occupancy of cells that
+over a factor graph. Let all cells in the map be the variable nodes $V$ and all
+the laser measurements be factor nodes $F$. 
+There
+exists an undirected edge $(i, f)$, if and only if the laser
+measurement $f \in F$ passes through the cell $i \in V$. Let $E$ be set of all such edges:
+% Mathematically,
+\begin{align}
+  E = \{(i, f) : i \in V, f \in F, \text{laser $f$ passes through cell $i$}\}
+\end{align}
+This defines our factor graph representation of occupancy grid mapping $G = (V, F, E)$.
+
+%Let $n(.)$ denote neighborhood in factor graph $G = \{V, F, E\}$.
+%
+%% unncessary
+% i.e
+% \begin{align}
+%   n(k) &= \begin{cases}
+%   \{f \in F: (i, f) \in E\} & \text{ if $k \in V$}\\
+%   \{i \in V: (i, f) \in E\} & \text{ if $k \in F$}
+%   \end{cases}
+% \end{align}
+%
+Each cell $i \in V$ takes values
+from a discrete set of labels $L_i = \{0, 1\}$, where $0$ (respectively $1$) means that
+the cell is free (respectively occupied). Also denote the sample space of all the
+cells in the map as $\Omega(V) = \prod_{i \in V} L_i$.
+
+Each laser measurement $f \in F$ corresponds to a function $\theta_f : \vect{x}_f \rightarrow \Real$ 
+that depends only on the labels of the neighboring cells, $\vect{x}_f = \{x_i\}_{i
+\in n(f)}$, and evaluates to an
+\emph{energy} value. Here $n(.)$ denotes the neighborhood in the factor graph $G$.
+The \emph{energy} can be thought as the negative log likelihood of the given
+state $\vect{x}_f$ being the correct state according to the laser measurement $f$.
+
+In this formulation, we seek to determine the label of all the map cells that
 maximizes the total likelihood across all measurement, which is equivalent to
 minimizing the total \emph{energy} over all factors.
 \begin{align}
-  \min_{X \in \Phi(X)} \sum_{f \in F} f(\vect{x}_f)
+  \vect{x} = \argmin_{\vect{x} \in \Omega(V)} \sum_{f \in F} \theta_f(\vect{x}_f)
 \end{align}
+\begin{figure}
+  \includegraphics[width=\columnwidth]{../figures/factorgraph/factorgraph.pdf}
+  \caption{Diagrammatic conversion of Occupancy Grid to a factor graph.}
+  \label{fig:factor-graph}
+\end{figure}
+
+\section{Laser sensor model}
+\subsection{Gaussian sensor model}
+\subsection{Piecewise constant sensor model}
+The expected pattern of occupancy from a laser observation is two have last cell as occupied and others as free. So the simplest energy function would be 
+\begin{align}
+  \theta_f(\vect{x}_f) &= \begin{cases}
+              0 & \text{ if } \vect{x}_f = [0, 0 \dots 0, 1]^\top\\
+           1000 & \text{ otherwise}
+  \end{cases}
+\end{align}
+where $[0, 0 \dots 0, 1]$ means that all cells are $0$ except the last cell which is $1$. In this context, we consider $\vect{x}^f$ to be a vector of ordered cell labels through which laser measurement $f$ passes.
+
+However, to resolve conflicts it is sometimes better to provide lower energy to all cells free case. Hence, we come with the following energy function.
+\begin{align}
+  \theta_f(\vect{x}_f) &= \begin{cases}
+                     0 & \text{ if } \vect{x}_f = \vect{P}_1\\
+                   900 & \text{ if } \vect{x}_f = \vect{P}_2\\
+                  1000 & \text{ otherwise}
+  \end{cases}
+\end{align}
+where $\vect{P}_1 = [0, 0 \dots 0, 1]^\top$ and $\vect{P}_2 = [0, 0 \dots 0, 0]^\top$.
 \section{Metropolis hastings}
 \section2{Heat map}
 \section{Sum product}
@@ -64,78 +113,97 @@ minimizing the total \emph{energy} over all factors.
 \section{Dual decomposition}
 \newcommand{\msg}[3]{\mu_{#1#2}(#3)}
 \newcommand{\assign}{\leftarrow}
-\newcommand{\Sx}{S(x)}
+\newcommand{\Sx}{L_i}
 \cite{sontag2011introduction} explains the algorithm in detail. For
 completeness, we will describe the algorithm here.
 \begin{algorithm}
   \dontprintsemicolon
   \KwData{\;
-  Factor Graph $G = (X, F, E)$ where $X$ are the variable nodes, $F$ are the factor nodes and $E$ are edges between them.\;
-  Sample space $\Sx$, of each variable $x$.\;
+  Factor Graph $G = (V, F, E)$\;
+  Label set $\{\Sx\}_{i \in V}$\;
   Step size $\alpha > 0$\;
   Maximum number of iterations $N$\;
   }
-  \KwResult{Minimizing Assignment $\{a_x\}$ for all $x$}
+  \KwResult{Labels $\{x^f_i\}_{(i, f) \in E} $,
+  Messages $\{\msg{i}{f}{x_i}\}$}
 
-  \tcc{Initialize messages with zero}
-  $\msg{x}{f}{s_x} \assign 0$\;
-  $\msg{x}{x}{s_x} \assign 0$\tcc*{Self messages}\;
-  $d_f \assign \text{true}$\tcc*{Disagreement flag}\;
-  \While{$i < N$} {
-    \For{$f \in F : d_f \text{ is true}$} {
-      \tcc{Solve each sub problem}
-      $\vect{x}^f \assign \argmin\limits_{\vect{x}^f} \left( f(\vect{x}^f) + \sum\limits_{x \in n(f)}\msg{x}{f}{x^f} \right)$\;
-      $d_f \assign false$\;
+  $\msg{i}{f}{x_i} \assign 0 \hfill \forall (i, f) \in E, x_i \in \Sx$\;
+  $r \assign 1$\;
+  \While{$r < N$} {
+    \For {$f \in F$} {
+      $\vect{x}^f \assign \argmin\limits_{\vect{x}^f} \left( \theta_f(\vect{x}^f) + \sum\limits_{i \in n(f)}\msg{i}{f}{x^f_i} \right)$\;
     }
-    \For{$x \in X$} {
-      \tcc{if there is disagreement}
-      \If{$\exists f, f' : x^{f'} \ne x^f$}{
-        \tcc{Resolve disagreement}
-        \For{$f \in n(X)$}{
-          $d_f \assign true$\;
-          $\msg{x}{f}{x^f} \assign \msg{x}{f}{x^f} + \frac{\alpha}{i}$\;
-          $\msg{x}{x}{x^f} \assign \msg{x}{x}{x^f} - \frac{\alpha}{i}$\;
-        }
-        \tcc{Compute best assignment}
-        $a_x \assign \argmin\limits_{s_x \in \Sx} \msg{x}{x}{s_x}$\;
-      } \Else {
-        \tcc{Take agreed assignment}
-        $a_x \assign x^f$\;
+    \tcc{For disagreeing nodes}
+    \For {$i \in V : \exists f, f' \in n(i) : x_i^{f'} \ne x_i^f$} {
+      \For{$f \in n(i)$}{
+        $\msg{i}{f}{x^f_i} \assign \msg{i}{f}{x^f_i} + \frac{\alpha}{r}$\;
       }
     }
-    $i \leftarrow i + 1$\;
+    $r \leftarrow r + 1$\;
   }
   \label{alg:dualdecompostion}
-  \caption{Dual decomposition}
+  \caption{Subgradient Dual Decomposition}
 \end{algorithm}
-\subsection{Efficient slave minimization}
-Minimizing slave problem can be done efficiently for specific kinds of functions, for example, piecewise constant functions. We have used the following energy function for each laser measurement.
+We can compute the minimum energy assignment from dual decomposition messages.
 \begin{align}
-  f(\vect{x}_f) &= \begin{cases}
-              0 & \text{ if } \vect{x}_f = [0, 0 \dots 0, 1]^\top\\
-            900 & \text{ if } \vect{x}_f = [0, 0 \dots 0, 0]^\top\\
-           1000 & \text{ otherwise}
-  \end{cases}
+  x_i \assign \argmax\limits_{x_i \in \Sx} \sum\limits_{f \in n(i)} \msg{i}{f}{x_i}
 \end{align}
+However, the above computation is only valid if the node has at least a pair of disagreeing factors. In case of agreement, we simply take the agreed upon assignment or if the node is not connected to any factors, we take a random assignment.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Unncessary
+% \begin{algorithm}
+%   \dontprintsemicolon
+%   \KwData{\;
+%     The Variable Node $i \in V$\;
+%     Factor Graph $G = (V, F, E)$\;
+%     Label set $\Sx$\;
+%     Labels $\{x^f_i\}_{f \in n(i)} $\;
+%     Messages $\{\msg{i}{f}{x_i}\}$\;
+%   }
+%   \KwResult{Minimum energy label $x_i$}
+%   \tcc{Check for disagreement}
+%   \If{$\exists f, f' \in n(i) : x^{f'}_i \ne x^f_i$}{
+%     $x_i \assign \argmax\limits_{x_i \in \Sx} \sum\limits_{f \in n(i)} \msg{i}{f}{x_i}$\;
+%   } \Else {
+%     \tcc{Take any agreed label}
+%     $x_i \assign x^f_i : f \in n(i)$\;
+%   }
+%   \caption{Label from Dual decomposition messages }
+%   \label{alg:compute-assignment}
+% \end{algorithm}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Unncessary
+\subsection{Efficient slave minimization of piecewise constant factor}
+Minimizing slave problem can be done efficiently for specific kinds of functions, for example, piecewise constant functions.
 The problem is to minimize the energy function along with the received messages.
 \begin{align}
-  \min_{\vect{x}^f} \left( f(\vect{x}^f) + \sum_{x \in n(f)}\msg{x}{f}{x^f} \right)
+  \min_{\vect{x}^f} \left( \theta(\vect{x}^f) + \sum_{i \in n(f)}\msg{i}{f}{x^f} \right)
 \end{align}
-A general minimization algorithm will take time of the order that is exponential in the number of cells a laser passes through. We can make use of the fact that the piecewise function needs to look for only two patterns. We should compute the total function value for these two patterns and the minimum value for the \emph{otherwise} case. 
+A general minimization algorithm will take time of the order that is exponential in the number of cells a laser passes through as $\vect{x}^f$ can have $|L_i|^{|n(f)|}$ possible values. However, for our sensor model we can make use of the fact that the piecewise function needs to look for only two patterns. We should compute the total function value for these two patterns and the minimum value for the \emph{otherwise} case. 
 \begin{align}
-  \min f(\vect{x}_f) = \min \left(\right.&\\
-                                         &0 + \sum_{x \in n(f), \vect{x}^f = [0, 0 \dots 0, 1]^\top}\msg{x}{f}{x^f},\\
-                                         &900 + \sum_{x \in n(f), \vect{x}^f = [0, 0 \dots 0, 0]^\top}\msg{x}{f}{x^f},\\
-                                         &1000 + \min_{\vect{x}^f \in \text{ otherwise}} \sum_{x \in n(f)}\msg{x}{f}{x^f}\\
-  \left.\right)
+  \min \theta_f(\vect{x}_f) &= \min \left\{\right.\\
+                            &0 + \sum_{\vect{x}_f = \vect{P}_1, i \in n(f)}\msg{i}{f}{x_i},\\
+                            &900 + \sum_{\vect{x}_f = \vect{P}_2, i \in n(f)}\msg{i}{f}{x_i},\\
+                            &1000 + \min_{\vect{x}_f \not\in \{\vect{P}_1, \vect{P}_2\}} \sum_{i \in n(f)}\msg{i}{f}{x_i}\\
+\left.\right\}
 \end{align}
-where $\min_{\vect{x}^f \in \text{ otherwise}}$ denotes minimization over all
-possible $\vect{x}^f$ except the cases already covered i.e. $\vect{x}_f = \{[0,
-0 \dots 0, 1]^\top, [0, 0 \dots 0, 0]^\top\}$. 
-The third term can be easily minimized by choosing the minimizing state for
-each $x$ over all possible $\vect{x}_f$.
+The third term can be easily minimized by 
+%choosing the minimizing state for each $i$ over all possible $\Omega(\vect{x}_f)$ by 
+simply choosing the minimizing $x_i \in L_i$ for each $i$. However, the minimizing labels can coincide with patterns $\vect{P}_1$ and $\vect{P}_2$. The solution is to find minimum three assignments of $\sum_{i \in n(f)}\msg{i}{f}{x_i}$ and pick the one that is not equal to $\vect{P}_1$ nor $\vect{P}_2$. 
+
+%
+% Algorithm~\ref{alg:efficient-minimize} gives pseudo code for minimizing the last term.
+% \begin{algorithm}
+%   \SetKwFunction{ArgSortNElements}{ArgSortNElements}
+%   $e_i = \min\limits_{x_i \in L_i} \msg{i}{f}{x_i} \hfill, \forall i \in n(f)$\;
+%   $x^*_i = \argmin\limits_{x_i \in L_i} \msg{i}{f}{x_i} \hfill, \forall i \in n(f)$\;
+%   $\delta_{if}(x_i) = \msg{i}{f}{x_i} - e_i \hfill, \forall i \in n(f), x_i \in L_i, x_i \ne x^*_i$\;
+%   $I = \ArgSortNElements(\delta_{if}(x_i), \lceil{\log_{|L_i|}{3}}\rceil)$\;
+%   \caption{Efficient minimization of piecewise constant function}
+%   \label{alg:efficient-minimize}
+% \end{algorithm}
 
 \subsection{Selection of step size}
+Step size is critical choice as it affects the speed with which Dual decomposition converges.
+
 \section{Experiments} 
 Sampling algorithms are liable to getting stuck in a local minima because we flip only one cell at a time.
 
