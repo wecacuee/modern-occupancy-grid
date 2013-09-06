@@ -59,7 +59,6 @@ void capture_player_data() {
             reflectance.at<uint8_t>(0, i) = laser.GetIntensity(i);
             //std::cout << "i:" << laser.GetIntensity(i) << ", ";
         }
-        std::cout << std::endl;
         laser_range_all.push_back(range);
         scan_angles_all.push_back(angles);
         laser_reflectance_all.push_back(reflectance);

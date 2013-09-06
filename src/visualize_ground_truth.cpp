@@ -4,8 +4,13 @@
 #include <opencv2/opencv.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/format.hpp>
+#include "OccupancyGrid/loadData.h"
+#include <boost/program_options.hpp>
 
 namespace bfs = boost::filesystem;
+namespace po = boost::program_options;
+using namespace std;
+using namespace gtsam;
 
 /// Override class to override is_occupied function so that it can copy the
 /// ground truth map everytime a laser crosses a cell.
@@ -56,22 +61,41 @@ void cvArrow(cv::Mat& vis,
 }
 
 int main(int argc, char** argv) {
-  if (argc != 8) {
-    std::cout << "Sample usage (from Data/player_sim_with_reflectance):"
-      << "../../bin/visualize_ground_truth laser_pose_all.bin laser_range_all.bin scan_angles_all.bin ../player_worlds/bitmaps/cave-rotated.png 16 16 laser_reflectance_all.bin\n";
-    std::cout << "Got " << argc << " arguments\n";
-    return 1;
-  }
-    cv::Mat laser_pose;
-    loadMat(laser_pose, argv[1]);
-    cv::Mat laser_ranges;
-    loadMat(laser_ranges, argv[2]);
-    cv::Mat scan_angles;
-    loadMat(scan_angles, argv[3]);
-    cv::Mat floorplan = cv::imread(argv[4], cv::IMREAD_GRAYSCALE);
-    cv::Vec2d size_bitmap(atof(argv[5]), atof(argv[6]));
-    cv::Mat laser_reflectance;
-    loadMat(laser_reflectance, argv[7]);
+
+  // parse arguments ///////////////////////////////////////////
+  // Declare the supported options.
+  po::options_description desc("Run dual decomposition");
+  desc.add_options()
+    ("help", "produce help message")
+    ("width", po::value<double>(), "width")
+    ("height", po::value<double>(), "height")
+    ("dir", po::value<std::string>()->default_value("."), "Data directory")
+;
+
+  po::positional_options_description pos;
+  pos.add("width", 1);
+  pos.add("height", 1);
+  pos.add("dir", 1);
+
+  po::variables_map vm;
+  po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
+  po::notify(vm);    
+
+  double width = vm["width"].as<double>();
+  double height = vm["height"].as<double>();
+  std::string datadirectory = vm["dir"].as<std::string>();
+  // end of parse arguments ////////////////////////////////////
+  cv::Mat laser_pose, laser_ranges, scan_angles, laser_reflectance;
+  loadMat(laser_pose, datadirectory + "/laser_pose_all.bin");
+  loadMat(laser_ranges, datadirectory + "/laser_range_all.bin");
+  loadMat(scan_angles, datadirectory + "/scan_angles_all.bin");
+  loadMat(laser_reflectance, datadirectory + "/laser_reflectance_all.bin");
+
+    cv::Mat floorplan = cv::imread(datadirectory + "/floorplan.png",
+        cv::IMREAD_GRAYSCALE);
+
+    //shiftPoses(laser_pose, scan_angles, laser_ranges, width, height);
+    cv::Vec2d size_bitmap(width, height);
 
     cv::Vec2d margin(1, 1);
     cv::Vec2d min_pt(-margin(0) - size_bitmap(0)/2, -margin(1) - size_bitmap(1)/2);

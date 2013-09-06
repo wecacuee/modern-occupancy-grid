@@ -1,0 +1,18 @@
+# simple.world - basic world file example
+# Authors: Richard Vaughan
+# $Id$
+
+include "pioneer.inc"
+include "map.inc"
+include "sick.inc"
+
+
+# time to pause (in GUI mode) or quit (in headless mode (-g)) the simulation
+quit_time 120 # 2 min of simulated time
+
+paused 1
+
+resolution 0.02
+
+
+include "simple_rooms.inc"

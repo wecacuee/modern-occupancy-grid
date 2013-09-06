@@ -131,7 +131,7 @@ target_link_libraries(inference_gibbs_sampling merali13icra ${OpenCV_LIBS})
 
 add_executable(visualize_ground_truth 
 	src/visualize_ground_truth.cpp)
-target_link_libraries(visualize_ground_truth merali13icra ${OpenCV_LIBS})
+target_link_libraries(visualize_ground_truth occupancy_grid_graph merali13icra ${OpenCV_LIBS})
 
 add_executable(two_assumption_alg 
 	src/two_assumption_alg.cpp)

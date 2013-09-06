@@ -29,3 +29,9 @@ void shiftPoses(
     double& width,
     double& height);
 
+void shiftPoses(
+    cv::Mat& laser_pose,
+    const cv::Mat& scan_angles,
+    const cv::Mat& laser_range,
+    double& width,
+    double& height);

@@ -30,67 +30,149 @@
   obtain faster convergence by using modern methods like Sum Product algorithm
   and Dual Decomposition.
 \end{abstract}
+\section{Introduction}
+% navigation -> localization and mapping -> mapping
+%Autonomous navigation of mobile robots is an important problem for any kind of robot that needs to find s path through obstacles.
+Robotic mapping is an important problem. It is a necessary step for applications like indoor autonomous navigation, grasping, reconstruction and augmented reality. It is often done in parallel with localization and termed as Simultaneous localization and mapping. Given the importance of the problem, lot of work has been done in this field. The approaches discussed in literature have used various kinds of sensors 
+Sonars,%TODO: cite sonar mapping papers,
+laser scanners, %TODO : cite laser mapping papers
+simple cameras, %TODO : single camera reconstructions
+RGB-D Cameras \cite{newcombe2011kinectfusion, whelan2013robust, whelan2012kintinuous}. 
+However, all the mapping algorithms introduced in the robotics suffer use a inaccurate independent cell assumption as pointed out in the % TODO: cite thrun's paper
+
+The main reason for using this assumption is speed gain that we gain with the independent cell assumption. We show that the assumption if dropped can produce more accurate maps, which can be useful when more accurate reconstructions are required and when computational resources are not limited, for example, during post processing of the data.
+
+We introduce the factor graph approach of solving mapping problem which, to the best of our knowledge, has not been introduced to the robotics community. The closest work is that of \cite{merali2013icra} that uses Monte carlo Markov chain (MCMC) methods to estimate accurate maps. It has been a common knowledge that MCMC methods are very likely to get stuck in a local minimum. In this paper, we go beyond MCMC methods and evaluate modern factor graph optimization methods to compute maps that are more accurate given the accuracy as long as we have an accurate forward sensor model.
+
+
+\section{Related work}
+% Work that has been in "application" i.e. mapping
+
+% Itersection mapping using forward sensor models
+% Thrun03ar:
+% Standard occupancy methods are characterized by two algorith-
+% mic choices:
+% 1. They decompose the high-dimensional mapping problem into many binary estimation
+% problems, which are then solved independently of each other.
+% 2. They rely on inverse models of the robot’s sensors which reasons from sensor measure-
+% ments to maps (opposite of the way sensor data is generated).
+\cite{thrun2003learning} made an argument for using forward sensor models in sonar based mapping instead of conventional inverse sensor model.
+
+
+% Work that has been in done in "method" that i.e MAP
+Minimization of cost (or energy) function over Factor graphs is a well studied field and it has found numerous application in the field of information theory, computer vision and machine learning. A lot of work has been done in the field.
+
 \section{Problem definition}
+\newcommand{\map}{\vect{x}}
 A robot equipped with a laser scanner and accurate odometry moves in a static
 environment, problem is to figure out an optimal occupancy grid map. For the
 purpose of ground robots often 2D maps are enough for path planning and
-exploration. 
+exploration.
 % define problem in probability terms
-The area to be mapped is divided into $N$ discrete cells. Let $x_i$ denote the state of cell $i$, which can take values from label set $L_i = \{0, 1\}$, where $0$ (resp. $1$) denotes that cell is free (resp. occupied). We define, the map $m$ as a vector that defines state for all $N$ cells, $m = [x_i]^\top_{0 \le i < N}$. Hence map $m$ takes values from sample space $\Omega = \prod_{0 \le i < N}L_i$.
+The area to be mapped is divided into $N$ discrete cells. Let $x_i$ denote the state of cell $i$, which can take values from label set $L_i = \{0, 1\}$, where $0$ (resp. $1$) denotes that cell is free (resp. occupied). We define, the map $\map$ as a vector that defines state for all $N$ cells, $\map = [x_i]^\top_{1 \le i \le N}$. Hence map $\map$ takes values from sample space $\Omega = \prod_{1 \le i \le N}L_i$.
 
-Let $z_k$ denote the $k$th laser range measurement when captured from pose $\rho_k$. We assume that the probability of observation $p(z_k| \rho_k, m)$ (forward sensor mdoel) be given. We want to find the marginal probability of a cell $i$ being occupied given $K$ observations $z = [z_k]^\top_{0 \le k < K}$ and $\rho = [\rho_k]^\top_{0 \le k < K}$.
+Let $z_t$ denote the $t$\textsuperscript{th} laser range measurement when captured from pose $\rho_t$. We assume that the probability of observation $p(z_t| \rho_t, \map)$ (forward sensor model) be given. The problem is to find the probability of all cells $i$ being occupied given all observations $z = [z_f]^\top_{1 \le f \le t}$ and $\rho = [\rho_f]^\top_{1 \le f \le t}$.
 \begin{align}
-  &p(x_i = 1 | z, \rho) = \sum_{m \in \Omega : x_i = 1} p(m | z , \rho)
+  p(x_i = 1 | z, \rho) &= \sum_{\map \in \Omega : x_i = 1} p(\map | z , \rho) & \forall 1 \le i \le N 
   \label{eq:fullsolution}
 \end{align}
-Merali et al. \cite{merali2013icra} derive a recursive formula to compute full solution which they observe
-to be computationally intractable as its complexity is exponential in the number of cells.
-
-\begin{comment}
-  
-\section{Full solution}
-Next we try to find out the full solution
+In another formulation of problem, we can focus on the best overall occupancy of the map that maximizes the posterior probability:
 \begin{align}
-  &p(x_i = 1 | z, \rho) = \sum_{m \in \Omega : x_i = 1} p(m | z , \rho)\\
-             &= \sum_{m \in \Omega : x_i = 1} \frac{p(m , z , \rho)}{p(z, \rho)} \\
-             &= \sum_{m \in \Omega : x_i = 1} \frac{p(z_K, \rho_K|m , z_{1:K-1} , \rho_{1:K-1})p(m, z_{1:K-1}, \rho_{1:K-1})}{p(z, p)}\\
-             &= \sum_{m \in \Omega : x_i = 1} \frac{p(z_K, \rho_K|m , z_{1:K-1} , \rho_{1:K-1})p(m| z_{1:K-1}, \rho_{1:K-1})}{p(z_K, \rho_K|z_{1:K-1}, \rho_{1:K-1})}
+  \vect{x}* &= \argmax_{\map \in \Omega } p(\map | z, \rho)
+  \label{eq:mapproblem}
 \end{align}
-The current laser range measurement $z_K$ and pose $\rho_K$ can be taken to independent of previous observations $z_{1:K-1}$ and $\rho_{1:K-1}$, which  simplifies above equation to
-\begin{align}
-  &p(x_i = 1 | z, p)
-  = \sum_{m \in \Omega : x_i = 1} \frac{p(z_K, \rho_K|m)p(m| z_{1:K-1}, \rho_{1:K-1})}{p(z_K, \rho_K|z_{1:K-1}, \rho_{1:K-1})}\\
-  &= \sum_{m \in \Omega : x_i = 1} \frac{p(z_K|m , \rho_K)p(\rho_K|m)p(m| z_{1:K-1}, \rho_{1:K-1})}{p(z_K|z_{1:K-1}, p)p(\rho_K|z_{1:K-1}, \rho_{1:K-1})}\\
-  &= \sum_{m \in \Omega : x_i = 1} \frac{p(z_K|m , \rho_K)p(\rho_K|m)p(m| z_{1:K-1}, \rho_{1:K-1})}{p(z_K|z_{1:K-1}, p)p(\rho_K|z_{1:K-1}, \rho_{1:K-1})}
-\end{align}
-Another assumption of pose $\rho_K$ being independent of map $m$ yields a simple recursive formula 
-\begin{align}
-  p(x_i = 1 | z, p)
-  = \sum_{m \in \Omega : x_i = 1} \frac{p(z_K|m , \rho_K)p(m| z_{1:K-1}, \rho_{1:K-1})}{p(z_K|z_{1:K-1}, p)}
-\end{align}
+It is easy to see that any solution to this problem would have complexity that is exponential in the number of cells. We can only hope to find an approximate solution of this problem.
 
-However, the full solution is computationally intractable as its complexity is exponential in the number of cells.
-
-\end{comment}
-
-\section{Two assumption algorithm}
+\section{Mapping by inverse sensor model}
 % assume independence
-Eq~\ref{eq:fullsolution} is usually simplified in robotic mapping algorithms by introducing two assumptions:
+%\eqref{eq:fullsolution} is usually simplified in robotic mapping algorithms by introducing two assumptions:
+Commonly used occupancy grid mapping algorithms make simplifying assumption
+that each grid cell is independent of all other map cells. 
+%As a result instead of the static world assumption (\eqref{eq:staticWorldAssumption}), we use 
 \begin{align}
+  %p(z_t|x_i, \sigma_{1:t-1}, \rho_t) = p(z_t|x_i, \rho_t)
+  p(x_i|z, \rho) &= \frac{p(z_t, \rho_t|x_i, \sigma_{1:t-1})p(x_i|\sigma_{1:t-1})}
+                         {p(z_t, \rho_t|\sigma_{1:t-1})}
 \end{align}
+% Thrun03ar : A common assumption in mapping is the static world assumption, which states that past sensor readings are conditionally independent given knowledge of the map \map, for any point in time t:
+The current laser measurement $z_t$ are commonly assumed (static world assumption) \cite{thrun2003learning} to be independent of previous observations $\sigma_{1:t-1}$ given the map $x_i$ :
+\begin{align}
+  p(z_t, \rho_t|x_i, \sigma_{1:t-1}) &= p(z_t, \rho_t|x_i)
+ \label{eq:staticWorldAssumption}
+\end{align}
+Using static world assumption (\eqref{eq:staticWorldAssumption}), we get:
+\begin{align}
+ p(x_i|z, \rho) &= p(z_t, \rho_t|x_i)\frac{p(x_i|\sigma_{1:t-1})}
+                                           {p(z_t, \rho_t|\sigma_{1:t-1})}\\
+                 &= \frac{p(x_i|z_t, \rho_t)p(z_t,\rho_t)} {p(x_i)}\frac{p(x_i|\sigma_{1:t-1})}{p(z_t, \rho_t|\sigma_{1:t-1})}\\
+                 &= \frac{1}{Z'}\frac{p(x_i|z_t, \rho_t)p(x_i|\sigma_{1:t-1})}{p(x_i)}\\
+                 &= \frac{1}{Z'}\prod_{1\le f \le t} \frac{p(x_i|z_f, \rho_f)}{p(x_i)}
+\end{align}
+where $Z'$ is a normalizing factor that is independent of $x_i$.
 
 
-\section{Dropping the assumption}
-% argue that it is an unreasonable assumption
+\section{Mapping by forward sensor model}
+
+   Here we present minimum assumption simplification of
+   \eqref{eq:fullsolution} as done in \cite{thrun2003learning,
+   merali2013icra}. 
+   For conciseness, we use 
+   %$\sigma_t = \{z_t, \rho_t\}$ to represent both range and pose of $t$\textsuperscript{th} laser measurement.
+   %Similarly,
+   $\sigma_{1:t-1} = \{z_{1:t-1}, \rho_{1:t-1}\}$ to represent all but
+   $t$\textsuperscript{th} measurement. For a given map $\map$, the conditional
+   probability of map being correct is
+   \begin{align}
+     p(\map | z, \rho) &= p(\map | \sigma_{1:t-1}, z_t, \rho_t)\\
+                    &= \frac{p(z_t|\map , \sigma_{1:t-1}, \rho_t)p(\map| \sigma_{1:t-1}, \rho_t)}
+                            {p(z_t|\sigma_{1:t-1}, \rho_t)}
+     \label{eq:recursivesol}
+   \end{align}
+   Static world assumption, $p(z_t|\map, \sigma_{1:t-1}, \rho_t) = p(z_t|\map, \rho_t)$, simplifies \eqref{eq:recursivesol} to :
+   \begin{align}
+     p(\map|z, \rho) &= \frac{p(z_t|\map, \rho_t)p(\map| \sigma_{1:t-1}, \rho_t)}
+                          {p(z_t|\sigma_{1:t-1}, \rho_t)}\\
+                  &= \frac{p(z_t|\map, \rho_t)p(\rho_t|\map, \sigma_{1:t-1})p(\map| \sigma_{1:t-1})}
+                          {p(z_t|\sigma_{1:t-1}, \rho_t)p(\rho_t|\sigma_{1:t-1})}
+   \end{align}
+
+   Another common assumption is that the pose of robot $\rho_t$ being independent of map $\map$:
+   \begin{align}
+     p(\rho_t|\map, \sigma_{1:t-1}) = p(\rho_t|\sigma_{1:t-1})
+   \end{align}
+   Using independent pose assumption, we get a recursive formula for \eqref{eq:recursivesol}
+   \begin{align}
+     p(\map | z, \rho) &= \frac{1}{Z} p(z_t|\map , \rho_t)p(\map| z_{1:t-1}, \rho_{1:t-1})\\
+                       &= \frac{1}{Z} \prod_{1 \le f \le t} p(z_f|\map, \rho_f)
+     \label{eq:map}
+   \end{align}
+   where $Z$ is a normalizing constant independent of $\map$. The term $p(z_f|\vect{x}, p_f)$ is the \emph{forward sensor model}. Thrun et al. \cite{thrun2003learning} approach this problem by expectation maximization, while Merali et al. \cite{merali2013icra} use Gibbs sampling to find approximate solution. In this paper, we explore modern explore modern methods of finding maximum a posteriori estimate of this problem.
+
+   Modern MAP methods approach the problem \eqref{eq:map}, by making use of the fact that a laser measurement depends only a small portion of the entire map:
+   \begin{align}
+     p(z_f |\vect{x}, \rho_f) = p(z_f|\vect{x}_f, \rho_f)
+   \end{align}
+   where $\vect{x}_f \subseteq \vect{x}$ is the small portion of the map on which the laser measurement $f$ depends. Rewriting, \eqref{eq:map} in new notation:
+   \begin{align}
+     p(\map | z, \rho) &= \frac{1}{Z} \prod_{1 \le f \le t} p(z_f|\map_f, \rho_f)
+     \label{eq:modernmap}
+   \end{align}
+   %However, the full solution is computationally intractable as its complexity is exponential in the number of cells.
+%\end{comment}
+
 
 \section{Representation as factor graph and Notation}
 \label{sec:notation}
 The problem of Occupancy grid mapping can be expressed as energy minimization
 over a factor graph. Let all cells in the map be the variable nodes $V$ and all
 the laser measurements be factor nodes $F$. 
-There
-exists an undirected edge $(i, f)$, if and only if the laser
-measurement $f \in F$ passes through the cell $i \in V$. Let $E$ be set of all such edges:
+There exists an undirected edge $(i, f)$, if and only if the laser
+range measurement $p(z_f|\vect{x}, \rho_f)$ depends on the cell occupancy 
+$x_i$. In this paper, we assume that laser range measurement depends on only
+those cells that the laser passes through for given pose $\rho_f$. Though more
+complicated models can lead to better accuracy, we show that with such a simple
+model we are able to achieve better accuracy than methods tried so far.
+Let $E$ be set of all such edges:
 % Mathematically,
 \begin{align}
   E = \{(i, f) : i \in V, f \in F, \text{laser $f$ passes through cell $i$}\}
@@ -108,23 +190,36 @@ This defines our factor graph representation of occupancy grid mapping $G = (V, 
 %   \end{cases}
 % \end{align}
 %
-Each cell $i \in V$ takes values
-from a discrete set of labels $L_i = \{0, 1\}$, where $0$ (respectively $1$) means that
-the cell is free (respectively occupied). Also denote the sample space of all the
-cells in the map as $\Omega(V) = \prod_{i \in V} L_i$.
+% As before each cell $i \in V$ takes values
+% from a discrete set of labels $L_i = \{0, 1\}$, where $0$ (respectively $1$) means that
+% the cell is free (respectively occupied). Also denote the sample space of all the
+% cells in the map as $\Omega = \prod_{i \in V} L_i$.
 
-Each laser measurement $f \in F$ corresponds to a function $\theta_f : \vect{x}_f \rightarrow \Real$ 
-that depends only on the labels of the neighboring cells, $\vect{x}_f = \{x_i\}_{i
-\in n(f)}$, and evaluates to an
-\emph{energy} value. Here $n(.)$ denotes the neighborhood in the factor graph $G$.
-The \emph{energy} can be thought as the negative log likelihood of the given
-state $\vect{x}_f$ being the correct state according to the laser measurement $f$.
+% Each laser measurement $f \in F$ corresponds to a function $\theta_f : \vect{x}_f \rightarrow \Real$ 
+% that depends only on the labels of the neighboring cells, $\vect{x}_f = \{x_i\}_{i
+% \in n(f)}$, and evaluates to an
+% \emph{energy} value. Here $n(.)$ denotes the neighborhood in the factor graph $G$.
+% The \emph{energy} can be thought as the negative log likelihood of the given
+% state $\vect{x}_f$ being the correct state according to the laser measurement $f$.
 
-In this formulation, we seek to determine the label of all the map cells that
-maximizes the total likelihood across all measurement, which is equivalent to
-minimizing the total \emph{energy} over all factors.
+% In this formulation, we seek to determine the label of all the map cells that
+% maximizes the total likelihood across all measurements, which is equivalent to
+% minimizing the total \emph{energy} over all factors.
+We focus on the maximum-a-posteriori formulation of the problem (using equations \eqref{eq:mapproblem} and \eqref{eq:modernmap}) 
 \begin{align}
-  \vect{x} = \argmin_{\vect{x} \in \Omega(V)} \sum_{f \in F} \theta_f(\vect{x}_f)
+  \vect{x}* = \argmax_{\vect{x} \in \Omega} \frac{1}{Z} \prod_{f \in F} p(z_f|\map_f, \rho_f)
+  \label{eq:probablisticmap}
+\end{align}
+Often, for computational reasons, this problem is approached in negative log
+likelihood or \emph{energy} domain. Let 
+$\theta_f(\vect{x}_f) = - \log p(z_f|\map_f, \rho_f)$ 
+denote the \emph{energy} for the laser measurement $f$. Note that here we
+assume that $p(z_f|\map_f, \rho_f) > 0$, which is practically achievable by
+choosing very low probability values instead of zero for highly improbable
+cases.  Taking negative log on both sides of \eqref{eq:probablisticmap} and
+dropping the constant normalizing factor, we get:
+\begin{align}
+  \vect{x}* = \argmin_{\vect{x} \in \Omega} \sum_{f \in F} \theta_f(\vect{x}_f)
 \end{align}
 \begin{figure}
   \includegraphics[width=\columnwidth]{../figures/factorgraph/factorgraph.pdf}
@@ -132,23 +227,25 @@ minimizing the total \emph{energy} over all factors.
   \label{fig:factor-graph}
 \end{figure}
 
-\section{Laser sensor model}
+\section{Forward sensor models}
+We explore here a few plausible sensor models
 \subsection{Gaussian sensor model}
-In this sensor model, we assume that the laser measurements are affected by Gaussian noise. The probability of actual distance of first occupied cell $d$ from the robot is a Gaussian with mean as the observed laser distance $\bar{d}$ from the robot.
+\newcommand{\actz}{\bar{z}_f(\vect{x}_f, \rho_f)}
+In this sensor model, we assume that the laser measurements are affected by Gaussian noise. The forward sensor model is given by
 \begin{align}
-  P(d) &= \frac{1}{2\pi\sigma(d)}\exp\left(-\frac{(d - \bar{d})^2}{\sigma(d)^2}\right)
+  p(z_f|\vect{x}_f, \rho_f) &= \frac{1}{2\pi\sigma}\exp\left(-\frac{(\actz - z_f)^2}{\sigma^2}\right)
 \end{align}
-where $\sigma(d)$ is a measure of noise in laser measurement and it often depends on the distance $d$ itself. For our experiments we assume noise to linearly vary with distance as $\sigma(d) = \sigma_0d$. Since $d$ is unknown, we approximate noise computation by using observed laser distance $\bar(d)$ instead of $d$ i.e. $\sigma(d) = \sigma_0\bar{d}$.
+where $\actz$ is the distance of first occupied cell in $\vect{x}_f$ starting from pose $\rho_f$. Also $\sigma$ is a measure of noise in laser measurement and it often depends on the distance measured. For our experiments we assume noise to linearly vary with distance as $\sigma = \sigma_0z_f$. 
 
 In terms of negative log likelihood, the energy function becomes
 \begin{align}
-  E(d) &= \frac{1}{\sigma_0^2}\left(1 - \frac{d}{\bar{d}}\right)^2
+  \theta_f(\vect{x}_f) &= \frac{1}{\sigma_0^2}\left(1 - \frac{\actz}{z_f}\right)^2 + \log(2\pi\sigma_0z_f)
 \end{align}
-In terms of discrete set of cells that the laser passes through the energy function becomes
-\begin{align}
-  \theta_f(\vect{x}_f) &= \frac{1}{\sigma_0^2}\left(1 - \frac{\kappa(\vect{x}_f)}{|\vect{x}_f|}\right)^2
-\end{align}
-where $\kappa(\vect{x}_f)$ denote the index of the first occupied cell in $\vect{x}_f$ and $|\vect{x}_f|$ is the total number of cells observed by the laser. Note that $\theta_f(\vect{x}_f)$ is independent of cell size.
+% In terms of discrete set of cells that the laser passes through the energy function becomes
+% \begin{align}
+%   \theta_f(\vect{x}_f) &= \frac{1}{\sigma_0^2}\left(1 - \frac{\kappa(\vect{x}_f) \Delta}{z_f}\right)^2 + \log(2\pi\sigma_0z_f)
+% \end{align}
+% where $\kappa(\vect{x}_f)$ denote the index of the first occupied cell in $\vect{x}_f$ and $\Delta$ is the cell size.
 
 \subsection{Piecewise constant sensor model}
 The expected pattern of occupancy from a laser observation is two have last cell as occupied and others as free. So the simplest energy function would be 
@@ -170,6 +267,23 @@ However, to resolve conflicts it is sometimes better to provide lower energy to 
 \end{align}
 where $\vect{P}_1 = [0, 0 \dots 0, 1]^\top$ and $\vect{P}_2 = [0, 0 \dots 0, 0]^\top$.
 \section{Metropolis hastings}
+Markov Chain Monte Carlo (MCMC) methods allow us to sample from high dimensional probability distributions. The samples drawn using MCMC methods are not independent but correlated as a Markov chain. They work by moving in a random walk in the high dimensional space. Metropolis Hastings is one of the popular MCMC methods. The idea is to sample $\vect{x}$ from the probability distribution $p(\vect{x}|z, \rho)$ and after sufficient number of iterations, we should get sample that is close to the true map.
+
+In general, for Metropolis hastings a \emph{transition probability} $Q(\vect{x}',
+\vect{x}^r)$ is chosen, that depends on current sample $\vect{x}^r$ and guides the random
+walk in the high-dimensional space. We randomly sample a point $\vect{x}'$ 
+from from $Q(.)$ and it is either accepted or rejected based on the acceptance probability $a$:
+\begin{align}
+  a = \frac{p(\vect{x}'|z, \rho)Q(\vect{x}^r, \vect{x}')}
+  {p(\vect{x}^r|z, \rho)Q(\vect{x}', \vect{x}^r)}
+\end{align}
+\begin{align}
+  \vect{x}^{r+1} = \begin{cases}
+    \vect{x}' & \text{ if $a \ge 1$ or with Probability $a$  }\\
+    \vect{x}^r & \text{ otherwise}\\
+  \end{cases}
+\end{align}
+Interested reader is referred to \cite{mackay1998introduction}.
 \subsection{Heat map}
 \section{Sum product}
 \cite{kschischang2001factor} introduced the algorithm.
@@ -281,8 +395,30 @@ Step size is critical choice as it affects the speed with which Dual decompositi
 Intuitively, dual decomposition converges faster because it focuses on the disagreeing 
 
 \section{Experiments} 
+Used player and stage to generate simulated data. Input map is in Fig
+\begin{figure}
+  %\includegraphics[width=\columnwidth]{../figures/hospital_trajectory.png}
+\end{figure}
 Sampling algorithms are liable to getting stuck in a local minima because we flip only one cell at a time.
 
+\begin{figure}
+  \includegraphics[width=\columnwidth]{../figures/relativeconvergence.pdf}%
+  \caption{Comparison of convergence of different algorithms on occupancy grid graph. While sampling methods like Metropolis hastings converge quickly they stay far from optimum energy. On the other hand modern minimization algorithms reach closer to an optimum value.}
+  \label{fig:convergence-comparison}
+\end{figure}
+\begin{figure*}
+  \includegraphics[width=0.2\textwidth]{../figures/cave_trajectory.png}%
+  \includegraphics[width=0.2\textwidth]{../figures/gt-final.png}%
+  \includegraphics[width=0.2\textwidth]{../figures/bpresults_100x100_200sec.png}%
+  \includegraphics[width=0.2\textwidth]{../figures/SICKDDMCMC200sec_100x100.png}\\
+  \includegraphics[width=0.2\textwidth]{../figures/SICKSlowMetropolis200sec_100x100.png}%
+  \includegraphics[width=0.2\textwidth]{../figures/dualdecomposition200sec_100x100.png}%
+  \includegraphics[width=0.2\textwidth]{../figures/TwoAssumptionAlgo200sec_100x100.png}%
+  \caption{Qualitative results at the end of 200sec for each algorithm (from left to right) a) Trajectory of th robot b) Ground truth as observed by robot c) Belief Propagation d) Metropolis Hastings with heat map e) Metropolis Hastings without heat map f) Dual decomposition g) Two assumption algorithm}
+  \label{fig:convergence-comparison-visuals}
+\end{figure*}
+
+\section{Conclusion}
 Dual decomposition converges better because it only focuses on disagreements.
 % Data source
 I have used \emph{Player 3.0.2} and \emph{Stage 3.2.2} \cite{gerkey2003player} for simulating input data.
