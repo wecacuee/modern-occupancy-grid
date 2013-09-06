@@ -124,8 +124,8 @@ public:
     if (! enable_show_) return;
     cv::namedWindow(window_name_, cv::WINDOW_NORMAL);
     cv::imshow(window_name_, vis_);
-    boost::format format("/tmp/occgridvis-%d-%s-%d.png");
-    cv::imwrite((format % getpid() % window_name_ % count_++).str(), vis_);
+    // boost::format format("/tmp/occgridvis-%d-%s-%d.png");
+    // cv::imwrite((format % getpid() % window_name_ % count_++).str(), vis_);
     cv::waitKey(t);
   }
 

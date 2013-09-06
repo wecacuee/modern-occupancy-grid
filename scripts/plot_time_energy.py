@@ -1,8 +1,9 @@
 #!/usr/bin/python
-from script_utils import (load_time_energy, plotdatafname)
-from convergence_experiment import executables
+from script_utils import load_time_energy
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
+import imp
 
 from matplotlib import rc
 rc('font',**{'family':'serif','serif':['Times']})
@@ -14,12 +15,14 @@ def _plot_time_energy_two_assumption(times, energy):
     return plt.plot(times, energy)
 
 if __name__ == '__main__':
-    plt.figure(figsize=(1.618*5, 5))
+    conf = sys.argv[1]
+    plt.figure(figsize=(1.618*4, 4))
 
     plot_obj = []
     legend_names = []
-    for exe in executables():
-        times, energy = load_time_energy( open( plotdatafname(exe)))
+    config = imp.load_source('config', conf)
+    for exe in config.executables():
+        times, energy = load_time_energy( open( exe.plotdatafname()))
         if exe.exe() == "bin/TwoAssumptionAlgorithm":
             p, = _plot_time_energy_two_assumption(times, energy)
         else:
@@ -28,7 +31,8 @@ if __name__ == '__main__':
         legend_names.append(exe.legend())
     plt.legend(plot_obj, legend_names)
     ax = plt.gca()
+    ax.set_ylim([2.78e8, 2.90e8])
     ax.set_xlabel("Time (clock seconds)")
     ax.set_ylabel("Total energy of the graph")
-    plt.savefig('doc/figures/relativeconvergence.pdf')
+    #plt.savefig('doc/figures/relativeconvergence.pdf')
     plt.show()

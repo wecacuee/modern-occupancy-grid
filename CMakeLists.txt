@@ -55,7 +55,7 @@ target_link_libraries (SICK_DDMCMC occupancy_grid_graph gtsam-shared
 find_package(Threads REQUIRED)
 
 find_package( Boost 1.40 COMPONENTS date_time serialization-mt filesystem
-	system REQUIRED)
+	system program_options REQUIRED)
 include_directories( ${Boost_INCLUDE_DIR} )
 
 find_package(GTest REQUIRED)

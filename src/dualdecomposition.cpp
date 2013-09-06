@@ -8,6 +8,7 @@
 #include "OccupancyGrid/utility.hpp"
 
 #include <gtsam/geometry/Pose2.h>
+#include <boost/program_options.hpp>
 
 Visualiser global_vis_;
 Visualiser global_vis2_;
@@ -17,19 +18,40 @@ using namespace boost;
 using namespace gtsam;
 using namespace occgrid;
 
+namespace po = boost::program_options;
 
 int main(int argc, const char *argv[])
 {
+  typedef double EnergyType;
   global_vis_.enable_show();
   global_vis2_.enable_show();
-  // parse arguments
-  if (argc != 4) {
-    printf("ERROR [USAGE]: executable <width (in m)> <height (in m)> <resolution (in m)>");
-    exit(1);
-  }
-  double width = atof(argv[1]); //meters
-  double height = atof(argv[2]); //meters
-  double resolution = atof(argv[3]); //meters
+  // parse arguments ///////////////////////////////////////////
+  // Declare the supported options.
+  po::options_description desc("Run dual decomposition");
+  desc.add_options()
+    ("help", "produce help message")
+    ("width", po::value<double>()->required(), "Width of map")
+    ("height", po::value<double>()->required(), "Height of map")
+    ("resolution", po::value<double>()->required(), "Size of square cell in the map")
+    ("step", po::value<EnergyType>()->default_value(50), "step size for algorithm")
+    ("dir", po::value<std::string>()->default_value("Data/player_sim_with_reflectance"), "Data directory")
+;
+
+  po::positional_options_description pos;
+  pos.add("width", 1)
+    .add("height", 1)
+    .add("resolution", 1);
+
+  po::variables_map vm;
+  po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
+  po::notify(vm);    
+
+  double width = vm["width"].as<double>();
+  double height = vm["height"].as<double>();
+  double resolution = vm["resolution"].as<double>();
+  EnergyType step = vm["step"].as<EnergyType>();
+  std::string datadirectory = vm["dir"].as<std::string>();
+  // end of parse arguments ////////////////////////////////////
 
   // Create the occupancy grid data structure
   OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
@@ -39,10 +61,10 @@ int main(int argc, const char *argv[])
   vector<double> allranges;
   vector<uint8_t> allreflectance;
   loadPlayerSim(
-      "Data/player_sim_with_reflectance/laser_pose_all.bin",
-      "Data/player_sim_with_reflectance/laser_range_all.bin",
-      "Data/player_sim_with_reflectance/scan_angles_all.bin",
-      "Data/player_sim_with_reflectance/laser_reflectance_all.bin",
+      datadirectory + "/laser_pose_all.bin",
+      datadirectory + "/laser_range_all.bin",
+      datadirectory + "/scan_angles_all.bin",
+      datadirectory + "/laser_reflectance_all.bin",
       allposes, allranges, allreflectance);
   for (size_t i = 0; i < allranges.size(); i++) {
     const Pose2& pose = allposes[i];
@@ -51,7 +73,6 @@ int main(int argc, const char *argv[])
     // this is where factors are added into the factor graph
     occupancyGrid.addLaser(pose, range, reflectance); //add laser to grid
   }
-  typedef double EnergyType;
   typedef gtsam::Index SampleSpaceType;
   typedef gtsam::Index vertex_descriptor;
   typedef G<OccupancyGrid, EnergyType, SampleSpaceType, vertex_descriptor> OccupancyGridGraph;
@@ -69,6 +90,6 @@ int main(int argc, const char *argv[])
   DisagreementMap disagreement_map(ogg, multiassign);
   typedef SubgradientDualDecomposition<OccupancyGridGraph, SlaveMinimizer_,
           SampleSpaceMap, DisagreementMap, Messages, SampleSpaceType, EnergyType> SubgradientDualDecompositionType;
-  SubgradientDualDecompositionType subg_dd(ogg, slvmin, ssm, disagreement_map, messages, 50);
+  SubgradientDualDecompositionType subg_dd(ogg, slvmin, ssm, disagreement_map, messages, step);
   iterate_dualdecomposition<OccupancyGridGraph, SubgradientDualDecompositionType, DisagreementMap, SampleSpaceType>(ogg, subg_dd, disagreement_map, 70);
 }
