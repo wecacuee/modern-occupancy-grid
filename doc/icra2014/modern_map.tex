@@ -29,14 +29,15 @@
   obtain faster convergence by using modern methods like Sum Product algorithm
   and Dual Decomposition.
 \end{abstract}
-\section{Problem definition and Notation}
+\section{Problem definition}
 A robot equipped with a laser scanner and accurate odometry moves in a static
 environment, problem is to figure out an optimal occupancy grid map. For the
 purpose of ground robots often 2D maps are enough for path planning and
 exploration. 
 \section{Two assumption algorithm}
 \section{Dropping the assumption}
-\section{Representation as factor graph}
+\section{Representation as factor graph and Notation}
+\label{sec:notation}
 The problem of Occupancy grid mapping can be expressed as energy minimization
 over a factor graph. Let all cells in the map be the variable nodes $V$ and all
 the laser measurements be factor nodes $F$. 
@@ -114,8 +115,11 @@ where $\vect{P}_1 = [0, 0 \dots 0, 1]^\top$ and $\vect{P}_2 = [0, 0 \dots 0, 0]^
 \newcommand{\msg}[3]{\mu_{#1#2}(#3)}
 \newcommand{\assign}{\leftarrow}
 \newcommand{\Sx}{L_i}
-\cite{sontag2011introduction} explains the algorithm in detail. For
-completeness, we will describe the algorithm here.
+Dual decomposition algorithm employs Lagrangian relaxation technique from integer programming to minimize. Here we explain the implementation of the algorithm without going into mathematical derivations. Interested user is referred to \cite{sontag2011introduction,jojic2010accelerated,komodakis2009beyond} for proofs and more variations of the algorithm. 
+
+Pseudo code for Dual decomposition is provided in Alg~\ref{alg:dualdecompostion}. Apart from input factor graph $G = (V, F, E)$ and label set $\{\Sx\}_{i \in V}$ introduced in Sec~\ref{sec:notation}, Dual decomposition depends on a step size $\alpha$.
+
+The idea for Dual decomposition is to split the minimization problem into \emph{slave} problems that can be efficiently minimized. In case of disagreement for minimizing label among slave problems, the messages to slave problems are updated until the slave problems agree with each other. We maintain the minimizing label for variable node $i$, computed by factor $f$ as $x^f_i$.
 \begin{algorithm}
   \dontprintsemicolon
   \KwData{\;
@@ -179,11 +183,9 @@ The problem is to minimize the energy function along with the received messages.
 \end{align}
 A general minimization algorithm will take time of the order that is exponential in the number of cells a laser passes through as $\vect{x}^f$ can have $|L_i|^{|n(f)|}$ possible values. However, for our sensor model we can make use of the fact that the piecewise function needs to look for only two patterns. We should compute the total function value for these two patterns and the minimum value for the \emph{otherwise} case. 
 \begin{align}
-  \min \theta_f(\vect{x}_f) &= \min \left\{\right.\\
-                            &0 + \sum_{\vect{x}_f = \vect{P}_1, i \in n(f)}\msg{i}{f}{x_i},\\
+    \min \theta_f(\vect{x}_f) = \min &\left( 0 + \sum_{\vect{x}_f = \vect{P}_1, i \in n(f)}\msg{i}{f}{x_i},\right.\\
                             &900 + \sum_{\vect{x}_f = \vect{P}_2, i \in n(f)}\msg{i}{f}{x_i},\\
-                            &1000 + \min_{\vect{x}_f \not\in \{\vect{P}_1, \vect{P}_2\}} \sum_{i \in n(f)}\msg{i}{f}{x_i}\\
-\left.\right\}
+                            &\left.1000 + \min_{\vect{x}_f \not\in \{\vect{P}_1, \vect{P}_2\}} \sum_{i \in n(f)}\msg{i}{f}{x_i} \right)
 \end{align}
 The third term can be easily minimized by 
 %choosing the minimizing state for each $i$ over all possible $\Omega(\vect{x}_f)$ by 
@@ -203,6 +205,11 @@ simply choosing the minimizing $x_i \in L_i$ for each $i$. However, the minimizi
 
 \subsection{Selection of step size}
 Step size is critical choice as it affects the speed with which Dual decomposition converges.
+\begin{figure}
+  \includegraphics[width=\columnwidth]{../figures/dualdecomposition-stepsize-inc500.pdf}
+  \caption{The rate of convergence in dual decomposition depends on step size}
+  \label{fig:dualdecomposition-stepsize}
+\end{figure}
 
 \section{Experiments} 
 Sampling algorithms are liable to getting stuck in a local minima because we flip only one cell at a time.
