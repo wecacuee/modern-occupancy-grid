@@ -16,6 +16,11 @@ include_directories(${GTSAM_INCLUDE_DIR})
 find_package( OpenCV 2.4 REQUIRED core imgproc highgui)
 include_directories(${OpenCV_INCLUDE_DIR})
 
+find_package( Boost 1.40 COMPONENTS date_time serialization-mt filesystem
+	system program_options REQUIRED)
+include_directories( ${Boost_INCLUDE_DIR} )
+
+
 ###################################################################################
 # Brian's code
 # run in toplevel dir, for example "bin/SICKSlowMetropolis 18 18 0.18"
@@ -36,7 +41,8 @@ add_executable(SICKSlowMetropolis
 	src/TwoAssumptionAlgorithm.cpp
 	tests/testSICKSlowMetropolis.cpp
 	)
-target_link_libraries (SICKSlowMetropolis occupancy_grid_graph ${OpenCV_LIBS})
+target_link_libraries (SICKSlowMetropolis occupancy_grid_graph
+	${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(SICK_DDMCMC
 	src/MCMC/DDMCMC.cpp
@@ -44,7 +50,7 @@ add_executable(SICK_DDMCMC
 	tests/testSICKDDMCMC.cpp
 	)
 target_link_libraries (SICK_DDMCMC occupancy_grid_graph gtsam-shared
-			${OpenCV_LIBS})
+			${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 ###################################################################################
 # Vikas' code with merali13icra implementation
@@ -53,10 +59,6 @@ target_link_libraries (SICK_DDMCMC occupancy_grid_graph gtsam-shared
 # ../../bin/two_assumption_alg laser_pose_all.bin laser_range_all.bin scan_angles_all.bin
 
 find_package(Threads REQUIRED)
-
-find_package( Boost 1.40 COMPONENTS date_time serialization-mt filesystem
-	system program_options REQUIRED)
-include_directories( ${Boost_INCLUDE_DIR} )
 
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIR})
@@ -71,7 +73,8 @@ target_link_libraries(merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES}
 add_executable(TwoAssumptionAlgorithm
 	src/TwoAssumptionAlgorithm.cpp
 	src/run_TwoAssumptionAlgorithm.cpp)
-target_link_libraries(TwoAssumptionAlgorithm occupancy_grid_graph ${OpenCV_LIBS})
+target_link_libraries(TwoAssumptionAlgorithm occupancy_grid_graph
+	${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(simulateddata
 	src/simulateddata.cpp)

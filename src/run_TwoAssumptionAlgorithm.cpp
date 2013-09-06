@@ -10,10 +10,12 @@
 
 #include "gtsam/discrete/Assignment.h"
 #include "gtsam/base/types.h"
+#include <boost/program_options.hpp>
 
 using namespace std;
 using namespace gtsam;
 using namespace occgrid;
+namespace po = boost::program_options;
 
 typedef boost::shared_ptr< LaserFactor > LaserFactorPtr;
 Visualiser global_vis_;
@@ -22,14 +24,31 @@ int main(int argc, const char *argv[])
 {
 
   cv::namedWindow("c", cv::WINDOW_NORMAL);
-  // parse arguments
-  if (argc != 4) {
-    printf("ERROR [USAGE]: executable <width (in m)> <height (in m)> <resolution (in m)>");
-    exit(1);
-  }
-  double width = atof(argv[1]); //meters
-  double height = atof(argv[2]); //meters
-  double resolution = atof(argv[3]); //meters
+  // parse arguments ///////////////////////////////////////////
+  // Declare the supported options.
+  po::options_description desc("Run dual decomposition");
+  desc.add_options()
+    ("help", "produce help message")
+    ("width", po::value<double>()->required(), "Width of map")
+    ("height", po::value<double>()->required(), "Height of map")
+    ("resolution", po::value<double>()->required(), "Size of square cell in the map")
+    ("dir", po::value<std::string>()->default_value("Data/player_sim_with_reflectance"), "Data directory")
+;
+
+  po::positional_options_description pos;
+  pos.add("width", 1)
+    .add("height", 1)
+    .add("resolution", 1);
+
+  po::variables_map vm;
+  po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
+  po::notify(vm);    
+
+  double width = vm["width"].as<double>();
+  double height = vm["height"].as<double>();
+  double resolution = vm["resolution"].as<double>();
+  std::string datadirectory = vm["dir"].as<std::string>();
+  // end of parse arguments ////////////////////////////////////
   
   // Create the occupancy grid data structure
   OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
@@ -44,11 +63,12 @@ int main(int argc, const char *argv[])
   //     "Data/SICK_Snapshot.txt",
   //     allposes, allranges,
   //     max_dist);
+  
   loadPlayerSim(
-      "Data/player_sim_with_reflectance/laser_pose_all.bin",
-      "Data/player_sim_with_reflectance/laser_range_all.bin",
-      "Data/player_sim_with_reflectance/scan_angles_all.bin",
-      "Data/player_sim_with_reflectance/laser_reflectance_all.bin",
+      datadirectory + "/laser_pose_all.bin",
+      datadirectory + "/laser_range_all.bin",
+      datadirectory + "/scan_angles_all.bin",
+      datadirectory + "/laser_reflectance_all.bin",
       allposes, allranges, allreflectance);
 
   for (size_t i = 0; i < allranges.size(); i++) {

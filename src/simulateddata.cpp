@@ -35,7 +35,7 @@ int main(int argc, const char *argv[])
   cv::Vec2i ncells;
   cv::divide(min_pt, cellsize, ncells, -2);
 
-  OccupancyGrid<double, int> map(
+  OccupancyGrid2D<double, int> map(
       min_pt(0), 
       min_pt(1),
       cellsize(0),
