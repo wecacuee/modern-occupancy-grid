@@ -32,6 +32,29 @@ class OccupancyGrid2DGT : public OccupancyGrid2D<real_t, int_t> {
     }
 };
 
+void cvArrow(cv::Mat& vis, 
+    int x, int y, int u, int v, cv::Scalar line_color, int line_thickness = 1) 
+{
+  cv::Point2i p,q;
+  q.x = x;
+  q.y = y;
+  p.x = x + u;
+  p.y = y + v;
+
+  cv::line(vis, p, q, line_color, line_thickness, CV_AA, 0);
+
+  const double pi = boost::math::constants::pi<double>();
+  double angle = atan2((double) p.y-q.y,(double) p.x-q.x);
+  double arrow_length = sqrt(u*u + v*v);
+  q.x = (int) (p.x - arrow_length / 3 * cos(angle + (pi / 6)));
+  q.y = (int) (p.y - arrow_length / 3 * sin(angle + (pi / 6)));
+  cv::line(vis, p, q, line_color, line_thickness, CV_AA, 0);
+
+  q.x = (int) (p.x - arrow_length / 3 * cos(angle - (pi / 6)));
+  q.y = (int) (p.y - arrow_length / 3 * sin(angle - (pi / 6)));
+  cv::line(vis, p, q, line_color, line_thickness, CV_AA, 0);
+}
+
 int main(int argc, char** argv) {
   if (argc != 8) {
     std::cout << "Sample usage (from Data/player_sim_with_reflectance):"
@@ -92,6 +115,11 @@ int main(int argc, char** argv) {
     bfs::create_directory("inputstream");
     boost::format gt_fmter("groundtruth/%d.png");
     bfs::create_directory("groundtruth");
+
+    // trajectory map
+    cv::Mat trajectory;
+    cv::cvtColor(map.og_, trajectory, cv::COLOR_GRAY2BGR);
+    const double pi = boost::math::constants::pi<double>();
     for (r = 0; r < laser_pose.rows; r++) {
         double* pose = laser_pose.ptr<double>(r);
         double* angles = scan_angles.ptr<double>(r);
@@ -115,6 +143,20 @@ int main(int argc, char** argv) {
         cv::imshow("c", visin);
         cv::imwrite((in_fmter % r).str(), visin);
 
+        // draw trajectory
+        double arrow_len = .5;
+        if ( r % (int)(arrow_len / cellsize(0)) == 0) {
+          double u = arrow_len * cos(robot_angle);
+          double v = arrow_len * sin(robot_angle);
+          cv::Point2i pt = map.xy2rc(cv::Vec2d(pose[0], pose[1])); 
+          cv::Point2i pt2 = map.xy2rc(cv::Vec2d(pose[0] + u, pose[1] + v));
+          cvArrow(trajectory, 
+              pt.x, pt.y, 
+              pt2.x - pt.x, pt2.y - pt.y,
+              cv::Scalar(255, 0, 0));
+          cv::imshow("e", trajectory);
+        }
+
         // draw ground truth
         cv::Mat vis;
         cv::cvtColor(map.gt_, vis, cv::COLOR_GRAY2BGR);
@@ -128,4 +170,5 @@ int main(int argc, char** argv) {
     std::stringstream ss;
     ss << "groundtruth/" << ++r << ".png";
     cv::imwrite(ss.str(), map.gt_);
+    cv::imwrite("trajectory.png", trajectory);
 }
