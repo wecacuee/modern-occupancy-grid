@@ -7,6 +7,7 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{graphicx}
+\usepackage{verbatim}
 
 \DeclareMathOperator*{\argmin}{arg\,min}
 \DeclareMathOperator*{\argmax}{arg\,max}
@@ -34,8 +35,54 @@ A robot equipped with a laser scanner and accurate odometry moves in a static
 environment, problem is to figure out an optimal occupancy grid map. For the
 purpose of ground robots often 2D maps are enough for path planning and
 exploration. 
+% define problem in probability terms
+The area to be mapped is divided into $N$ discrete cells. Let $x_i$ denote the state of cell $i$, which can take values from label set $L_i = \{0, 1\}$, where $0$ (resp. $1$) denotes that cell is free (resp. occupied). We define, the map $m$ as a vector that defines state for all $N$ cells, $m = [x_i]^\top_{0 \le i < N}$. Hence map $m$ takes values from sample space $\Omega = \prod_{0 \le i < N}L_i$.
+
+Let $z_k$ denote the $k$th laser range measurement when captured from pose $\rho_k$. We assume that the probability of observation $p(z_k| \rho_k, m)$ (forward sensor mdoel) be given. We want to find the marginal probability of a cell $i$ being occupied given $K$ observations $z = [z_k]^\top_{0 \le k < K}$ and $\rho = [\rho_k]^\top_{0 \le k < K}$.
+\begin{align}
+  &p(x_i = 1 | z, \rho) = \sum_{m \in \Omega : x_i = 1} p(m | z , \rho)
+  \label{eq:fullsolution}
+\end{align}
+Merali et al. \cite{merali2013icra} derive a recursive formula to compute full solution which they observe
+to be computationally intractable as its complexity is exponential in the number of cells.
+
+\begin{comment}
+  
+\section{Full solution}
+Next we try to find out the full solution
+\begin{align}
+  &p(x_i = 1 | z, \rho) = \sum_{m \in \Omega : x_i = 1} p(m | z , \rho)\\
+             &= \sum_{m \in \Omega : x_i = 1} \frac{p(m , z , \rho)}{p(z, \rho)} \\
+             &= \sum_{m \in \Omega : x_i = 1} \frac{p(z_K, \rho_K|m , z_{1:K-1} , \rho_{1:K-1})p(m, z_{1:K-1}, \rho_{1:K-1})}{p(z, p)}\\
+             &= \sum_{m \in \Omega : x_i = 1} \frac{p(z_K, \rho_K|m , z_{1:K-1} , \rho_{1:K-1})p(m| z_{1:K-1}, \rho_{1:K-1})}{p(z_K, \rho_K|z_{1:K-1}, \rho_{1:K-1})}
+\end{align}
+The current laser range measurement $z_K$ and pose $\rho_K$ can be taken to independent of previous observations $z_{1:K-1}$ and $\rho_{1:K-1}$, which  simplifies above equation to
+\begin{align}
+  &p(x_i = 1 | z, p)
+  = \sum_{m \in \Omega : x_i = 1} \frac{p(z_K, \rho_K|m)p(m| z_{1:K-1}, \rho_{1:K-1})}{p(z_K, \rho_K|z_{1:K-1}, \rho_{1:K-1})}\\
+  &= \sum_{m \in \Omega : x_i = 1} \frac{p(z_K|m , \rho_K)p(\rho_K|m)p(m| z_{1:K-1}, \rho_{1:K-1})}{p(z_K|z_{1:K-1}, p)p(\rho_K|z_{1:K-1}, \rho_{1:K-1})}\\
+  &= \sum_{m \in \Omega : x_i = 1} \frac{p(z_K|m , \rho_K)p(\rho_K|m)p(m| z_{1:K-1}, \rho_{1:K-1})}{p(z_K|z_{1:K-1}, p)p(\rho_K|z_{1:K-1}, \rho_{1:K-1})}
+\end{align}
+Another assumption of pose $\rho_K$ being independent of map $m$ yields a simple recursive formula 
+\begin{align}
+  p(x_i = 1 | z, p)
+  = \sum_{m \in \Omega : x_i = 1} \frac{p(z_K|m , \rho_K)p(m| z_{1:K-1}, \rho_{1:K-1})}{p(z_K|z_{1:K-1}, p)}
+\end{align}
+
+However, the full solution is computationally intractable as its complexity is exponential in the number of cells.
+
+\end{comment}
+
 \section{Two assumption algorithm}
+% assume independence
+Eq~\ref{eq:fullsolution} is usually simplified in robotic mapping algorithms by introducing two assumptions:
+\begin{align}
+\end{align}
+
+
 \section{Dropping the assumption}
+% argue that it is an unreasonable assumption
+
 \section{Representation as factor graph and Notation}
 \label{sec:notation}
 The problem of Occupancy grid mapping can be expressed as energy minimization
@@ -87,6 +134,22 @@ minimizing the total \emph{energy} over all factors.
 
 \section{Laser sensor model}
 \subsection{Gaussian sensor model}
+In this sensor model, we assume that the laser measurements are affected by Gaussian noise. The probability of actual distance of first occupied cell $d$ from the robot is a Gaussian with mean as the observed laser distance $\bar{d}$ from the robot.
+\begin{align}
+  P(d) &= \frac{1}{2\pi\sigma(d)}\exp\left(-\frac{(d - \bar{d})^2}{\sigma(d)^2}\right)
+\end{align}
+where $\sigma(d)$ is a measure of noise in laser measurement and it often depends on the distance $d$ itself. For our experiments we assume noise to linearly vary with distance as $\sigma(d) = \sigma_0d$. Since $d$ is unknown, we approximate noise computation by using observed laser distance $\bar(d)$ instead of $d$ i.e. $\sigma(d) = \sigma_0\bar{d}$.
+
+In terms of negative log likelihood, the energy function becomes
+\begin{align}
+  E(d) &= \frac{1}{\sigma_0^2}\left(1 - \frac{d}{\bar{d}}\right)^2
+\end{align}
+In terms of discrete set of cells that the laser passes through the energy function becomes
+\begin{align}
+  \theta_f(\vect{x}_f) &= \frac{1}{\sigma_0^2}\left(1 - \frac{\kappa(\vect{x}_f)}{|\vect{x}_f|}\right)^2
+\end{align}
+where $\kappa(\vect{x}_f)$ denote the index of the first occupied cell in $\vect{x}_f$ and $|\vect{x}_f|$ is the total number of cells observed by the laser. Note that $\theta_f(\vect{x}_f)$ is independent of cell size.
+
 \subsection{Piecewise constant sensor model}
 The expected pattern of occupancy from a laser observation is two have last cell as occupied and others as free. So the simplest energy function would be 
 \begin{align}
@@ -107,7 +170,7 @@ However, to resolve conflicts it is sometimes better to provide lower energy to 
 \end{align}
 where $\vect{P}_1 = [0, 0 \dots 0, 1]^\top$ and $\vect{P}_2 = [0, 0 \dots 0, 0]^\top$.
 \section{Metropolis hastings}
-\section2{Heat map}
+\subsection{Heat map}
 \section{Sum product}
 \cite{kschischang2001factor} introduced the algorithm.
 \subsection{Efficient sum product}
@@ -119,7 +182,10 @@ Dual decomposition algorithm employs Lagrangian relaxation technique from intege
 
 Pseudo code for Dual decomposition is provided in Alg~\ref{alg:dualdecompostion}. Apart from input factor graph $G = (V, F, E)$ and label set $\{\Sx\}_{i \in V}$ introduced in Sec~\ref{sec:notation}, Dual decomposition depends on a step size $\alpha$.
 
-The idea for Dual decomposition is to split the minimization problem into \emph{slave} problems that can be efficiently minimized. In case of disagreement for minimizing label among slave problems, the messages to slave problems are updated until the slave problems agree with each other. We maintain the minimizing label for variable node $i$, computed by factor $f$ as $x^f_i$.
+The idea for Dual decomposition is to split the minimization problem into \emph{slave} problems that can be efficiently minimized. In case of disagreement for minimizing label among slave problems, the messages to slave problems are updated until the slave problems agree with each other. We maintain the minimizing label for variable node $i$, computed by slave problem corresponding to $f$ as $x^f_i$. Also, we use $\msg{i}{f}{x_i}$ to denote messages from node $i$ to slave problem corresponding to $f$ regarding state $x_i$.
+
+In each iteration of Dual Decomposition, we first minimize all the slave problems getting labels for each pair of variable followed by message update in case of disagreement. Optionally, we can only minimize only those factors that have at least one disagreeing node in their neighborhood.
+
 \begin{algorithm}
   \dontprintsemicolon
   \KwData{\;
@@ -134,10 +200,11 @@ The idea for Dual decomposition is to split the minimization problem into \emph{
   $\msg{i}{f}{x_i} \assign 0 \hfill \forall (i, f) \in E, x_i \in \Sx$\;
   $r \assign 1$\;
   \While{$r < N$} {
-    \For {$f \in F$} {
+    \tcp{For disagreeing factors}
+    \For {$f \in F$} {% : \exists i, i' \in n(f) : x_i^f \ne x_{i'}^f$} {
       $\vect{x}^f \assign \argmin\limits_{\vect{x}^f} \left( \theta_f(\vect{x}^f) + \sum\limits_{i \in n(f)}\msg{i}{f}{x^f_i} \right)$\;
     }
-    \tcc{For disagreeing nodes}
+    \tcp{For disagreeing nodes}
     \For {$i \in V : \exists f, f' \in n(i) : x_i^{f'} \ne x_i^f$} {
       \For{$f \in n(i)$}{
         $\msg{i}{f}{x^f_i} \assign \msg{i}{f}{x^f_i} + \frac{\alpha}{r}$\;
@@ -204,17 +271,21 @@ simply choosing the minimizing $x_i \in L_i$ for each $i$. However, the minimizi
 % \end{algorithm}
 
 \subsection{Selection of step size}
-Step size is critical choice as it affects the speed with which Dual decomposition converges.
+Step size is critical choice as it affects the speed with which Dual decomposition converges. Fig~\ref{fig:dualdecomposition-stepsize} shows convergence with different step size.
 \begin{figure}
   \includegraphics[width=\columnwidth]{../figures/dualdecomposition-stepsize-inc500.pdf}
   \caption{The rate of convergence in dual decomposition depends on step size}
   \label{fig:dualdecomposition-stepsize}
 \end{figure}
+\section{Belief propagation with disagreement tracking}
+Intuitively, dual decomposition converges faster because it focuses on the disagreeing 
 
 \section{Experiments} 
 Sampling algorithms are liable to getting stuck in a local minima because we flip only one cell at a time.
 
 Dual decomposition converges better because it only focuses on disagreements.
+% Data source
+I have used \emph{Player 3.0.2} and \emph{Stage 3.2.2} \cite{gerkey2003player} for simulating input data.
 
 \bibliographystyle{IEEEtran}
 \newcommand{\bibdatabase}{/home/vikasdhi/wrk/biblib/bibdb}

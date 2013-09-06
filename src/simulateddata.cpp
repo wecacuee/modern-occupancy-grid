@@ -11,10 +11,12 @@
 
 int main(int argc, const char *argv[])
 {
-  if (argc != 4)
+  if (argc != 6) {
     std::cout << "Sample usage from OccupancyGrid/Data/ds3:"
       << "../../bin/simulateddata laser_pose_all.bin scan_angles_all.bin ../player_worlds/bitmaps/cave-rotated.png" 
       << std::endl;
+    return 1;
+  }
   cv::Mat laser_pose;
   loadMat(laser_pose, argv[1]);
   cv::Mat scan_angles;
@@ -22,8 +24,9 @@ int main(int argc, const char *argv[])
   cv::Mat laser_ranges(scan_angles.rows, scan_angles.cols, CV_64F);
   cv::Mat laser_reflectance(scan_angles.rows, scan_angles.cols, CV_8U);
   cv::Mat floorplan = cv::imread(argv[3], cv::IMREAD_GRAYSCALE);
-  cv::Vec2d min_pt(-8, -8);
-  cv::Vec2d size_bitmap(16, 16);
+  cv::Vec2d size_bitmap(atof(argv[4]), atof(argv[5]));
+  cv::Vec2d margin(1, 1);
+  cv::Vec2d min_pt(- margin(0) - size_bitmap(0)/2, - margin(1) - size_bitmap(1)/2);
   double max_range = 8;
   cv::Vec2i gridsize(floorplan.size[0], floorplan.size[1]);
   cv::Vec2d cellsize; 
@@ -32,7 +35,7 @@ int main(int argc, const char *argv[])
   cv::Vec2i ncells;
   cv::divide(min_pt, cellsize, ncells, -2);
 
-  OccupancyGrid2D<double, int> map(
+  OccupancyGrid<double, int> map(
       min_pt(0), 
       min_pt(1),
       cellsize(0),
@@ -42,7 +45,14 @@ int main(int argc, const char *argv[])
   // initialize map with occupancy with floorplan
   for (int r = 0; r < ncells(0); ++r) {
     for (int c = 0; c < ncells(1); ++c) {
-      map.og_.at<uint8_t>(r, c) = (floorplan.at<uint8_t>(r, c) > 127) ? map.FREE : map.OCCUPIED;
+      int fp_r = r - margin(0) / cellsize(0);
+      int fp_c = c - margin(1) / cellsize(1);
+      if ((0 <= fp_r) && (fp_r < floorplan.rows)
+          && (0 <= fp_c) && (fp_c < floorplan.cols)) {
+        map.og_.at<uint8_t>(r, c) = (floorplan.at<uint8_t>(fp_r, fp_c) > 127) ? map.FREE : map.OCCUPIED;
+      } else {
+        map.og_.at<uint8_t>(r, c) = map.OCCUPIED;
+      }
     }
   }
 

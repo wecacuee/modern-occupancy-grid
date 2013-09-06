@@ -44,7 +44,7 @@ void capture_player_data() {
         }
 
 
-        std::cout << "(" << p2d.GetXPos() << ", " << p2d.GetYPos() << ")" << std::endl;
+        //std::cout << "(" << p2d.GetXPos() << ", " << p2d.GetYPos() << ")" << std::endl;
         cv::Mat pose = (cv::Mat_<double>(1, 3) << p2d.GetXPos(), p2d.GetYPos(), p2d.GetYaw());
         laser_pose_all.push_back(pose);
 
@@ -57,7 +57,7 @@ void capture_player_data() {
             range.at<double>(0, i) = laser.GetRange(i);
             angles.at<double>(0, i) = laser.GetBearing(i);
             reflectance.at<uint8_t>(0, i) = laser.GetIntensity(i);
-            std::cout << "i:" << laser.GetIntensity(i) << ", ";
+            //std::cout << "i:" << laser.GetIntensity(i) << ", ";
         }
         std::cout << std::endl;
         laser_range_all.push_back(range);

@@ -33,9 +33,10 @@ class OccupancyGrid2DGT : public OccupancyGrid2D<real_t, int_t> {
 };
 
 int main(int argc, char** argv) {
-  if ((argc != 5)  && (argc != 6)) {
+  if (argc != 8) {
     std::cout << "Sample usage (from Data/player_sim_with_reflectance):"
-      << "../../bin/visualize_ground_truth laser_pose_all.bin laser_range_all.bin scan_angles_all.bin ../player_worlds/bitmaps/cave-rotated.png laser_reflectance_all.bin";
+      << "../../bin/visualize_ground_truth laser_pose_all.bin laser_range_all.bin scan_angles_all.bin ../player_worlds/bitmaps/cave-rotated.png 16 16 laser_reflectance_all.bin\n";
+    std::cout << "Got " << argc << " arguments\n";
     return 1;
   }
     cv::Mat laser_pose;
@@ -45,11 +46,12 @@ int main(int argc, char** argv) {
     cv::Mat scan_angles;
     loadMat(scan_angles, argv[3]);
     cv::Mat floorplan = cv::imread(argv[4], cv::IMREAD_GRAYSCALE);
+    cv::Vec2d size_bitmap(atof(argv[5]), atof(argv[6]));
     cv::Mat laser_reflectance;
-    if (argc == 6)
-      loadMat(laser_reflectance, argv[5]);
-    cv::Vec2d min_pt(-9, -9);
-    cv::Vec2d size_bitmap(16, 16);
+    loadMat(laser_reflectance, argv[7]);
+
+    cv::Vec2d margin(1, 1);
+    cv::Vec2d min_pt(-margin(0) - size_bitmap(0)/2, -margin(1) - size_bitmap(1)/2);
     cv::Vec2i gridsize(floorplan.size[0], floorplan.size[1]);
     cv::Vec2d cellsize; 
     cv::divide(size_bitmap , gridsize, cellsize);
@@ -69,8 +71,9 @@ int main(int argc, char** argv) {
     cv::addWeighted(ncells, 0.5, gridsize, -0.5, 0, min_bitmap);
     cv::Vec2i max_bitmap;
     cv::addWeighted(ncells , 0.5, gridsize, 0.5, 0, max_bitmap);
+    printf("Map size (%d, %d)\n", ncells(0), ncells(1));
     printf("(%d, %d) <-> (%d, %d)\n", min_bitmap(0), min_bitmap(1), max_bitmap(0), max_bitmap(1));
-    cv::Mat roi = map.og_(cv::Range(min_bitmap(0), max_bitmap(1)),
+    cv::Mat roi = map.og_(cv::Range(min_bitmap(0), max_bitmap(0)),
       cv::Range(min_bitmap(1), max_bitmap(1)));
     map.og_ = cv::Scalar(map.OCCUPIED);
     floorplan.copyTo(roi);
@@ -120,7 +123,7 @@ int main(int argc, char** argv) {
             scan_angles.cols, CV_RGB(0, 255, 0));
         cv::imshow("d", vis);
         cv::imwrite((gt_fmter % r).str(), vis);
-        cv::waitKey(10);
+        cv::waitKey(1);
     }
     std::stringstream ss;
     ss << "groundtruth/" << ++r << ".png";
