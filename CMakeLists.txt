@@ -30,18 +30,20 @@ include_directories(include/)
 add_library(occupancy_grid_graph SHARED
 			src/OccupancyGrid.cpp
 			src/LaserFactor.cpp
-			src/cvmat_serialization.cpp
-			src/loadData.cpp
 			src/utility.cpp
 			)
 target_link_libraries (occupancy_grid_graph gtsam-shared ${OpenCV_LIBS})
+add_library(occupancy_grid_io SHARED
+	src/cvmat_serialization.cpp
+	src/loadData.cpp)
+target_link_libraries(occupancy_grid_io gtsam-shared ${OpenCV_LIBS})
 
 add_executable(SICKSlowMetropolis
 	src/MCMC/Metropolis.cpp
 	src/TwoAssumptionAlgorithm.cpp
 	tests/testSICKSlowMetropolis.cpp
 	)
-target_link_libraries (SICKSlowMetropolis occupancy_grid_graph
+target_link_libraries (SICKSlowMetropolis occupancy_grid_graph occupancy_grid_io
 	${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(SICK_DDMCMC
@@ -50,7 +52,7 @@ add_executable(SICK_DDMCMC
 	tests/testSICKDDMCMC.cpp
 	)
 target_link_libraries (SICK_DDMCMC occupancy_grid_graph gtsam-shared
-			${Boost_LIBRARIES} ${OpenCV_LIBS})
+	occupancy_grid_io ${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 ###################################################################################
 # Vikas' code with merali13icra implementation
@@ -65,20 +67,25 @@ include_directories(${GTEST_INCLUDE_DIR})
 
 add_library(merali13icra SHARED
 	src/occgrid.cpp
-	src/forward_sensor_model.cpp
-	src/cvmat_serialization.cpp)
+	src/forward_sensor_model.cpp)
 target_link_libraries(merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
+
+add_executable(convert_stanford_log
+	src/convert_stanford_log.cpp)
+target_link_libraries(convert_stanford_log
+	occupancy_grid_graph occupancy_grid_io ${OpenCV_LIBS})
 
 add_executable(TwoAssumptionAlgorithm
 	src/TwoAssumptionAlgorithm.cpp
 	src/run_TwoAssumptionAlgorithm.cpp)
 target_link_libraries(TwoAssumptionAlgorithm occupancy_grid_graph
+	occupancy_grid_io
 	${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(simulateddata
 	src/simulateddata.cpp)
-target_link_libraries(simulateddata merali13icra 
+target_link_libraries(simulateddata merali13icra occupancy_grid_io
 	${OpenCV_LIBS} ${Boost_LIBRARIES})
 add_executable(test_raytrace
 	tests/test_raytrace.cpp)
@@ -87,7 +94,8 @@ target_link_libraries(test_raytrace
 
 add_executable(dualdecomposition
 	src/dualdecomposition.cpp)
-target_link_libraries(dualdecomposition occupancy_grid_graph ${Boost_LIBRARIES} ${OpenCV_LIBS})
+target_link_libraries(dualdecomposition occupancy_grid_graph
+	occupancy_grid_io ${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(test_slaveminimizer
 	tests/test_slaveminimizer.cpp)
@@ -96,7 +104,8 @@ target_link_libraries(test_slaveminimizer occupancy_grid_graph ${Boost_LIBRARIES
 add_executable(run_belief_propagation
 	src/TwoAssumptionAlgorithm.cpp
 	src/run_belief_propagation.cpp)
-target_link_libraries(run_belief_propagation occupancy_grid_graph ${Boost_LIBRARIES} ${OpenCV_LIBS})
+target_link_libraries(run_belief_propagation occupancy_grid_graph
+	occupancy_grid_io ${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(test_utility
 	src/utility.cpp
@@ -127,15 +136,15 @@ target_link_libraries(test_occgrid  merali13icra
 
 add_executable(inference_gibbs_sampling 
 	src/inference_gibbs_sampling.cpp)
-target_link_libraries(inference_gibbs_sampling merali13icra ${OpenCV_LIBS})
+target_link_libraries(inference_gibbs_sampling occupancy_grid_io merali13icra ${OpenCV_LIBS})
 
 add_executable(visualize_ground_truth 
 	src/visualize_ground_truth.cpp)
-target_link_libraries(visualize_ground_truth occupancy_grid_graph merali13icra ${OpenCV_LIBS})
+target_link_libraries(visualize_ground_truth occupancy_grid_io merali13icra ${OpenCV_LIBS})
 
 add_executable(two_assumption_alg 
 	src/two_assumption_alg.cpp)
-target_link_libraries(two_assumption_alg merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES})
+target_link_libraries(two_assumption_alg merali13icra occupancy_grid_io ${OpenCV_LIBS} ${Boost_LIBRARIES})
 
 add_executable(displayMarginals
 	src/displayMarginals.cpp)

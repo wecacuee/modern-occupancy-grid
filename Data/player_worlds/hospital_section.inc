@@ -22,7 +22,7 @@ pioneer2dx
 (		  
   # can refer to the robot by this name
   name "r0"
-  pose [ -22 3.2 0 00 ] # for hospital_section.png
+  pose [ -22 3.2 0 10 ] # for hospital_section.png
 
   sicklaser(   
      ctrl "lasernoise"  # uncomment this line to run a laser noise generator

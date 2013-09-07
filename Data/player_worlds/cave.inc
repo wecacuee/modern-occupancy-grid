@@ -3,7 +3,7 @@ window
 (
   size [ 635.000 666.000 ] # in pixels
   scale 37.481   # pixels per meter
-  center [ -0.019  -0.282 ]
+  center [ -0.0 -0.0 ]
   rotate [ 0  0 ]
   			
   show_data 1              # 1=on 0=off
