@@ -1,7 +1,10 @@
 == Tasks (priority sorted) ==
+* [ ] Write paper
 * [ ] Run algorithms on more datasets http://cres.usc.edu/radishrepository/view-all.php
-* [ ] Try algorithms on real laser data.
-* [ ] Think of someway to compute, step size in dual decomposition
+    * [ ] Average them out.
+* [o] Try algorithms on real laser data.
+    * [X] Download and convert data set
+    * [ ] Run dataset on CCR
 * [o] Write down the description of algorithms in the way I implemented them. (especially dual decomposition)
     * [X] Dual decomposition
     * [ ] Belief propagation
@@ -18,6 +21,7 @@
     * [ ] Consider changing the size of laser factors to the disagreeing part only ??
 * [ ] Tree Re-weighted Belief propagation ??
 * [ ] Try algorithms on sonar data. Would require a difference sensor model.
+* [ ] Think of someway to compute, step size in dual decomposition. Use min marginals.
 * [ ] Learn the factors by using training data. It would be interesting to explore learning on sonar data, but not that much on laser data.
 * [ ] implement neighbor factor. Occupied regions are contiguous.
  
