@@ -5,6 +5,7 @@
 #include "OccupancyGrid/gtsam_adaptor.hpp"
 #include "OccupancyGrid/slaveminimizer.hpp"
 #include "OccupancyGrid/DDLaserFactor.hpp"
+#include "OccupancyGrid/loadOccupancyGrid.h"
 #include "OccupancyGrid/utility.hpp"
 
 #include <gtsam/geometry/Pose2.h>
@@ -42,35 +43,13 @@ int main(int argc, const char *argv[])
   po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
   po::notify(vm);    
 
-  double resolution = vm["resolution"].as<double>();
   EnergyType step = vm["step"].as<EnergyType>();
-  std::string datadirectory = vm["dir"].as<std::string>();
   // end of parse arguments ////////////////////////////////////
+  OccupancyGrid occupancyGrid = loadOccupancyGrid(vm);
 
-  vector<Pose2> allposes;
-  vector<double> allranges;
-  vector<uint8_t> allreflectance;
-  loadPlayerSim(
-      datadirectory + "/laser_pose_all.bin",
-      datadirectory + "/laser_range_all.bin",
-      datadirectory + "/scan_angles_all.bin",
-      datadirectory + "/laser_reflectance_all.bin",
-      allposes, allranges, allreflectance);
-  double width, height, origin_x, origin_y;
-  shiftPoses(allranges, allposes, width, height, origin_x, origin_y);
-
-  // Create the occupancy grid data structure
-  OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
   global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
   global_vis2_.init(occupancyGrid.height(), occupancyGrid.width(), "d");
 
-  for (size_t i = 0; i < allranges.size(); i++) {
-    const Pose2& pose = allposes[i];
-    const double range = allranges[i];
-    const uint8_t reflectance = allreflectance[i];
-    // this is where factors are added into the factor graph
-    occupancyGrid.addLaser(pose, range, reflectance); //add laser to grid
-  }
   typedef gtsam::Index SampleSpaceType;
   typedef gtsam::Index vertex_descriptor;
   typedef G<OccupancyGrid, EnergyType, SampleSpaceType, vertex_descriptor> OccupancyGridGraph;

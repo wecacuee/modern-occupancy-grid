@@ -35,8 +35,9 @@ add_library(occupancy_grid_graph SHARED
 target_link_libraries (occupancy_grid_graph gtsam-shared ${OpenCV_LIBS})
 add_library(occupancy_grid_io SHARED
 	src/cvmat_serialization.cpp
-	src/loadData.cpp)
-target_link_libraries(occupancy_grid_io gtsam-shared ${OpenCV_LIBS})
+	src/loadData.cpp
+	src/loadOccupancyGrid.cpp)
+target_link_libraries(occupancy_grid_io occupancy_grid_graph gtsam-shared ${Boost_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(SICKSlowMetropolis
 	src/MCMC/Metropolis.cpp
