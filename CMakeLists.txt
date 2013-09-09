@@ -71,6 +71,11 @@ add_library(merali13icra SHARED
 target_link_libraries(merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
 
+add_executable(convert_albert_log
+	src/convert_albert_log.cpp)
+target_link_libraries(convert_albert_log
+	occupancy_grid_graph occupancy_grid_io ${OpenCV_LIBS})
+
 add_executable(convert_stanford_log
 	src/convert_stanford_log.cpp)
 target_link_libraries(convert_stanford_log
