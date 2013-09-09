@@ -6,6 +6,6 @@ def executables():
     args = convergence_experiment.exec_config()
     for k, conf in args:
         conf['args'] = [.05, "--width=25", "--height=25",
-                        "--dir=Data/albertb.sw/"]
+                        "--dir=Data/albertb.sm/"]
     return [ExecutableConfig(*args) for args in args]
 
