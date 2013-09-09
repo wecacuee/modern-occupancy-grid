@@ -316,6 +316,39 @@ struct SubgradientDualDecomposition {
     return occgrid::assignment(g_, x, messages_, sample_space_map_, disagreement_tracker_);
   }
 
+  EnergyType marginal(
+      typename boost::graph_traits<Graph>::vertex_descriptor x,
+      SampleSpaceType value)
+  {
+    if ( ! is_disagreement(disagreement_tracker_, x)) {
+      BOOST_FOREACH(vertex_descriptor f, adjacent_vertices(x, g_)) {
+        SampleSpaceType assign = get(disagreement_tracker_, std::make_pair(f, x));
+        // Agreement. Take any assignment and decide on energy values.
+        return (assign == value) ? 0 : std::numeric_limits<EnergyType>::infinity();
+      }
+      // Agreement but there is no factor associated. This is unexplored
+      // region.
+      return - std::log(0.5);
+    }
+
+    // Disgreement
+    // maximum energy assignment
+    EnergyType min_energy = std::numeric_limits<EnergyType>::infinity(),
+    max_energy = 0;
+    BOOST_FOREACH(SampleSpaceType xv, get(sample_space_map_, x)) {
+      EnergyType xv_energy = vertex_energy(messages_, g_, x, xv);
+      if (max_energy < xv_energy)
+        max_energy = xv_energy;
+      if (min_energy > xv_energy)
+        min_energy = xv_energy;
+    }
+
+    EnergyType xv_energy = vertex_energy(messages_, g_, x, value);
+    EnergyType retenergy = (max_energy - xv_energy);
+    assert(retenergy >= 0);
+    return retenergy;
+  }
+
   private:
       const Graph& g_;
       const SlaveMinimizer& slave_minimizer_;
@@ -350,13 +383,16 @@ void iterate_dualdecomposition(
     std::cout << "Variable disagreement count:" << count << std::endl;
 
     gtsam::Assignment<gtsam::Index> best_assign;
-    BOOST_FOREACH(vertex_descriptor x, variables(g_))
+    std::vector<double> marg(num_variables(g_));
+    BOOST_FOREACH(vertex_descriptor x, variables(g_)) {
       best_assign[x] = func.assignment(x);
+      marg[x] = std::exp(-func.marginal(x, 1));
+    }
     double energy = g_.g_(best_assign);
     std::cout << "<Energy>\t" << ((float)(et - st)) / CLOCKS_PER_SEC << "\t" << energy << std::endl;
 
-    global_vis_.setMarginals(best_assign);
-    global_vis_.show(1);
+    global_vis_.setMarginals(marg);
+    global_vis_.show(10);
 
     std::vector<sample_space_type> disagreeing_cells;
     BOOST_FOREACH(vertex_descriptor x, variables(g_))
