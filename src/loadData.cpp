@@ -132,48 +132,24 @@ void shiftPoses(
     cv::Mat& laser_pose,
     const cv::Mat& scan_angles,
     const cv::Mat& laser_range,
+    const cv::Mat& laser_reflectance,
     double& width,
     double& height,
     double& origin_x,
     double& origin_y) 
 {
-  double min_x = std::numeric_limits<double>::infinity(),
-         max_x = - std::numeric_limits<double>::infinity(),
-         min_y = std::numeric_limits<double>::infinity(),
-         max_y = - std::numeric_limits<double>::infinity();
-  for (int r = 0; r < laser_pose.rows; r++) {
-    double* pose_robot = laser_pose.ptr<double>(r);
-    const double* angles = scan_angles.ptr<double>(r);
-    const double* ranges_row = laser_range.ptr<double>(r);
-    double robot_angle = pose_robot[2];
-    for (int c = 0; c < scan_angles.cols; c++) {
-      double total_angle = robot_angle + angles[c];
-      double range = ranges_row[c];
-      gtsam::Pose2 pose(pose_robot[0], pose_robot[1], total_angle);
-      double end_x = pose.x() + range * cos(pose.theta()),
-             end_y = pose.y() + range * sin(pose.theta());
-      min_x = std::min(std::min(end_x, min_x), pose.x());
-      min_y = std::min(std::min(end_y, min_y), pose.y());
-      max_x = std::max(std::max(end_x, max_x), pose.x());
-      max_y = std::max(std::max(end_y, max_y), pose.y());
-    }
-  }
-  double margin_x = 0, margin_y = 0;
-  max_x += margin_x;
-  max_y += margin_y;
-  min_x -= margin_x;
-  min_y -= margin_y;
-  double mid_x = (max_x + min_x) / 2;
-  double mid_y = (max_y + min_y) / 2;
-  origin_x = mid_x;
-  origin_y = mid_y;
+  std::vector<gtsam::Pose2> allposes;
+  std::vector<double> allranges;
+  std::vector<uint8_t> allreflectance;
+  cvMatToData(
+      laser_pose, laser_range, scan_angles, laser_reflectance,
+      allposes, allranges, allreflectance);
+  shiftPoses(allranges, allposes, width, height, origin_x, origin_y);
   for (int r = 0; r < laser_pose.rows; r++) {
     double* pose_robot = laser_pose.ptr<double>(r);
     pose_robot[0] = pose_robot[0] - origin_x;
     pose_robot[1] = pose_robot[1] - origin_y;
   }
-  width = max_x - min_x;
-  height = max_y - min_y;
 }
 
 
@@ -181,7 +157,9 @@ void shiftPoses(
     const std::vector<double>& allranges,
     std::vector<gtsam::Pose2>& allposes,
     double& width,
-    double& height) 
+    double& height,
+    double& origin_x,
+    double& origin_y) 
 {
   BOOST_AUTO(pose, allposes.begin());
   BOOST_AUTO(range, allranges.begin());

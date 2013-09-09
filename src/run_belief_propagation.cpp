@@ -124,8 +124,8 @@ int main(int argc, const char *argv[])
       datadirectory + "/scan_angles_all.bin",
       datadirectory + "/laser_reflectance_all.bin",
       allposes, allranges, allreflectance);
-  double width, height;
-  shiftPoses(allranges, allposes, width, height);
+  double width, height, origin_x, origin_y;
+  shiftPoses(allranges, allposes, width, height, origin_x, origin_y);
   // Create the occupancy grid data structure
   OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
   global_vis_.init(occupancyGrid.height(), occupancyGrid.width());

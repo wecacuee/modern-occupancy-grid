@@ -29,6 +29,8 @@ int main(int argc, const char *argv[])
   po::options_description desc("Run dual decomposition");
   desc.add_options()
     ("help", "produce help message")
+    ("width", po::value<double>(), "Width")
+    ("height", po::value<double>(), "Height")
     ("resolution", po::value<double>()->required(), "Size of square cell in the map")
     ("dir", po::value<std::string>()->default_value("Data/player_sim_with_reflectance"), "Data directory")
 ;
@@ -60,8 +62,14 @@ int main(int argc, const char *argv[])
       datadirectory + "/scan_angles_all.bin",
       datadirectory + "/laser_reflectance_all.bin",
       allposes, allranges, allreflectance);
-  double width, height;
-  shiftPoses(allranges, allposes, width, height);
+  double width, height, origin_x, origin_y;
+  shiftPoses(allranges, allposes, width, height, origin_x, origin_y);
+
+  std::cout << "Laser spans (" << width << ", " << height << ")\n";
+  if (vm.count("width"))
+    width = vm["width"].as<double>();
+  if (vm.count("height"))
+    height = vm["height"].as<double>();
 
   // Create the occupancy grid data structure
   OccupancyGrid occupancyGrid(width, height, resolution); //default center to middle
