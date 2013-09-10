@@ -44,6 +44,7 @@ int main(int argc, const char *argv[])
   po::notify(vm);    
   // end of parse arguments ////////////////////////////////////
   OccupancyGrid occupancyGrid = loadOccupancyGrid(vm);
+  global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
 
   occupancyGrid.saveLaser("Data/lasers.lsr");
   
