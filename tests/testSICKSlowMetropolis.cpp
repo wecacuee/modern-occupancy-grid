@@ -38,6 +38,7 @@ int main(int argc, char *argv[]) {
   po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
   po::notify(vm);    
 
+  std::string directory = vm["dir"].as<std::string>();
   // end of parse arguments ////////////////////////////////////
   OccupancyGrid occupancyGrid = loadOccupancyGrid(vm);
 
@@ -57,6 +58,8 @@ int main(int argc, char *argv[]) {
     fprintf(fptr, "%lf ", occupancyMarginals[i]);
   }
   fclose(fptr);
-  global_vis_.save("/tmp/SICKSlowMetropolis.png");
+  std::stringstream ss;
+  ss << directory << "/SICKSlowMetropolis.png";
+  global_vis_.save(ss.str());
 }
 

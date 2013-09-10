@@ -46,6 +46,7 @@ int main(int argc, const char *argv[])
   po::notify(vm);    
 
   EnergyType step = vm["step"].as<EnergyType>();
+  std::string directory = vm["dir"].as<std::string>();
   // end of parse arguments ////////////////////////////////////
   OccupancyGrid occupancyGrid = loadOccupancyGrid(vm);
 
@@ -71,4 +72,7 @@ int main(int argc, const char *argv[])
           SampleSpaceMap, DisagreementMap, Messages, SampleSpaceType, EnergyType> SubgradientDualDecompositionType;
   SubgradientDualDecompositionType subg_dd(ogg, slvmin, ssm, disagreement_map, messages, step);
   iterate_dualdecomposition<OccupancyGridGraph, SubgradientDualDecompositionType, DisagreementMap, SampleSpaceType>(ogg, subg_dd, disagreement_map, 70);
+  std::stringstream ss;
+  ss << directory << "/dualdecomposition.png";
+  global_vis_.save(ss.str());
 }

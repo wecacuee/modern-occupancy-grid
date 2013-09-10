@@ -42,6 +42,8 @@ int main(int argc, const char *argv[])
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
   po::notify(vm);    
+
+  std::string directory = vm["dir"].as<std::string>();
   // end of parse arguments ////////////////////////////////////
   OccupancyGrid occupancyGrid = loadOccupancyGrid(vm);
   global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
@@ -63,7 +65,9 @@ int main(int argc, const char *argv[])
     probab[i] = 1 / (1 + p);
   }
   global_vis_.setMarginals(probab);
-  global_vis_.save("/tmp/TwoAssumptionAlgo.png");
+  std::stringstream ss;
+  ss << directory << "/TwoAssumptionAlgo.png";
+  global_vis_.save(ss.str());
   global_vis_.show(2000);
 
   return 0;

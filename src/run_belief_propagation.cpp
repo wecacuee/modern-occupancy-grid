@@ -113,6 +113,8 @@ int main(int argc, const char *argv[])
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
   po::notify(vm);    
+
+  std::string directory = vm["dir"].as<std::string>();
   // end of parse arguments ////////////////////////////////////
 
   // Create the occupancy grid data structure
@@ -161,5 +163,7 @@ int main(int argc, const char *argv[])
   std::cout << "Number of iterations:" << n_iter << std::endl;
   random_edge_traversal(ogg, vistor_list, n_iter);
   display_vis.display(ogg);
-  global_vis_.save("/tmp/run_belief_propagation.png");
+  std::stringstream ss;
+  ss << directory << "/run_belief_propagation.png";
+  global_vis_.save(ss.str());
 }
