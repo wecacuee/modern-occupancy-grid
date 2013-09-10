@@ -15,9 +15,10 @@ def exec_config():
          {"legend" : "Two Assumption Algorithm"})
     ] 
     return args
-def executables(dir):
+def executables(dir_):
     args = exec_config()
     for k, conf in args:
-        conf['args'] = [.18, "--dir=%s" % dir]
+        conf['dir'] = dir_
+        conf['args'] = [.18, "--dir=%s" % dir_]
     return [ExecutableConfig(*args) for args in args]
 
