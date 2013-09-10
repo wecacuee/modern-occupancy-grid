@@ -8,6 +8,7 @@
 \usepackage{amsfonts}
 \usepackage{graphicx}
 \usepackage{verbatim}
+\usepackage{hyperref}
 
 \DeclareMathOperator*{\argmin}{arg\,min}
 \DeclareMathOperator*{\argmax}{arg\,max}
@@ -54,13 +55,17 @@ We introduce the factor graph approach of solving mapping problem which, to the 
 % mic choices:
 % 1. They decompose the high-dimensional mapping problem into many binary estimation
 % problems, which are then solved independently of each other.
-% 2. They rely on inverse models of the robot’s sensors which reasons from sensor measure-
+% 2. They rely on inverse models of the robotâs sensors which reasons from sensor measure-
 % ments to maps (opposite of the way sensor data is generated).
 \cite{thrun2003learning} made an argument for using forward sensor models in sonar based mapping instead of conventional inverse sensor model.
 
 
 % Work that has been in done in "method" that i.e MAP
 Minimization of cost (or energy) function over Factor graphs is a well studied field and it has found numerous application in the field of information theory, computer vision and machine learning. A lot of work has been done in the field.
+
+% Work on higher order potentials
+\cite{leonardis2006efficient}  propose decreasing the labels set of variable
+nodes to restrict the size of sample space of high order neighborhood. 
 
 \section{Problem definition}
 \newcommand{\map}{\vect{x}}
@@ -83,7 +88,10 @@ In another formulation of problem, we can focus on the best overall occupancy of
   \vect{x}* &= \argmax_{\map \in \Omega } p(\map | z, \rho)
   \label{eq:mapproblem}
 \end{align}
-Clearly, \eqref{eq:mapproblem} is a simpler problem than \eqref{eq:fullsolution}. If problem is \eqref{eq:fullsolution} is solved than problem \eqref{eq:mapproblem} is solved by just taking the label that maximizes the marginal probability.
+Clearly, \eqref{eq:mapproblem} is a simpler problem than
+\eqref{eq:fullsolution}. If problem is \eqref{eq:fullsolution} is solved than
+problem \eqref{eq:mapproblem} is solved by just taking the label that maximizes
+the marginal probability.
 
 It is easy to see that any naive solution to any of the two problems would have complexity that is exponential in the number of cells. We can only hope to find an approximate solution of this problem.
 
@@ -253,6 +261,7 @@ We explore here a few plausible sensor models
 In this sensor model, we assume that the laser measurements are affected by Gaussian noise. The forward sensor model is given by
 \begin{align}
   p(z_f|\vect{x}_f, \rho_f) &= \frac{1}{2\pi\sigma}\exp\left(-\frac{(\actz - z_f)^2}{\sigma^2}\right)
+  \label{eq:gaussiansensormodel}
 \end{align}
 where $\actz$ is the distance of first occupied cell in $\vect{x}_f$ starting from pose $\rho_f$. Also $\sigma$ is a measure of noise in laser measurement and it often depends on the distance measured. For our experiments we assume noise to linearly vary with distance as $\sigma = \sigma_0z_f$. 
 
@@ -279,12 +288,70 @@ where $[0, 0 \dots 0, 1]$ means that all cells are $0$ except the last cell whic
 However, to resolve conflicts it is sometimes better to provide lower energy to all cells free case. Hence, we come with the following energy function.
 \begin{align}
   \theta_f(\vect{x}_f) &= \begin{cases}
-                     0 & \text{ if } \vect{x}_f = \vect{P}_1\\
-                   900 & \text{ if } \vect{x}_f = \vect{P}_2\\
+                     0 & \text{ if } \vect{x}_f = \vect{R}_1\\
+                   900 & \text{ if } \vect{x}_f = \vect{R}_2\\
                   1000 & \text{ otherwise}
   \end{cases}
+  \label{eq:piecewiseconstant}
 \end{align}
-where $\vect{P}_1 = [0, 0 \dots 0, 1]^\top$ and $\vect{P}_2 = [0, 0 \dots 0, 0]^\top$.
+where $\vect{R}_1 = [0, 0 \dots 0, 1]^\top$ and $\vect{R}_2 = [0, 0 \dots 0, 0]^\top$.
+
+\subsection{Pattern-based functions}
+\label{sec:patternfunctions}
+However, we can efficiently compute \eqref{eq:factor2node} for certain class of
+$P_f(.)$. Here, we take a consider a class of \emph{pattern-based} function
+that are similar (yet different) to those discussed by Komodakis et al
+\cite{komodakis2009beyond}. Pattern based functions are functions of the form:
+\begin{align}
+  P_f(\vect{x}_f) = \begin{cases}
+    \psi_{1} & \text{ if $\vect{x}_f \sim \vect{R}_1$}\\
+            .&.\\
+    \psi_{m} & \text{ if $\vect{x}_f \sim \vect{R}_m$}\\
+            .&.\\
+    \psi_{\text{min}} & \text{ otherwise}
+  \end{cases}
+  \label{eq:patternfunction}
+\end{align}
+where $\vect{R}_m$ is one of the mutually exclusive $M$ patterns and operator
+$\vect{x}_f \sim \vect{R}_m$ denotes that vector $\vect{x}_f$ matches pattern
+$\vect{R}_m$.  
+%Usually $M$ is either a constant or linear in the size of neighborhood $n(f)$.
+%We further constrain the class of functions by requring each pattern
+A pattern $\vect{R}_m$ is defined by a non empty set of \emph{fixed} nodes
+$n^m_0(f) \subseteq n(f)$ from neighboring nodes to have fixed values $\vect{r}_m$, 
+while the state of remaining \emph{free} nodes $n^m_*(f) = n(f) \setminus
+n^m_0(f)$ can have any values and they do not affects $P_f(\vect{x}_f)$.
+We assume that the number
+of patterns $M$ is much smaller than the sample space of $\vect{x}_f$.
+
+Here, we show that gaussian sensor
+model \eqref{eq:gaussiansensormodel} can also be represented as pattern based function. 
+We use the fact that the term $\bar{z}_f(\vect{x}_f, \rho_f)$, just depends on
+first occupied cell. We define pattern $\vect{R}_m$ such that the first
+occupied cell is $m$\textsuperscript{th} cell in $n(f)$:
+\begin{align}
+  \vect{x}_f \sim \vect{R}_m = \begin{cases}
+    1 & \text{ if $x_{fk} = 0 \, \forall k < m$ and $x_{fm} = 1$}\\
+    0 & \text{ otherwise}
+  \end{cases}
+\end{align}
+where $x_{fk}$ is the $k$\textsuperscript{th} element in $\vect{x}_f$. With
+this formulation, we will have $M = n(f)$ patterns to describe the gaussian
+sensor model in the form \eqref{eq:patternfunction} with $\psi_m$ given by
+\begin{align}
+  \psi_m &= \frac{1}{2\pi\sigma}\exp\left(-\frac{(\delta(m)- z_f)^2}{\sigma^2}\right)
+\end{align}
+where $\delta(m)$ is the distance of $m$\textsuperscript{th} cell from robot
+starting point $\rho_f$. Also note that in this formulation the only case for
+\emph{otherwise} is the one when all cells are $0$ (or free).
+
+It is clear that piecewise constant sensor model \eqref{eq:piecewiseconstant}
+%Here we show that piecewise constant sensor model \eqref{eq:piecewiseconstant}
+is an instance of pattern based functions.
+%The first two cases of
+%\eqref{eq:piecewiseconstant} are already in pattern-based format, but the
+%otherwise case is not mutually exclusive with 
+
 \section{Metropolis Hastings}
 Markov Chain Monte Carlo (MCMC) methods allow us to sample from high dimensional probability distributions. The samples drawn using MCMC methods are not independent but correlated as a Markov chain. They work by moving in a random walk in the high dimensional space. Metropolis Hastings is one of the popular MCMC methods. The idea is to sample $\vect{x}$ from the probability distribution $p(\vect{x}|z, \rho)$ and after sufficient number of iterations, we should get sample that is close to the true map.
 
@@ -342,9 +409,16 @@ of graph $G$ only the neighboring factors $f \in n(i)$ depend on state of cell $
 % Now, we know that $\vect{x}'$ and $\vect{x}^r$ differ only by one cell or dimension, say $i$. Using this fact we can assert that only those subsets $\vect{x}_f$ of map can be different that contain
 % 
 \begin{algorithm}
+  \KwData{
+  Factor Graph $G = (V, F, E)$\;
+  %Label set $\{\Sx\}_{i \in V}$\;
+  %Step size $\alpha > 0$\;
+  Maximum number of iterations $N$\;
+  }
+  \KwResult{$\vect{x}^r$}
   Initialize the map $\vect{x}^0$ randomly.\;
   $r = 0$\;
-  \For {fixed number of iterations} {
+  \While {$r < N$} {
     Randomly choose a cell $i : i \in V$\;
     Flip its state $x'_i = \neg x^r_i$ in $\vect{x}^r$ to get $\vect{x}'$\;
     Compute acceptance probability $a$ by \eqref{eq:acceptanceprob}\;
@@ -375,11 +449,7 @@ We observe that Metropolis Hastings algorithm converges faster by using \emph{he
 
 \section{Sum product}
 \newcommand{\msg}[4]{\mu^{#4}_{#1\rightarrow#2}(#3)}
-% FIXME
-%Pearls sum product used for error correcting codes is still widely used for computing marginals over factor graphs.
-% FIXME
-%Kschischang \cite{kschischang2001factor} explains  the algorithm nicely.
-% 
+% TODO: Use introduction section of \cite{potetz2007efficient} to introduct belief propagation specifically 
 Sum product algorithm over factor graphs \cite{kschischang2001factor} is a
 powerful yet simple algorithm to compute marginals  of
 expression (of the form \eqref{eq:fullsolution}) that can be decomposed into
@@ -424,34 +494,84 @@ $n(f)$ of factor $f$ can be very large; of the order of $2^{500}$  in above
 example. This makes message update step in \eqref{eq:factor2node}
 computationally expensive.
 
-However, we can efficiently compute \eqref{eq:factor2node} for certain class of
-$P_f(.)$. Here, we take a class of pattern based function as discussed by
-Komodakis et al \cite{komodakis2009beyond} in their work on Dual decomposition. Pattern based functions are functions of the form:
-\begin{align}
-\end{align}
-
-The messages $\msg{i}{f}{l_i}{r}$ are often normalized over the label set $L_i$ to sum up to one:
+To efficiently compute \eqref{eq:factor2node} for pattern-based functions defined Section~\ref{sec:patternfunctions}, we need the messages to be normalized. The messages $\msg{i}{f}{l_i}{r}$ are often normalized over the label set $L_i$ to sum up to one:
 \begin{align}
   \sum_{l_i \in L_i} \msg{i}{f}{l_i}{r} = 1
 \end{align}
+
+Using this property, we can efficiently compute \eqref{eq:factor2node}. We
+compute the probability of each pattern being true using messages as beliefs
+$\msg{i}{f}{x_i}{r}$
+\begin{align}
+  &p(\vect{x_f} \sim \vect{R}_m) = \sum_{\vect{x_f} \sim \vect{R}_m} \prod_{j \in n(f)}\msg{j}{f}{x_j}{r}\\
+  %&= \prod_{j \in n^m_0(f)}\msg{j}{f}{R_{mj}}{r}\underbrace{\sum_{\vect{x}^*_f \in \Omega^*_f}\prod_{j \in n^m_*(f)}\msg{j}{f}{x_j}{r}}_{=1\text{, because $\vect{R}_m$ do not contraints $n^m_*(f)$}}\\
+  &= \prod_{j \in n^m_0(f)}\msg{j}{f}{R_{mj}}{r}\left(\sum_{\vect{x_f} \sim \vect{R}_m}\prod_{j \in n^m_*(f)}\msg{j}{f}{x_j}{r}\right)
+\end{align}
+where $R_{mj}$ is the fixed value of $j$\textsuperscript{th} node in pattern
+$\vect{R}_m$. The summation inside the bracket evaluates to one, because
+$\vect{x}_f \sim \vect{R}_m$ do not constraints state of any node in $n^m_*(f)$
+by definition. Hence, the probability of pattern is just the product of beliefs
+of fixed terms:
+\begin{align}
+  p(\vect{x_f} \sim \vect{R}_m)&= \prod_{j \in n^m_0(f)}\msg{j}{f}{R_{mj}}{r}.
+\end{align}
+
+Unlike \eqref{eq:factor2node}, we do not leave out target node
+$i$ from product terms, instead we temporarily replace the beliefs
+$\msg{i}{f}{x_i}{r}$ with deterministic values to obtain the same effect
+\begin{align}
+  \msg{i}{f}{x_i}{r} = \begin{cases}
+    1 & \text{if $x_i = l_i$}\\
+    0 & \text{otherwise}
+  \end{cases}
+\end{align}
+%Note that probabiltiy $p(\vect{x_f} \sim \vect{R}_m)$, depends only on the fixed nodes $n^m_0(f)$.
+Now, we are in position to compute \eqref{eq:factor2node}
+\begin{align}
+  \msg{f}{i}{l_i}{r+1} &= \sum_{m \le M} \psi_m p(\vect{x_f} \sim \vect{R}_m)
+  + \psi_{\text{min}} p_{\text{otherwise}}
+  \label{eq:efficientbp}
+\end{align}
+where $p_{\text{otherwise}} = 1 - \sum_{m \le M}p(\vect{x_f} \sim \vect{R}_m)$.
+
+The message update can be computed in $O(M|n(f)|)$ using \eqref{eq:efficientbp}, instead of $O(L_i^{n(f)-1})$ in the general case.
 
 \section{Dual decomposition}
 \renewcommand{\msg}[3]{\mu_{#1#2}(#3)}
 \newcommand{\assign}{\leftarrow}
 \newcommand{\Sx}{L_i}
-Dual decomposition algorithm employs Lagrangian relaxation technique from integer programming to minimize. Here we explain the implementation of the algorithm without going into mathematical derivations. Interested user is referred to \cite{sontag2011introduction,jojic2010accelerated,komodakis2009beyond} for proofs and more variations of the algorithm. 
+Dual decomposition algorithm employs Lagrangian relaxation technique from
+integer programming to minimize. Here we explain the implementation of the
+algorithm without going into mathematical derivations. Interested user is
+referred to
+\cite{sontag2011introduction,jojic2010accelerated,komodakis2009beyond} for
+proofs and more variations of the algorithm. 
 
-Pseudo code for Dual decomposition is provided in Alg~\ref{alg:dualdecompostion}. Apart from input factor graph $G = (V, F, E)$ and label set $\{\Sx\}_{i \in V}$ introduced in Sec~\ref{sec:notation}, Dual decomposition depends on a step size $\alpha$.
+Pseudo code for Dual decomposition is provided in
+Alg~\ref{alg:dualdecompostion}. Apart from input factor graph $G = (V, F, E)$
+and label set $\{\Sx\}_{i \in V}$ introduced in Sec~\ref{sec:notation}, Dual
+decomposition depends on a step size $\alpha$.
 
-The idea for Dual decomposition is to split the minimization problem into \emph{slave} problems that can be efficiently minimized. In case of disagreement for minimizing label among slave problems, the messages to slave problems are updated until the slave problems agree with each other. We maintain the minimizing label for variable node $i$, computed by slave problem corresponding to $f$ as $x^f_i$. Also, we use $\msg{i}{f}{x_i}$ to denote messages from node $i$ to slave problem corresponding to $f$ regarding state $x_i$.
+The idea for Dual decomposition is to split the minimization problem into
+\emph{slave} problems that can be efficiently minimized. In case of
+disagreement for minimizing label among slave problems, the messages to slave
+problems are updated until the slave problems agree with each other. We
+maintain the minimizing label for variable node $i$, computed by slave problem
+corresponding to $f$ as $x^f_i$. Also, we use $\msg{i}{f}{x_i}$ to denote
+messages from node $i$ to slave problem corresponding to $f$ regarding state
+$x_i$.
 
-In each iteration of Dual Decomposition, we first minimize all the slave problems getting labels for each pair of variable followed by message update in case of disagreement. Optionally, we can only minimize only those factors that have at least one disagreeing node in their neighborhood.
+In each iteration of Dual Decomposition, we first minimize all the slave
+problems getting labels for each pair of variable followed by message update in
+case of disagreement. Optionally, we can only minimize only those factors that
+have at least one disagreeing node in their neighborhood. However, the
+performance gain obtained by such tweak is marginal.
 
 \begin{algorithm}
   \dontprintsemicolon
   \KwData{\;
   Factor Graph $G = (V, F, E)$\;
-  Label set $\{\Sx\}_{i \in V}$\;
+  %Label set $\{\Sx\}_{i \in V}$\;
   Step size $\alpha > 0$\;
   Maximum number of iterations $N$\;
   }
@@ -461,7 +581,7 @@ In each iteration of Dual Decomposition, we first minimize all the slave problem
   $\msg{i}{f}{x_i} \assign 0 \hfill \forall (i, f) \in E, x_i \in \Sx$\;
   $r \assign 1$\;
   \While{$r < N$} {
-    \tcp{For disagreeing factors}
+    %\tcp{For disagreeing factors}
     \For {$f \in F$} {% : \exists i, i' \in n(f) : x_i^f \ne x_{i'}^f$} {
       $\vect{x}^f \assign \argmin\limits_{\vect{x}^f} \left( \theta_f(\vect{x}^f) + \sum\limits_{i \in n(f)}\msg{i}{f}{x^f_i} \right)$\;
     }
@@ -503,33 +623,95 @@ However, the above computation is only valid if the node has at least a pair of 
 %   \label{alg:compute-assignment}
 % \end{algorithm}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Unncessary
-\subsection{Efficient slave minimization of piecewise constant factor}
-Minimizing slave problem can be done efficiently for specific kinds of functions, for example, piecewise constant functions.
+\subsection{Efficient slave minimization}
+Here we address the efficient slave minimization of pattern based functions (Sec.~\ref{sec:patternfunctions}). 
 The problem is to minimize the energy function along with the received messages.
+\begin{equation}
+  \begin{split}
+    \text{minimize }  S(\vect{x}_f) &=\theta_f(\vect{x}^f) + \sum_{i \in n(f)}\msg{i}{f}{x_i^f} \\
+   \text{such that }  &\vect{x}^f \in \Omega_f
+  \end{split}
+\end{equation}
+where $\theta_f(\vect{x}^f)$ is a pattern-based function of the form
 \begin{align}
-  \min_{\vect{x}^f} \left( \theta(\vect{x}^f) + \sum_{i \in n(f)}\msg{i}{f}{x^f} \right)
+  \theta_f(\vect{x}^f) &= \begin{cases}
+                \Psi_m & \text{ if $\vect{x}_f \sim \vect{R}_m$}\\
+     \Psi_{\text{max}} & \text{ otherwise}
+  \end{cases}
 \end{align}
-A general minimization algorithm will take time of the order that is exponential in the number of cells a laser passes through as $\vect{x}^f$ can have $|L_i|^{|n(f)|}$ possible values. However, for our sensor model we can make use of the fact that the piecewise function needs to look for only two patterns. We should compute the total function value for these two patterns and the minimum value for the \emph{otherwise} case. 
-\begin{align}
-    \min \theta_f(\vect{x}_f) = \min &\left( 0 + \sum_{\vect{x}_f = \vect{P}_1, i \in n(f)}\msg{i}{f}{x_i},\right.\\
-                            &900 + \sum_{\vect{x}_f = \vect{P}_2, i \in n(f)}\msg{i}{f}{x_i},\\
-                            &\left.1000 + \min_{\vect{x}_f \not\in \{\vect{P}_1, \vect{P}_2\}} \sum_{i \in n(f)}\msg{i}{f}{x_i} \right)
-\end{align}
-The third term can be easily minimized by 
-%choosing the minimizing state for each $i$ over all possible $\Omega(\vect{x}_f)$ by 
-simply choosing the minimizing $x_i \in L_i$ for each $i$. However, the minimizing labels can coincide with patterns $\vect{P}_1$ and $\vect{P}_2$. The solution is to find minimum three assignments of $\sum_{i \in n(f)}\msg{i}{f}{x_i}$ and pick the one that is not equal to $\vect{P}_1$ nor $\vect{P}_2$. 
 
+A general minimization algorithm will take time of the order that is
+exponential in the number of cells a laser passes through as $\vect{x}^f$ can
+have $|L_i|^{|n(f)|}$ possible values.
+%However, minimizing pattern-based functions is relatively easy because 
+We can compute minimum for each pattern case and then take the minimum among all the patterns. While computing minimum for single pattern we can make use of the fact that certain nodes are fixed while other free:
+\begin{align}
+  &\argmin_{\vect{x}_f \sim \vect{R}_m} S(\vect{x}_f) 
+% &= \argmin_{\vect{x}_f \sim \vect{R}_m} \Psi_m + \msg{i}{f}{x_i^f}\\
+  = \Psi_m + \argmin_{\vect{x}_f \sim \vect{R}_m} \sum_{i \in n(f)}\msg{i}{f}{x_i^f}\\
+  &= \Psi_m + \sum_{i \in n^m_0(f)}\msg{i}{f}{R_{mi}} 
+  + \argmin_{\vect{x}_f \sim \vect{R}_m} \sum_{i \in n^m_*(f)}\msg{i}{f}{x_i^f}
+\end{align}
+
+We have to still make sure that the \emph{otherwise} case is mutually
+exclusive with all other patterns.  This can be done in two different ways,
+depending on how big is the sample space for \emph{otherwise} case. If the
+sample space for \emph{otherwise} case is small (like in the gaussian sensor
+model), we simply go over all the entire sample space to find minimum value.
+Otherwise, we depend on the sample space covered by patterns being small. In this case 
+we keep finding best minimizations of $\sum_{i \in n(f)} \msg{i}{f}{x_i^f}$
+untill we get a minimization that does not match any of the
+patterns already considered. 
+%If the number of patterns $M$ is small, we should
+%be able to do this minimization efficiently.
+% \begin{align}
+%   \argmin_{\vect{x}_f \in \Omega_f} S(\vect{x}_f) &= \argmin_{m \le M} \argmin_{\vect{x}_f \sim \vect{R}_m} S(\vect{x}_f)
+% \end{align}
+% 
+%\begin{align}
+%    \min \theta_f(\vect{x}_f) = \min &\left( 0 + \sum_{\vect{x}_f = \vect{P}_1, i \in n(f)}\msg{i}{f}{x_i},\right.\\
+%                            &900 + \sum_{\vect{x}_f = \vect{P}_2, i \in n(f)}\msg{i}{f}{x_i},\\
+%                            &\left.1000 + \min_{\vect{x}_f \not\in \{\vect{P}_1, \vect{P}_2\}} \sum_{i \in n(f)}\msg{i}{f}{x_i} \right)
+%\end{align}
+For example, in case of piecewise constant sensor model, there are only two
+patterns that need to be checked for exclusivity. The otherwise term can be
+easily minimized by finding three best assignments that minimize 
+$\sum_{i \in n(f)}\msg{i}{f}{x_i}$.
+
+%choosing the minimizing state for each $i$ over all possible $\Omega(\vect{x}_f)$ by 
+%simply choosing the minimizing $x_i \in L_i$ for each $i$. However, the
+%minimizing labels can coincide with patterns $\vect{P}_1$ and $\vect{P}_2$. The
+%solution is to find minimum three assignments of $\sum_{i \in
+%n(f)}\msg{i}{f}{x_i}$ and pick the one that is not equal to $\vect{P}_1$ nor
+%$\vect{P}_2$. 
+
+%\subsection{Efficient slave minimization of piecewise constant factor}
+%Minimizing slave problem can be done efficiently for specific kinds of functions, for example, piecewise constant functions.
+%The problem is to minimize the energy function along with the received messages.
+%\begin{align}
+%  \min_{\vect{x}^f} \left( \theta(\vect{x}^f) + \sum_{i \in n(f)}\msg{i}{f}{x^f} \right)
+%\end{align}
+%A general minimization algorithm will take time of the order that is exponential in the number of cells a laser passes through as $\vect{x}^f$ can have $|L_i|^{|n(f)|}$ possible values. However, for our sensor model we can make use of the fact that the piecewise function needs to look for only two patterns. We should compute the total function value for these two patterns and the minimum value for the \emph{otherwise} case. 
+%\begin{align}
+%    \min \theta_f(\vect{x}_f) = \min &\left( 0 + \sum_{\vect{x}_f = \vect{P}_1, i \in n(f)}\msg{i}{f}{x_i},\right.\\
+%                            &900 + \sum_{\vect{x}_f = \vect{P}_2, i \in n(f)}\msg{i}{f}{x_i},\\
+%                            &\left.1000 + \min_{\vect{x}_f \not\in \{\vect{P}_1, \vect{P}_2\}} \sum_{i \in n(f)}\msg{i}{f}{x_i} \right)
+%\end{align}
+%The third term can be easily minimized by 
+%%choosing the minimizing state for each $i$ over all possible $\Omega(\vect{x}_f)$ by 
+%simply choosing the minimizing $x_i \in L_i$ for each $i$. However, the minimizing labels can coincide with patterns $\vect{P}_1$ and $\vect{P}_2$. The solution is to find minimum three assignments of $\sum_{i \in n(f)}\msg{i}{f}{x_i}$ and pick the one that is not equal to $\vect{P}_1$ nor $\vect{P}_2$. 
 %
-% Algorithm~\ref{alg:efficient-minimize} gives pseudo code for minimizing the last term.
-% \begin{algorithm}
-%   \SetKwFunction{ArgSortNElements}{ArgSortNElements}
-%   $e_i = \min\limits_{x_i \in L_i} \msg{i}{f}{x_i} \hfill, \forall i \in n(f)$\;
-%   $x^*_i = \argmin\limits_{x_i \in L_i} \msg{i}{f}{x_i} \hfill, \forall i \in n(f)$\;
-%   $\delta_{if}(x_i) = \msg{i}{f}{x_i} - e_i \hfill, \forall i \in n(f), x_i \in L_i, x_i \ne x^*_i$\;
-%   $I = \ArgSortNElements(\delta_{if}(x_i), \lceil{\log_{|L_i|}{3}}\rceil)$\;
-%   \caption{Efficient minimization of piecewise constant function}
-%   \label{alg:efficient-minimize}
-% \end{algorithm}
+%%
+%% Algorithm~\ref{alg:efficient-minimize} gives pseudo code for minimizing the last term.
+%% \begin{algorithm}
+%%   \SetKwFunction{ArgSortNElements}{ArgSortNElements}
+%%   $e_i = \min\limits_{x_i \in L_i} \msg{i}{f}{x_i} \hfill, \forall i \in n(f)$\;
+%%   $x^*_i = \argmin\limits_{x_i \in L_i} \msg{i}{f}{x_i} \hfill, \forall i \in n(f)$\;
+%%   $\delta_{if}(x_i) = \msg{i}{f}{x_i} - e_i \hfill, \forall i \in n(f), x_i \in L_i, x_i \ne x^*_i$\;
+%%   $I = \ArgSortNElements(\delta_{if}(x_i), \lceil{\log_{|L_i|}{3}}\rceil)$\;
+%%   \caption{Efficient minimization of piecewise constant function}
+%%   \label{alg:efficient-minimize}
+%% \end{algorithm}
 
 \subsection{Selection of step size}
 Step size is critical choice as it affects the speed with which Dual decomposition converges. Fig~\ref{fig:dualdecomposition-stepsize} shows convergence with different step size.
@@ -538,8 +720,8 @@ Step size is critical choice as it affects the speed with which Dual decompositi
   \caption{The rate of convergence in dual decomposition depends on step size}
   \label{fig:dualdecomposition-stepsize}
 \end{figure}
-\section{Belief propagation with disagreement tracking}
-Intuitively, dual decomposition converges faster because it focuses on the disagreeing 
+% \section{Belief propagation with disagreement tracking}
+% Intuitively, dual decomposition converges faster because it focuses on the disagreeing 
 
 \section{Experiments} 
 Used player and stage to generate simulated data. Input map is in Fig
@@ -561,12 +743,12 @@ Sampling algorithms are liable to getting stuck in a local minima because we fli
 \begin{figure*}
   %\includegraphics[width=0.2\textwidth]{../figures/cave_trajectory.png}%
   \includegraphics[width=0.16\textwidth]{../figures/cave_gt.png}%
-  \includegraphics[width=0.16\textwidth]{../figures/cave_run_belief_propagation.png}%
-  \includegraphics[width=0.16\textwidth]{../figures/cave_SICKDDMCMC.png}
   \includegraphics[width=0.16\textwidth]{../figures/cave_SICKSlowMetropolis.png}%
+  \includegraphics[width=0.16\textwidth]{../figures/cave_SICKDDMCMC.png}%
+  \includegraphics[width=0.16\textwidth]{../figures/cave_run_belief_propagation.png}%
   \includegraphics[width=0.16\textwidth]{../figures/cave_dualdecomposition.png}%
   \includegraphics[width=0.16\textwidth]{../figures/cave_TwoAssumptionAlgo.png}%
-  \caption{Qualitative results at the end of 200sec for each algorithm (from left to right) a) Ground truth with the trajectory of the robot b) Belief Propagation c) Metropolis Hastings with heat map d) Metropolis Hastings without heat map e) Dual decomposition f) Two assumption algorithm}
+  \caption{Qualitative results at the end of 200sec for each algorithm (from left to right) a) Ground truth with the trajectory of the robot b) Two assumption algorithm c) Metropolis Hastings without heat map d) Metropolis Hastings with heat map e) Belief Propagation  f) Dual decomposition}
   \label{fig:convergence-comparison-visuals}
 \end{figure*}
 

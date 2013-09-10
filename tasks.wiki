@@ -1,13 +1,18 @@
 == Tasks (priority sorted) ==
 * [ ] Write paper
-* [ ] Run algorithms on more datasets http://cres.usc.edu/radishrepository/view-all.php
-    * [ ] Average them out.
-* [o] Try algorithms on real laser data.
-    * [X] Download and convert data set
-    * [ ] Run dataset on CCR
-* [o] Write down the description of algorithms in the way I implemented them. (especially dual decomposition)
-    * [X] Dual decomposition
-    * [ ] Belief propagation
+    * [ ] Address TODO's in paper ~/wrk/OccupancyGrid/doc/icra2014/modern_map.tex
+* [.] Run algorithms on more datasets http://cres.usc.edu/radishrepository/view-all.php
+    * [.] Run algorithms on all player datasets available.
+        * [X] cave
+        * [X] hospital
+        * [X] hospital_section
+        * [ ] simple_rooms
+        * [ ] uoa_robotics_lab
+        * [ ] autolab
+        * [ ] freiburg
+        * [ ] sal2
+        * [ ] SFU
+    * [ ] Average them out??
 * [ ] Implement Gaussian measurement model for
     * [ ] metropolis hastings
     * [ ] belief propagation ??
@@ -15,6 +20,12 @@
 * [o] Quantitative comparison of algorithms
     * [X] Compute energy in algorithms
     * [ ] Probabilistic difference of marginals from ground truth.
+* [X] Try algorithms on real laser data.
+    * [X] Download and convert data set
+    * [X] Run dataset on CCR
+* [o] Write down the description of algorithms in the way I implemented them. (especially dual decomposition)
+    * [X] Dual decomposition
+    * [ ] Belief propagation
 * [o] Consider ways of making belief propagation/dual decomposition faster
     * [X] Treat maxed out lasers correctly so that all the empty space is in agreement.
     * [ ] Implement other methods of dual decomposition like Block gradient descent.
