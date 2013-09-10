@@ -31,6 +31,8 @@ int main(int argc, const char *argv[])
   po::options_description desc("Run dual decomposition");
   desc.add_options()
     ("help", "produce help message")
+    ("width", po::value<double>(), "Width")
+    ("height", po::value<double>(), "Height")
     ("resolution", po::value<double>()->required(), "Size of square cell in the map")
     ("step", po::value<EnergyType>()->default_value(50), "step size for algorithm")
     ("dir", po::value<std::string>()->default_value("Data/player_sim_with_reflectance"), "Data directory")
