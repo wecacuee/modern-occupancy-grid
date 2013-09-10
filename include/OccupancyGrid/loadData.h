@@ -27,12 +27,15 @@ void shiftPoses(
     const std::vector<double>& allranges,
     std::vector<gtsam::Pose2>& allposes,
     double& width,
-    double& height);
+    double& height,
+    double& origin_x,
+    double& origin_y);
 
 void shiftPoses(
     cv::Mat& laser_pose,
     const cv::Mat& scan_angles,
     const cv::Mat& laser_range,
+    const cv::Mat& laser_reflectance,
     double& width,
     double& height,
     double& origin_x,
