@@ -2,6 +2,7 @@
 
 #include "OccupancyGrid/OccupancyGrid.h"
 #include "OccupancyGrid/LaserFactor.h"
+#include "OccupancyGrid/visualiser.h"
 
 #include <vector>
 
@@ -24,6 +25,13 @@ void two_assumption_algorithm(const OccupancyGrid& occupancyGrid,
     size_t last_cell_idx = lf->cells_[lf->cells_.size() - 1];
     energy[last_cell_idx] -= LOG_ODDS_FREE;
     energy[last_cell_idx] += LOG_ODDS_OCCUPIED;
+    // if (f % 10000 == 0) {
+    //   for (gtsam::Index x = 0; x < occupancyGrid.cellCount(); ++x) {
+    //     best_assign[x] = (energy[x] < 0) ? 0 : 1;
+    //   }
+    //   global_vis_.setMarginals(best_assign);
+    //   global_vis_.show(1);
+    // }
   }
 
   for (gtsam::Index x = 0; x < occupancyGrid.cellCount(); ++x) {

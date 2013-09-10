@@ -69,12 +69,14 @@ int main(int argc, char** argv) {
     ("help", "produce help message")
     ("width", po::value<double>()->required(), "Width ")
     ("height", po::value<double>()->required(), "Height ")
+    ("resolution", po::value<double>()->required(), "Resolution ")
     ("dir", po::value<std::string>()->default_value("."), "Data directory")
 ;
 
   po::positional_options_description pos;
   pos.add("width", 1);
   pos.add("height", 1);
+  pos.add("resolution", 1);
   pos.add("dir", 1);
 
   po::variables_map vm;
@@ -83,6 +85,7 @@ int main(int argc, char** argv) {
 
   double width = vm["width"].as<double>();
   double height = vm["height"].as<double>();
+  double resolution = vm["resolution"].as<double>();
   std::string datadirectory = vm["dir"].as<std::string>();
   // end of parse arguments ////////////////////////////////////
   cv::Mat laser_pose, laser_ranges, scan_angles, laser_reflectance;
@@ -95,13 +98,19 @@ int main(int argc, char** argv) {
   cv::Mat floorplan = cv::imread(floorplanfile, cv::IMREAD_GRAYSCALE);
 
   cv::Vec2d original_size(width, height);
-  cv::Vec2i gridsize(floorplan.cols, floorplan.rows);
-  cv::Vec2d cellsize; 
-  cv::divide(original_size, gridsize, cellsize); // cellsize = in meters per pixel
+  cv::Vec2i gridsize;
+  cv::Vec2d cellsize(resolution, resolution); 
+  //cv::divide(original_size, gridsize, cellsize); // cellsize = in meters per pixel
+  cv::divide(original_size, cellsize, gridsize);
+  cv::resize(floorplan, floorplan, cv::Size(gridsize(0), gridsize(1)),
+      0, 0, cv::INTER_AREA);
 
   double origin_x = 0, origin_y = 0;
   double size_x = width, size_y = height;
-    shiftPoses(laser_pose, scan_angles, laser_ranges, size_x, size_y, origin_x, origin_y);
+
+    shiftPoses(laser_pose, scan_angles, laser_ranges, laser_reflectance,
+        size_x, size_y, origin_x, origin_y);
+    std::cout << "Laser spans (" << size_x << ", " << size_y << ")\n";
     cv::Vec2d size_bitmap(size_x, size_y);
     cv::Vec2i size_bitmap_px(size_x / cellsize(0), size_y / cellsize(1));
     cv::Vec2i origin_px(origin_x / cellsize(0), origin_y / cellsize(1));
@@ -218,13 +227,42 @@ int main(int argc, char** argv) {
         cv::imwrite((gt_fmter % r).str(), vis);
         cv::waitKey(1);
     }
-    std::stringstream ss;
-    ss << "groundtruth/" << ++r << ".png";
-    cv::Mat vis;
-    cv::transpose(map.gt_, vis);
-    cv::flip(vis, vis, 0);
-    cv::imwrite(ss.str(), vis);
     cv::transpose(trajectory, trajectory);
     cv::flip(trajectory, trajectory, 0);
     cv::imwrite("trajectory.png", trajectory);
+
+    cv::Mat visgt;
+    cv::cvtColor(map.gt_, visgt, cv::COLOR_GRAY2BGR);
+    for (r = 0; r < laser_pose.rows; r++) {
+        double* pose = laser_pose.ptr<double>(r);
+        double* angles = scan_angles.ptr<double>(r);
+        double robot_angle = pose[2];
+        for (int c = 0; c < scan_angles.cols; c++) {
+            double total_angle = robot_angle + angles[c];
+
+            cv::Vec2d final_pos;
+            bool reflectance;
+            ranges[c] = map.ray_trace(pose[0], pose[1], total_angle, MAX_RANGE, final_pos, reflectance);
+        }
+        cv::Vec2d position(pose[0], pose[1]);
+        // draw trajectory
+        double arrow_len = .5;
+        if ( r % (int)(arrow_len * 10/ cellsize(0)) == 0) {
+          double u = arrow_len * cos(robot_angle);
+          double v = arrow_len * sin(robot_angle);
+          cv::Point2i pt = map.xy2rc(cv::Vec2d(pose[0], pose[1])); 
+          cv::Point2i pt2 = map.xy2rc(cv::Vec2d(pose[0] + u, pose[1] + v));
+          cvArrow(visgt, 
+              pt.x, pt.y, 
+              pt2.x - pt.x, pt2.y - pt.y,
+              cv::Scalar(255, 0, 0));
+          cv::imshow("d", visgt);
+          cv::waitKey(33);
+        }
+    }
+    std::stringstream ss;
+    ss << "gt-final.png";
+    cv::transpose(visgt, visgt);
+    cv::flip(visgt, visgt, 0);
+    cv::imwrite(ss.str(), visgt);
 }

@@ -48,7 +48,7 @@ int main(int argc, const char *argv[])
           double angle = min_angle + i * (max_angle - min_angle) / (count - 1);
           range.at<double>(0, i) = r;
           angles.at<double>(0, i) = angle;
-          reflectance.at<double>(0, i) = 1;
+          reflectance.at<uint8_t>(0, i) = 1;
         }
         laser_pose_all.push_back(current_pose);
         laser_range_all.push_back(range);
