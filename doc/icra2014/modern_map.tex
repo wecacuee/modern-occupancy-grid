@@ -19,7 +19,7 @@
 
 
 \title{Modern MAP methods for accurate and faster occupancy grid mapping}
-\author{Vikas Dhiman, Brian, Jason J. Corso, Abhijit Kundu, Frank Dallaert}
+\author{Vikas Dhiman, Abhijit Kundu, Frank Dallaert, Jason J. Corso}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -71,7 +71,9 @@ exploration.
 % define problem in probability terms
 The area to be mapped is divided into $N$ discrete cells. Let $x_i$ denote the state of cell $i$, which can take values from label set $L_i = \{0, 1\}$, where $0$ (resp. $1$) denotes that cell is free (resp. occupied). We define, the map $\map$ as a vector that defines state for all $N$ cells, $\map = [x_i]^\top_{1 \le i \le N}$. Hence map $\map$ takes values from sample space $\Omega = \prod_{1 \le i \le N}L_i$.
 
-Let $z_t$ denote the $t$\textsuperscript{th} laser range measurement when captured from pose $\rho_t$. We assume that the probability of observation $p(z_t| \rho_t, \map)$ (forward sensor model) be given. The problem is to find the probability of all cells $i$ being occupied given all observations $z = [z_f]^\top_{1 \le f \le t}$ and $\rho = [\rho_f]^\top_{1 \le f \le t}$.
+Let $z_f$ denote the $f$\textsuperscript{th} laser range measurement when captured from pose $\rho_f$. 
+%We assume that the probability of observation $p(z_f| \rho_f, \map)$ (forward sensor model) be given.
+The problem is to find the probability of all cells of the map being occupied given all observations till time $t$, $z = [z_f]^\top_{1 \le f \le t}$ and $\rho = [\rho_f]^\top_{1 \le f \le t}$.
 \begin{align}
   p(x_i = 1 | z, \rho) &= \sum_{\map \in \Omega : x_i = 1} p(\map | z , \rho) & \forall 1 \le i \le N 
   \label{eq:fullsolution}
@@ -81,7 +83,9 @@ In another formulation of problem, we can focus on the best overall occupancy of
   \vect{x}* &= \argmax_{\map \in \Omega } p(\map | z, \rho)
   \label{eq:mapproblem}
 \end{align}
-It is easy to see that any solution to this problem would have complexity that is exponential in the number of cells. We can only hope to find an approximate solution of this problem.
+Clearly, \eqref{eq:mapproblem} is a simpler problem than \eqref{eq:fullsolution}. If problem is \eqref{eq:fullsolution} is solved than problem \eqref{eq:mapproblem} is solved by just taking the label that maximizes the marginal probability.
+
+It is easy to see that any naive solution to any of the two problems would have complexity that is exponential in the number of cells. We can only hope to find an approximate solution of this problem.
 
 \section{Mapping by inverse sensor model}
 % assume independence
@@ -205,19 +209,34 @@ This defines our factor graph representation of occupancy grid mapping $G = (V, 
 % In this formulation, we seek to determine the label of all the map cells that
 % maximizes the total likelihood across all measurements, which is equivalent to
 % minimizing the total \emph{energy} over all factors.
-We focus on the maximum-a-posteriori formulation of the problem (using equations \eqref{eq:mapproblem} and \eqref{eq:modernmap}) 
+We rewrite the problems \eqref{eq:fullsolution} and \eqref{eq:mapproblem} here
+in generic notation, along with use of factorization obtained in
+\eqref{eq:modernmap}, for generic explanation of algorithms.
 \begin{align}
-  \vect{x}* = \argmax_{\vect{x} \in \Omega} \frac{1}{Z} \prod_{f \in F} p(z_f|\map_f, \rho_f)
-  \label{eq:probablisticmap}
+  P_i(x_i = l_i) &= \sum_{\map \in \Omega : x_i = l_i} P(\vect{x}) & \forall i \in V
+  \label{eq:marginalgeneric}
+  \\
+     \vect{x}* &= \argmax_{\vect{x} \in \Omega} P(\vect{x})
+  \label{eq:mapgeneric}
+  \\
+   P(\vect{x}) &= \frac{1}{Z}\prod_{f \in F} P_f(\vect{x}_f)
+  \label{eq:factorizationgeneric}
 \end{align}
+where  $l_i \in L_i$ denote an element from the label set $L_i$ of node $i \in V$.
+The equations \eqref{eq:fullsolution}, \eqref{eq:mapproblem} and
+\eqref{eq:modernmap} correspond to \eqref{eq:marginalgeneric},
+\eqref{eq:mapgeneric} and \eqref{eq:factorizationgeneric} respectively. Also
+note the corresponding equivalence of notation, $P_i(x_i = l_i) = p(x_i = l_i|z, \rho)$, $P(\vect{x}) = p(\vect{x}|z, \rho)$ and $P_f(\vect{x}_f) = p(z_f|\vect{x}_f, \rho_f)$.
+
 Often, for computational reasons, this problem is approached in negative log
 likelihood or \emph{energy} domain. Let 
-$\theta_f(\vect{x}_f) = - \log p(z_f|\map_f, \rho_f)$ 
+$\theta_f(\vect{x}_f) = - \log P_f(\vect{x}_f)$ 
 denote the \emph{energy} for the laser measurement $f$. Note that here we
-assume that $p(z_f|\map_f, \rho_f) > 0$, which is practically achievable by
+assume that $P_f(\map_f) > 0$, which is practically achievable by
 choosing very low probability values instead of zero for highly improbable
-cases.  Taking negative log on both sides of \eqref{eq:probablisticmap} and
-dropping the constant normalizing factor, we get:
+cases. We will be using this non-zero probability assumption for the rest of the paper. 
+In energy domain, the problem \eqref{eq:mapgeneric}, along with
+\eqref{eq:factorizationgeneric}, can be rewritten as
 \begin{align}
   \vect{x}* = \argmin_{\vect{x} \in \Omega} \sum_{f \in F} \theta_f(\vect{x}_f)
 \end{align}
@@ -275,10 +294,9 @@ the random walk in the high-dimensional space. We randomly sample a point
 $\vect{x}'$ from from $Q(.)$ and it is either accepted or rejected based on the
 acceptance probability $a$:
 \begin{align}
-  a = \frac{p(\vect{x}')Q(\vect{x}^r, \vect{x}')}
-  {p(\vect{x}^r)Q(\vect{x}', \vect{x}^r)}
+  a = \frac{P(\vect{x}')Q(\vect{x}^r, \vect{x}')}
+  {P(\vect{x}^r)Q(\vect{x}', \vect{x}^r)}
 \end{align}
-where $p(\vect{x})$ is the probability distribution that needs to be sampled.
 
 If $a \ge 1$, then the new point $\vect{x}'$ is accepted otherwise it is accepted with probability $a$. Here acceptance means that the point in next iteration is taken as the sampled point otherwise the older point is retained:
 \begin{align}
@@ -307,11 +325,11 @@ where $N$ is the number of cells in the map and $\|.\|_1$ is the L1-norm. The
 first case in \eqref{eq:transitionprob} enforces that only one cell (or dimension)
 in the map
 can change its state at a time. We will see this choice is one of the reasons of
-poor performance of Metropolis Hastings. Also note that the ratio of probability distributions can be simplified by using \eqref{eq:modernmap}
+poor performance of Metropolis Hastings. Also note that the ratio of probability distributions can be simplified by using \eqref{eq:factorizationgeneric}
 \begin{align}
-  a &= \frac{p(\vect{x}'|z,\rho)}{p(\vect{x}^r|z, \rho)}\\
-    &= \frac{\prod_{f \in F} p(z_f|\vect{x}'_f, \rho)}{\prod_{f \in F}p(z_f|\vect{x}^r_f, \rho_f)}\\
-    &= \frac{\prod_{f \in n(i)} p(z_f|\vect{x}'_f, \rho)}{\prod_{f \in n(i)}p(z_f|\vect{x}^r_f, \rho_f)}
+  a &= \frac{P(\vect{x}')}{P(\vect{x}^r)}\\
+    &= \frac{\prod_{f \in F} P_f(\vect{x}'_f)}{\prod_{f \in F} P_f(\vect{x}^r_f)}\\
+    &= \frac{\prod_{f \in n(i)} P_f(\vect{x}'_f)}{\prod_{f \in n(i)} P_f(\vect{x}^r_f)}
   \label{eq:acceptanceprob}
 \end{align}
 where $i$ is the cell whose state is different in $\vect{x}'$ and $\vect{x}^r$,
@@ -356,15 +374,69 @@ We employ a \emph{heat map} to bias our sampling along the boundaries of free an
 We observe that Metropolis Hastings algorithm converges faster by using \emph{heat map}.
 
 \section{Sum product}
+\newcommand{\msg}[4]{\mu^{#4}_{#1\rightarrow#2}(#3)}
 % FIXME
 %Pearls sum product used for error correcting codes is still widely used for computing marginals over factor graphs.
 % FIXME
 %Kschischang \cite{kschischang2001factor} explains  the algorithm nicely.
 % 
+Sum product algorithm over factor graphs \cite{kschischang2001factor} is a
+powerful yet simple algorithm to compute marginals  of
+expression (of the form \eqref{eq:fullsolution}) that can be decomposed into
+factors of the form \eqref{eq:modernmap}. The algorithm provides exact
+marginals in the case when the graphs have no loops. For general case the
+algorithm has been shown %TODO: cite?  
+to converge in most of the practical problems.
+ 
+%The sum product algorithm is one of the easiest algorithm to implement. 
+The sum product algorithm works by sending messages along the edges of factor
+graph. The messages can be understood as a belief of the source node
+considering all other neighbors except the destination. These messages are
+defined on a directed edge, with a different message value for each state of
+the variable node involved. 
+
+Let $\msg{f}{i}{l_i}{r}$ represent message from
+node $i \in V$ to node $f \in F$ for state $x_i = l_i$ at any iteration $r$ of the
+algorithm. With a similar convention we take $\msg{i}{f}{l_i}{r}$ to denote
+update in opposite direction. We use the following equations to update the messages depending whether the direction of edge is from variable node to factor node or vice versa:
+\begin{align}
+  \msg{f}{i}{l_i}{r+1} &= \sum_{\vect{x}_f \in \Omega_f: x_i = l_i}P_f(\vect{x}_f)\prod_{j \in n(f) \setminus i}\msg{j}{f}{x_j}{r}
+  \label{eq:factor2node}
+  \\
+  \msg{i}{f}{l_i}{r+1} &= \prod_{h \in n(i) \setminus f}\msg{h}{i}{l_i}{r}
+  \label{eq:node2factor}
+\end{align}
+where $\Omega_f = \prod_{i \in n(f)} L_i$ denotes the sample space of the neighborhood of factor $f$ in graph $G$.
+
+When the factor graph is a tree, then the recommended message update sequence
+is two pass sequence. The messages are updated starting from leaves towards the
+root node in the first pass, and from root node leaves in the second pass,
+where we have freedom to choose the root node. However, for graphs with loops
+various update sequences have been suggested of which easiest to implement is
+random update sequence i.e. a random edge is selected from the graph for each iteration.
 
 \subsection{Efficient sum product}
+We note that for Occupancy grid mapping the neighborhood of nodes in factor
+graph $G$ can be large. For example a typical laser scan might have maximum
+range of up to 50 m, which can cover up to 500 cells event at 10cm resolution.
+In such a factor graph, even the sample space $\Omega_f$ of neighbors
+$n(f)$ of factor $f$ can be very large; of the order of $2^{500}$  in above
+example. This makes message update step in \eqref{eq:factor2node}
+computationally expensive.
+
+However, we can efficiently compute \eqref{eq:factor2node} for certain class of
+$P_f(.)$. Here, we take a class of pattern based function as discussed by
+Komodakis et al \cite{komodakis2009beyond} in their work on Dual decomposition. Pattern based functions are functions of the form:
+\begin{align}
+\end{align}
+
+The messages $\msg{i}{f}{l_i}{r}$ are often normalized over the label set $L_i$ to sum up to one:
+\begin{align}
+  \sum_{l_i \in L_i} \msg{i}{f}{l_i}{r} = 1
+\end{align}
+
 \section{Dual decomposition}
-\newcommand{\msg}[3]{\mu_{#1#2}(#3)}
+\renewcommand{\msg}[3]{\mu_{#1#2}(#3)}
 \newcommand{\assign}{\leftarrow}
 \newcommand{\Sx}{L_i}
 Dual decomposition algorithm employs Lagrangian relaxation technique from integer programming to minimize. Here we explain the implementation of the algorithm without going into mathematical derivations. Interested user is referred to \cite{sontag2011introduction,jojic2010accelerated,komodakis2009beyond} for proofs and more variations of the algorithm. 
@@ -471,6 +543,11 @@ Intuitively, dual decomposition converges faster because it focuses on the disag
 
 \section{Experiments} 
 Used player and stage to generate simulated data. Input map is in Fig
+
+We have used the \emph{albert-b-laser} dataset provided by Cyrill Stachniss from University of Freiburg. The dataset was captured by a B21r robot with a SICK PLS moving through a lab at University of Freiburg.
+This data set was obtained from the Robotics Data Set
+Repository (Radish)~\cite{howard2003radish}. Thanks go to Cyrill Stachniss for providing this data.
+
 \begin{figure}
   %\includegraphics[width=\columnwidth]{../figures/hospital_trajectory.png}
 \end{figure}
