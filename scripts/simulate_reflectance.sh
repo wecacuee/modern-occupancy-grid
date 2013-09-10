@@ -8,9 +8,9 @@ MY_DIR=`dirname ${BASH_SOURCE}`
 cd Data/$1_player/ || exit 1
 
 # generates laser_reflectance_all.bin
-#../../bin/simulateddata laser_pose_all.bin scan_angles_all.bin ../player_worlds/bitmaps/$key-rotated.png $map_width $map_height #142.46 54.36
+../../bin/simulateddata $map_width $map_height #142.46 54.36
 # generates groundtruth/ inputstrem/
-cmd="../../bin/visualize_ground_truth laser_pose_all.bin laser_range_all.bin scan_angles_all.bin ../player_worlds/bitmaps/$key-rotated.png $map_width $map_height laser_reflectance_all.bin"
+cmd="../../bin/visualize_ground_truth $map_width $map_height"
 echo $cmd
 $cmd
 avconv -i groundtruth/%d.png -b:v 5000k gt.mp4

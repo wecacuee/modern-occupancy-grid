@@ -8,23 +8,50 @@
 #include <boost/random/variate_generator.hpp>
 #include "OccupancyGrid/forward_sensor_model.h"
 #include "OccupancyGrid/cvmat_serialization.h"
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
 
 int main(int argc, const char *argv[])
 {
-  if (argc != 6) {
-    std::cout << "Sample usage from OccupancyGrid/Data/ds3:"
-      << "../../bin/simulateddata laser_pose_all.bin scan_angles_all.bin ../player_worlds/bitmaps/cave-rotated.png" 
-      << std::endl;
-    return 1;
-  }
-  cv::Mat laser_pose;
-  loadMat(laser_pose, argv[1]);
-  cv::Mat scan_angles;
-  loadMat(scan_angles, argv[2]);
-  cv::Mat laser_ranges(scan_angles.rows, scan_angles.cols, CV_64F);
-  cv::Mat laser_reflectance(scan_angles.rows, scan_angles.cols, CV_8U);
-  cv::Mat floorplan = cv::imread(argv[3], cv::IMREAD_GRAYSCALE);
-  cv::Vec2d size_bitmap(atof(argv[4]), atof(argv[5]));
+
+  // parse arguments ///////////////////////////////////////////
+  // Declare the supported options.
+  po::options_description desc("Visualize data");
+  desc.add_options()
+    ("help", "produce help message")
+    ("width", po::value<double>()->required(), "Width ")
+    ("height", po::value<double>()->required(), "Height ")
+    ("dir", po::value<std::string>()->default_value("."), "Data directory")
+;
+
+  po::positional_options_description pos;
+  pos.add("width", 1);
+  pos.add("height", 1);
+  pos.add("dir", 1);
+
+  po::variables_map vm;
+  po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
+  po::notify(vm);    
+
+  double width = vm["width"].as<double>();
+  double height = vm["height"].as<double>();
+  std::string datadirectory = vm["dir"].as<std::string>();
+  // end of parse arguments ////////////////////////////////////
+  cv::Mat laser_pose, laser_ranges, scan_angles;
+  loadMat(laser_pose, datadirectory + "/laser_pose_all.bin");
+  loadMat(laser_ranges, datadirectory + "/laser_range_all.bin");
+  loadMat(scan_angles, datadirectory + "/scan_angles_all.bin");
+  cv::Mat laser_reflectance(laser_ranges.rows, laser_ranges.cols, CV_8U);
+  std::string floorplanfile = datadirectory + "/floorplan.png";
+  cv::Mat floorplan = cv::imread(floorplanfile, cv::IMREAD_GRAYSCALE);
+    if(! floorplan.data )                              // Check for invalid input
+    {
+      std::cout <<  "Could not open or find the image" << std::endl ;
+        return -1;
+    }
+  cv::transpose(floorplan, floorplan);
+  cv::flip(floorplan, floorplan, 1);
+  cv::Vec2d size_bitmap(width, height);
   cv::Vec2d margin(1, 1);
   cv::Vec2d min_pt(- margin(0) - size_bitmap(0)/2, - margin(1) - size_bitmap(1)/2);
   double max_range = 8;

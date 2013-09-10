@@ -1,8 +1,9 @@
 == Tasks (priority sorted) ==
-* [ ] Run algorithms on more datasets
+* [ ] Run algorithms on more datasets http://cres.usc.edu/radishrepository/view-all.php
+* [ ] Try algorithms on real laser data.
 * [ ] Think of someway to compute, step size in dual decomposition
-* [ ] Write down the description of algorithms in the way I implemented them. (especially dual decomposition)
-    * [ ] Dual decomposition
+* [o] Write down the description of algorithms in the way I implemented them. (especially dual decomposition)
+    * [X] Dual decomposition
     * [ ] Belief propagation
 * [ ] Implement Gaussian measurement model for
     * [ ] metropolis hastings
@@ -11,13 +12,12 @@
 * [o] Quantitative comparison of algorithms
     * [X] Compute energy in algorithms
     * [ ] Probabilistic difference of marginals from ground truth.
-* [ ] Try algorithms on real laser data.
 * [o] Consider ways of making belief propagation/dual decomposition faster
     * [X] Treat maxed out lasers correctly so that all the empty space is in agreement.
     * [ ] Implement other methods of dual decomposition like Block gradient descent.
     * [ ] Consider changing the size of laser factors to the disagreeing part only ??
 * [ ] Tree Re-weighted Belief propagation ??
-* [ ] Try algorithms on sonar data
+* [ ] Try algorithms on sonar data. Would require a difference sensor model.
 * [ ] Learn the factors by using training data. It would be interesting to explore learning on sonar data, but not that much on laser data.
 * [ ] implement neighbor factor. Occupied regions are contiguous.
  

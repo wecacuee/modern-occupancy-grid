@@ -133,7 +133,9 @@ void shiftPoses(
     const cv::Mat& scan_angles,
     const cv::Mat& laser_range,
     double& width,
-    double& height) 
+    double& height,
+    double& origin_x,
+    double& origin_y) 
 {
   double min_x = std::numeric_limits<double>::infinity(),
          max_x = - std::numeric_limits<double>::infinity(),
@@ -156,17 +158,19 @@ void shiftPoses(
       max_y = std::max(std::max(end_y, max_y), pose.y());
     }
   }
-  double margin_x = 1, margin_y = 1;
+  double margin_x = 0, margin_y = 0;
   max_x += margin_x;
   max_y += margin_y;
   min_x -= margin_x;
   min_y -= margin_y;
   double mid_x = (max_x + min_x) / 2;
   double mid_y = (max_y + min_y) / 2;
+  origin_x = mid_x;
+  origin_y = mid_y;
   for (int r = 0; r < laser_pose.rows; r++) {
     double* pose_robot = laser_pose.ptr<double>(r);
-    pose_robot[0] = pose_robot[0] - mid_x;
-    pose_robot[1] = pose_robot[1] - mid_y;
+    pose_robot[0] = pose_robot[0] - origin_x;
+    pose_robot[1] = pose_robot[1] - origin_y;
   }
   width = max_x - min_x;
   height = max_y - min_y;
