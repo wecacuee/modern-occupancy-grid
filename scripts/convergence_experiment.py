@@ -1,7 +1,7 @@
 from __future__ import division
 from script_utils import ExecutableConfig
 
-def exec_config(dir):
+def exec_config():
     args = [
         ("bin/run_belief_propagation",
          {"legend" : "Belief Propagation"}),
