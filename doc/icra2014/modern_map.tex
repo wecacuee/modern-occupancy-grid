@@ -19,7 +19,7 @@
 
 
 \title{Modern MAP methods for accurate and faster occupancy grid mapping}
-\author{Vikas Dhiman, Brian, Jason J. Corso, Abhijit Kundu, Frank Dallert}
+\author{Vikas Dhiman, Brian, Jason J. Corso, Abhijit Kundu, Frank Dallaert}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -266,27 +266,102 @@ However, to resolve conflicts it is sometimes better to provide lower energy to 
   \end{cases}
 \end{align}
 where $\vect{P}_1 = [0, 0 \dots 0, 1]^\top$ and $\vect{P}_2 = [0, 0 \dots 0, 0]^\top$.
-\section{Metropolis hastings}
+\section{Metropolis Hastings}
 Markov Chain Monte Carlo (MCMC) methods allow us to sample from high dimensional probability distributions. The samples drawn using MCMC methods are not independent but correlated as a Markov chain. They work by moving in a random walk in the high dimensional space. Metropolis Hastings is one of the popular MCMC methods. The idea is to sample $\vect{x}$ from the probability distribution $p(\vect{x}|z, \rho)$ and after sufficient number of iterations, we should get sample that is close to the true map.
 
 In general, for Metropolis hastings a \emph{transition probability} $Q(\vect{x}',
-\vect{x}^r)$ is chosen, that depends on current sample $\vect{x}^r$ and guides the random
-walk in the high-dimensional space. We randomly sample a point $\vect{x}'$ 
-from from $Q(.)$ and it is either accepted or rejected based on the acceptance probability $a$:
+\vect{x}^r)$ is chosen, that depends on current sample $\vect{x}^r$ and guides
+the random walk in the high-dimensional space. We randomly sample a point
+$\vect{x}'$ from from $Q(.)$ and it is either accepted or rejected based on the
+acceptance probability $a$:
 \begin{align}
-  a = \frac{p(\vect{x}'|z, \rho)Q(\vect{x}^r, \vect{x}')}
-  {p(\vect{x}^r|z, \rho)Q(\vect{x}', \vect{x}^r)}
+  a = \frac{p(\vect{x}')Q(\vect{x}^r, \vect{x}')}
+  {p(\vect{x}^r)Q(\vect{x}', \vect{x}^r)}
 \end{align}
+where $p(\vect{x})$ is the probability distribution that needs to be sampled.
+
+If $a \ge 1$, then the new point $\vect{x}'$ is accepted otherwise it is accepted with probability $a$. Here acceptance means that the point in next iteration is taken as the sampled point otherwise the older point is retained:
 \begin{align}
   \vect{x}^{r+1} = \begin{cases}
-    \vect{x}' & \text{ if $a \ge 1$ or with Probability $a$  }\\
+    \vect{x}' & \text{ if $\vect{x}'$ accepted}\\
     \vect{x}^r & \text{ otherwise}\\
   \end{cases}
 \end{align}
-Interested reader is referred to \cite{mackay1998introduction}.
+Interested reader is referred to \cite{mackay1998introduction} for further details about the Metropolis Hastings algorithm.
+
+For our problem, we need to sample map $\vect{x}$ from the probability
+distribution $p(\vect{x}|z, \rho)$. Note that when the transition probability
+is symmetric, for example Gaussian distribution, the acceptance probability is
+simply the ratio of probabilities at the proposed point and the current point.
+We uniformly sample from all the cells in the map and flip the state of the
+sampled cell to get the proposal point $\vect{x}'$. Clearly, this transition probability is symmetric.
+% TODO: how to write this distribution in
+\begin{align}
+  Q(\vect{x}', \vect{x}^r) = \begin{cases}
+    \frac{1}{N} & \text{if $\|\vect{x}' - \vect{x}^r\|_1 = 1$}\\
+      0 & \text{ otherwise}
+  \end{cases}
+  \label{eq:transitionprob}
+\end{align}
+where $N$ is the number of cells in the map and $\|.\|_1$ is the L1-norm. The
+first case in \eqref{eq:transitionprob} enforces that only one cell (or dimension)
+in the map
+can change its state at a time. We will see this choice is one of the reasons of
+poor performance of Metropolis Hastings. Also note that the ratio of probability distributions can be simplified by using \eqref{eq:modernmap}
+\begin{align}
+  a &= \frac{p(\vect{x}'|z,\rho)}{p(\vect{x}^r|z, \rho)}\\
+    &= \frac{\prod_{f \in F} p(z_f|\vect{x}'_f, \rho)}{\prod_{f \in F}p(z_f|\vect{x}^r_f, \rho_f)}\\
+    &= \frac{\prod_{f \in n(i)} p(z_f|\vect{x}'_f, \rho)}{\prod_{f \in n(i)}p(z_f|\vect{x}^r_f, \rho_f)}
+  \label{eq:acceptanceprob}
+\end{align}
+where $i$ is the cell whose state is different in $\vect{x}'$ and $\vect{x}^r$,
+and $n(.)$ denotes the neighborhood of a vertex in graph $G$.
+
+The above simplification uses the fact that only those terms  that depend on
+state of $i$\textsuperscript{th} cell need to be computed. By definition
+of graph $G$ only the neighboring factors $f \in n(i)$ depend on state of cell $i$.
+
+% Now, we know that $\vect{x}'$ and $\vect{x}^r$ differ only by one cell or dimension, say $i$. Using this fact we can assert that only those subsets $\vect{x}_f$ of map can be different that contain
+% 
+\begin{algorithm}
+  Initialize the map $\vect{x}^0$ randomly.\;
+  $r = 0$\;
+  \For {fixed number of iterations} {
+    Randomly choose a cell $i : i \in V$\;
+    Flip its state $x'_i = \neg x^r_i$ in $\vect{x}^r$ to get $\vect{x}'$\;
+    Compute acceptance probability $a$ by \eqref{eq:acceptanceprob}\;
+    Sample random number $q : 0 \le q \le 1$\;
+    \If {$a \ge 1$ or $a \ge q$} {
+      Accept proposed point, $\vect{x}^{r + 1} = \vect{x}'$\;
+    } \Else {
+      Reject proposed point, $\vect{x}^{r + 1} = \vect{x}^r$\;
+    }
+    $r \leftarrow r + 1$\;
+  }
+  \caption{Metropolis Hastings}
+\end{algorithm}
+
 \subsection{Heat map}
+As we uniformly sampled cells from the map, we noticed that not all
+cells are equally important in mapping. There are three kinds of region any
+occupancy map, occupied, free and unexplored. Sampling and analyzing a cell in
+unexplored region is not much helpful as we do not have any evidence for the
+region. On the other hand, the central regions of free areas are not very
+interesting as all factors usually agree on their state. The uncertainty lies
+usually lies along the boundaries of free and occupied regions. This is the
+region we want to focus on.
+
+We employ a \emph{heat map} to bias our sampling along the boundaries of free and occupied regions. We maintain a vector of cells $\vect{x}_h$ that form the ``interesting'' region of the map. In our experiments, we take the last cell spanned by each laser measurement as an ``interesting'' cell and add it to the \emph{heat map}, $\vect{x}_h$. We use a sampling bias of $1:4$ for cells outside heat map to cells within heat map.
+
+We observe that Metropolis Hastings algorithm converges faster by using \emph{heat map}.
+
 \section{Sum product}
-\cite{kschischang2001factor} introduced the algorithm.
+% FIXME
+%Pearls sum product used for error correcting codes is still widely used for computing marginals over factor graphs.
+% FIXME
+%Kschischang \cite{kschischang2001factor} explains  the algorithm nicely.
+% 
+
 \subsection{Efficient sum product}
 \section{Dual decomposition}
 \newcommand{\msg}[3]{\mu_{#1#2}(#3)}
@@ -407,21 +482,21 @@ Sampling algorithms are liable to getting stuck in a local minima because we fli
   \label{fig:convergence-comparison}
 \end{figure}
 \begin{figure*}
-  \includegraphics[width=0.2\textwidth]{../figures/cave_trajectory.png}%
-  \includegraphics[width=0.2\textwidth]{../figures/gt-final.png}%
-  \includegraphics[width=0.2\textwidth]{../figures/bpresults_100x100_200sec.png}%
-  \includegraphics[width=0.2\textwidth]{../figures/SICKDDMCMC200sec_100x100.png}\\
-  \includegraphics[width=0.2\textwidth]{../figures/SICKSlowMetropolis200sec_100x100.png}%
-  \includegraphics[width=0.2\textwidth]{../figures/dualdecomposition200sec_100x100.png}%
-  \includegraphics[width=0.2\textwidth]{../figures/TwoAssumptionAlgo200sec_100x100.png}%
-  \caption{Qualitative results at the end of 200sec for each algorithm (from left to right) a) Trajectory of th robot b) Ground truth as observed by robot c) Belief Propagation d) Metropolis Hastings with heat map e) Metropolis Hastings without heat map f) Dual decomposition g) Two assumption algorithm}
+  %\includegraphics[width=0.2\textwidth]{../figures/cave_trajectory.png}%
+  \includegraphics[width=0.16\textwidth]{../figures/cave_gt.png}%
+  \includegraphics[width=0.16\textwidth]{../figures/cave_run_belief_propagation.png}%
+  \includegraphics[width=0.16\textwidth]{../figures/cave_SICKDDMCMC.png}
+  \includegraphics[width=0.16\textwidth]{../figures/cave_SICKSlowMetropolis.png}%
+  \includegraphics[width=0.16\textwidth]{../figures/cave_dualdecomposition.png}%
+  \includegraphics[width=0.16\textwidth]{../figures/cave_TwoAssumptionAlgo.png}%
+  \caption{Qualitative results at the end of 200sec for each algorithm (from left to right) a) Ground truth with the trajectory of the robot b) Belief Propagation c) Metropolis Hastings with heat map d) Metropolis Hastings without heat map e) Dual decomposition f) Two assumption algorithm}
   \label{fig:convergence-comparison-visuals}
 \end{figure*}
 
-\section{Conclusion}
-Dual decomposition converges better because it only focuses on disagreements.
 % Data source
 I have used \emph{Player 3.0.2} and \emph{Stage 3.2.2} \cite{gerkey2003player} for simulating input data.
+\section{Conclusion}
+Dual decomposition converges better because it only focuses on disagreements.
 
 \bibliographystyle{IEEEtran}
 \newcommand{\bibdatabase}{/home/vikasdhi/wrk/biblib/bibdb}
