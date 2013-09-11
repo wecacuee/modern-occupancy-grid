@@ -724,6 +724,7 @@ Step size is critical choice as it affects the speed with which Dual decompositi
 % Intuitively, dual decomposition converges faster because it focuses on the disagreeing 
 
 \section{Experiments} 
+We run experiments on simulated as well real data.
 Used player and stage to generate simulated data. Input map is in Fig
 
 We have used the \emph{albert-b-laser} dataset provided by Cyrill Stachniss from University of Freiburg. The dataset was captured by a B21r robot with a SICK PLS moving through a lab at University of Freiburg.
@@ -743,13 +744,30 @@ Sampling algorithms are liable to getting stuck in a local minima because we fli
 \begin{figure*}
   %\includegraphics[width=0.2\textwidth]{../figures/cave_trajectory.png}%
   \includegraphics[width=0.16\textwidth]{../figures/cave_gt.png}%
+  \includegraphics[width=0.16\textwidth]{../figures/cave_TwoAssumptionAlgo.png}%
   \includegraphics[width=0.16\textwidth]{../figures/cave_SICKSlowMetropolis.png}%
   \includegraphics[width=0.16\textwidth]{../figures/cave_SICKDDMCMC.png}%
   \includegraphics[width=0.16\textwidth]{../figures/cave_run_belief_propagation.png}%
   \includegraphics[width=0.16\textwidth]{../figures/cave_dualdecomposition.png}%
-  \includegraphics[width=0.16\textwidth]{../figures/cave_TwoAssumptionAlgo.png}%
   \caption{Qualitative results at the end of 200sec for each algorithm (from left to right) a) Ground truth with the trajectory of the robot b) Two assumption algorithm c) Metropolis Hastings without heat map d) Metropolis Hastings with heat map e) Belief Propagation  f) Dual decomposition}
   \label{fig:convergence-comparison-visuals}
+\end{figure*}
+
+\begin{figure}
+  \includegraphics[width=\columnwidth]{../figures/convergence-albert-b.pdf}%
+  \caption{Comparison of convergence of different algorithms on occupancy grid graph. While sampling methods like Metropolis hastings converge quickly they stay far from optimum energy. On the other hand modern minimization algorithms reach closer to an optimum value.}
+  \label{fig:convergence-comparison-albertb}
+\end{figure}
+\begin{figure*}
+  %\includegraphics[width=0.2\textwidth]{../figures/cave_trajectory.png}%
+  \includegraphics[width=0.33\textwidth]{../../Data/albertb.sm/path.png}%
+  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/TwoAssumptionAlgo.png}%
+  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/SICKSlowMetropolis.png}\\
+  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/SICKDDMCMC.png}%
+  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/run_belief_propagation.png}%
+  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/dualdecomposition.png}%
+  \caption{Qualitative results at the end of 200sec for each algorithm (from left to right) a) Ground truth with the trajectory of the robot b) Two assumption algorithm c) Metropolis Hastings without heat map d) Metropolis Hastings with heat map e) Belief Propagation  f) Dual decomposition}
+  \label{fig:convergence-comparison-visuals-albertb}
 \end{figure*}
 
 % Data source
