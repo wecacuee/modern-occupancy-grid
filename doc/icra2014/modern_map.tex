@@ -3,12 +3,14 @@
 \IEEEoverridecommandlockouts   % Needed if you want to use the \thanks command
 \overrideIEEEmargins
 
-\usepackage[ruled,vlined]{algorithm2e}
-\usepackage{amsmath}
-\usepackage{amsfonts}
+\usepackage{amsmath} 
 \usepackage{graphicx}
-\usepackage{verbatim}
-\usepackage{hyperref}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{amsfonts} % for mathbf and mathbb
+\usepackage{hyperref} % required because bib generates \url{}
+\usepackage{verbatim} % For begin{comment} end{comment}
+\usepackage{authblk} % useful for multiple authors with different affiliations
+\usepackage{cite} % useful to show multiple citations in single square bracket
 
 \DeclareMathOperator*{\argmin}{arg\,min}
 \DeclareMathOperator*{\argmax}{arg\,max}
@@ -19,49 +21,133 @@
 \newcommand{\Real}[0]{\field{R}}
 
 
-\title{Modern MAP methods for accurate and faster occupancy grid mapping}
-\author{Vikas Dhiman, Abhijit Kundu, Frank Dallaert, Jason J. Corso}
+\title{\Large \bf
+Modern MAP methods for accurate and faster occupancy grid mapping
+}
+\author[1]{Vikas Dhiman}
+\author[2]{Abhijit Kundu}
+\author[2]{Frank Dallaert}
+\author[1]{Jason J. Corso}
+\affil[1]{{\tt\small\{vikasdhi,jcorso\}@buffalo.edu}}
+\affil[1]{ Department of Computer Science and Engineering, SUNY at Buffalo, NY, USA }
+\affil[2]{{\tt\small\{abhijit.kundu,frank\}@gatech.edu}}
+\affil[2]{College of Computing, Georgia Tech, GA, USA}
+
 \begin{document}
 \maketitle
 \begin{abstract}
-  Most occupancy grid mapping algorithms have been using two assumption
-  algorithm.  \cite{merali2013icra} showed that belief maximization methods
-  produce better maps than the traditional two assumption algorithm.  In this
-  paper, we show that we can go beyond methods like MCMC Gibbs sampling and
-  obtain faster convergence by using modern methods like Sum Product algorithm
-  and Dual Decomposition.
+  Using the inverse sensor model has been quite popular in occupancy grid mapping.
+% TODO: cite papers using inverse sensor model
+  However, it has been repeatedly shown \cite{thrun2003learning,merali2013icra} 
+  that applying inverse sensor model to mapping requires certain
+  assumptions that are not necessarily true. Even the papers that use forward 
+  sensor models have only used methods like expectation maximization
+  or Gibbs sampling which have been succeeded by better methods of
+  \emph{maximum a posteriori} (MAP) inference over graphical models.
+  In this paper, we propose the use of modern MAP inference methods along with
+  the forward sensor model, that deliver more accurate and faster maps than
+  previously used methods.
 \end{abstract}
 \section{Introduction}
-% navigation -> localization and mapping -> mapping
-%Autonomous navigation of mobile robots is an important problem for any kind of robot that needs to find s path through obstacles.
-Robotic mapping is an important problem. It is a necessary step for applications like indoor autonomous navigation, grasping, reconstruction and augmented reality. It is often done in parallel with localization and termed as Simultaneous localization and mapping. Given the importance of the problem, lot of work has been done in this field. The approaches discussed in literature have used various kinds of sensors 
-Sonars,%TODO: cite sonar mapping papers,
-laser scanners, %TODO : cite laser mapping papers
-simple cameras, %TODO : single camera reconstructions
-RGB-D Cameras \cite{newcombe2011kinectfusion, whelan2013robust, whelan2012kintinuous}. 
-However, all the mapping algorithms introduced in the robotics suffer use a inaccurate independent cell assumption as pointed out in the % TODO: cite thrun's paper
+% % Outline
+% * [X] Describe the problem. How it is important for robotics?
+% * [X] What are different ways of solving problem?
+% * [X] Do we focus on a particular way of solving?
+% * [X] What is the common trend?
+% * [X] What is wrong  with current approach?
+% * [X] What are we proposing?
+% * [X] Has someone done this before? If yes, how are we different.
 
-The main reason for using this assumption is speed gain that we gain with the independent cell assumption. We show that the assumption if dropped can produce more accurate maps, which can be useful when more accurate reconstructions are required and when computational resources are not limited, for example, during post processing of the data.
+Spatial understanding of the environment is required to make mobile robots more
+autonomous in unexplored environment to address a variety of problems like
+navigation, path planning, localization and collision avoidance. 
+The problem of estimating a spatial model of robot's
+environment is called robot mapping\cite{thrun2002robotic}. Even in
+environments where we have maps available, the environment may change over time
+which necessitates the mapping ability in a mobile robot.
+Mapping remains an active field of research \cite{meyer2012occupancy,nagla2012improved,merali2013icra}
+as it is an important problem for
+applications like indoor autonomous navigation, grasping, reconstruction and
+augmented reality.
+Mapping can be performed by employing information from a variety of range
+sensors like Sonars \cite{thrun2003learning}, laser scanners \cite{merali2013icra}
+and RGB-D Cameras \cite{newcombe2011kinectfusion}
+%, whelan2013robust, whelan2012kintinuous}. % too many citations
+Although there has been some work on mapping with bearing only sensors
+\cite{davison2007monoslam,kundu2011realtime}, use of range sensors still
+remains exciting because the maps build by former sensors are correct only up
+to a scale.
 
-We introduce the factor graph approach of solving mapping problem which, to the best of our knowledge, has not been introduced to the robotics community. The closest work is that of \cite{merali2013icra} that uses Monte carlo Markov chain (MCMC) methods to estimate accurate maps. It has been a common knowledge that MCMC methods are very likely to get stuck in a local minimum. In this paper, we go beyond MCMC methods and evaluate modern factor graph optimization methods to compute maps that are more accurate given the accuracy as long as we have an accurate forward sensor model.
+% * [X] What are different ways of solving problem?
+Research have attempted topological and metric approaches to robotic mapping.
+Of the various techniques in metric mapping, occupancy grid mapping has been
+quite popular \cite{elfes1989using,moravec1988sensor} because of its ability
+to represent uncertainty and simplicity of implementation.
+% * [X] Do we focus on a particular way of solving?
+In this paper we focus on occupancy grid mapping, in which we divide the area
+or volume being mapped into square or cubic cells respectively. Each cell is
+associated to a random variable that represents the probability of the cell
+being occupied or free. The various variations of occupancy grid mapping
+algorithms vary on how these occupancy probabilities are computed.
 
+% * [X] What is the common trend?
+Most of the occupancy grid mapping algorithms make use of inverse sensor
+model by assuming that the occupancy of each cell can be estimated
+independently of the other cells in the map.
+% * [X] What is wrong  with current approach?
+This is an inaccurate assumption and can lead to overconfident estimates of
+occupancy in noisy observations \cite{thrun2003learning,merali2013icra}. The
+main reason for using this assumption is the computational efficiency
+associated with independent cell assumption.
+% * [X] What is the common trend?
+However, a more accurate approach by using forward solution can be useful when
+more accurate reconstructions are required and when computational resources
+are not limited, for example, during post processing of the data.
 
-\section{Related work}
-% Work that has been in "application" i.e. mapping
+% * [X] What are we proposing?
+% * [X] Has someone done this before? If yes, how are we different.
+Our contribution in this paper is two fold. Firstly, we introduce the factor
+graph approach of approaching occupancy grid mapping problem which, to the
+best of our knowledge, has not been applied to this problem. The work that
+closely matches our approach is that of \cite{merali2013icra} that uses Monte
+Carlo Markov chain (MCMC) Gibbs sampling to estimate accurate maps. It has been a
+common knowledge that MCMC methods are very likely to get stuck in a local
+minimum. In this paper, we evaluate modern maximum-a-posteriori (MAP) methods
+to compute maps that are more accurate given the accuracy as long as we have
+an accurate forward sensor model. 
 
-% Itersection mapping using forward sensor models
-% Thrun03ar:
-% Standard occupancy methods are characterized by two algorith-
-% mic choices:
-% 1. They decompose the high-dimensional mapping problem into many binary estimation
-% problems, which are then solved independently of each other.
-% 2. They rely on inverse models of the robotâs sensors which reasons from sensor measure-
-% ments to maps (opposite of the way sensor data is generated).
-\cite{thrun2003learning} made an argument for using forward sensor models in sonar based mapping instead of conventional inverse sensor model.
+% TODO: Someone should verify, if this is a mentionable contribution.
+Secondly, we introduce a class of higher
+order potentials that can be efficiently used with modern MAP inference 
+methods like belief propagation and dual decomposition. Applying 
+modern methods to higher order Markov random field (MRF) is in general
+exponential in the order of clique size.
+That is why often the problem of efficiently applying the factors is addressed
+for a certain class of factors \cite{komodakis2009beyond,leonardis2006efficient,potetz2007efficient}.
+Following the same approach, we introduce a new class of pattern based higher
+order factors that can be used with both sum product belief propagation and
+dual decomposition.  Although inspired by \cite{komodakis2009beyond} and
+similarly named, our patterns are more general than those introduced by
+\cite{komodakis2009beyond}.
 
+\section{Related work} % History?
+Moravec and Elfes \cite{elfes1989using,moravec1988sensor,moravec1985high} proposed the
+seminal work in occupancy grids mapping. While the proposed algorithm worked
+well in practice and was computationally efficient, in some cases it provided
+overconfident occupancy estimates. Thrun \cite{thrun2003learning} argued that
+forward sensor models are theoretically as well as experimentally superior to 
+inverse sensor models. He proposed the use of Expectation maximization
+algorithm for inference. More recently, Merali et al \cite{merali2013icra}
+proposed the use of Gibbs sampling algorithm for occupancy grid mapping.
+
+One of the main contribution of this paper is the application of modern MAP
+algorithms on occupancy grid mapping. We apply sum product belief propagation
+and dual decomposition to the mapping problem.
 
 % Work that has been in done in "method" that i.e MAP
-Minimization of cost (or energy) function over Factor graphs is a well studied field and it has found numerous application in the field of information theory, computer vision and machine learning. A lot of work has been done in the field.
+Minimization of cost (or energy) function over Factor graphs is a well studied
+field and it has found numerous application in the field of information theory,
+computer vision and machine learning. A lot of work has been done in the field.
 
 % Work on higher order potentials
 \cite{leonardis2006efficient}  propose decreasing the labels set of variable
@@ -126,8 +212,7 @@ where $Z'$ is a normalizing factor that is independent of $x_i$.
 \section{Mapping by forward sensor model}
 
    Here we present minimum assumption simplification of
-   \eqref{eq:fullsolution} as done in \cite{thrun2003learning,
-   merali2013icra}. 
+   \eqref{eq:fullsolution} as done in \cite{thrun2003learning,merali2013icra}. 
    For conciseness, we use 
    %$\sigma_t = \{z_t, \rho_t\}$ to represent both range and pose of $t$\textsuperscript{th} laser measurement.
    %Similarly,
@@ -260,14 +345,16 @@ We explore here a few plausible sensor models
 \newcommand{\actz}{\bar{z}_f(\vect{x}_f, \rho_f)}
 In this sensor model, we assume that the laser measurements are affected by Gaussian noise. The forward sensor model is given by
 \begin{align}
-  p(z_f|\vect{x}_f, \rho_f) &= \frac{1}{2\pi\sigma}\exp\left(-\frac{(\actz - z_f)^2}{\sigma^2}\right)
+  p(z_f|\vect{x}_f, \rho_f) &=
+  \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(\actz - z_f)^2}{2\sigma^2}\right)
   \label{eq:gaussiansensormodel}
 \end{align}
 where $\actz$ is the distance of first occupied cell in $\vect{x}_f$ starting from pose $\rho_f$. Also $\sigma$ is a measure of noise in laser measurement and it often depends on the distance measured. For our experiments we assume noise to linearly vary with distance as $\sigma = \sigma_0z_f$. 
 
 In terms of negative log likelihood, the energy function becomes
 \begin{align}
-  \theta_f(\vect{x}_f) &= \frac{1}{\sigma_0^2}\left(1 - \frac{\actz}{z_f}\right)^2 + \log(2\pi\sigma_0z_f)
+  \theta_f(\vect{x}_f) &= \frac{1}{2\sigma_0^2}\left(1 -
+  \frac{\actz}{z_f}\right)^2 + \log(\sqrt{2\pi}\sigma_0z_f)
 \end{align}
 % In terms of discrete set of cells that the laser passes through the energy function becomes
 % \begin{align}
@@ -339,7 +426,7 @@ where $x_{fk}$ is the $k$\textsuperscript{th} element in $\vect{x}_f$. With
 this formulation, we will have $M = n(f)$ patterns to describe the gaussian
 sensor model in the form \eqref{eq:patternfunction} with $\psi_m$ given by
 \begin{align}
-  \psi_m &= \frac{1}{2\pi\sigma}\exp\left(-\frac{(\delta(m)- z_f)^2}{\sigma^2}\right)
+  \psi_m &= \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(\delta(m)- z_f)^2}{2\sigma^2}\right)
 \end{align}
 where $\delta(m)$ is the distance of $m$\textsuperscript{th} cell from robot
 starting point $\rho_f$. Also note that in this formulation the only case for
@@ -724,38 +811,94 @@ Step size is critical choice as it affects the speed with which Dual decompositi
 % Intuitively, dual decomposition converges faster because it focuses on the disagreeing 
 
 \section{Experiments} 
-Used player and stage to generate simulated data. Input map is in Fig
+We run experiments on simulated as well real data.
+The simulated data is generated using \emph{Player/Stage} \cite{gerkey2003player}
+project. We use multiple map bitmaps bundled along with player/stage library.
+The robot motion is generated using the wander driver. The robot is allowed to
+wander in the map for 2 minutes aggregating approximately 270,000 laser measurements.
+The qualitative results are shown in
+Fig~\ref{fig:convergence-comparison-visuals} for several simulated dataset. To evaluate the
+convergence rate of each algorithm, we plot total energy of the graph with
+respect CPU ticks taken by the algorithm. The plot of energy convergence with respect to time for cave dataset is shown in Fig~\ref{fig:convergence-comparison}.
 
-We have used the \emph{albert-b-laser} dataset provided by Cyrill Stachniss from University of Freiburg. The dataset was captured by a B21r robot with a SICK PLS moving through a lab at University of Freiburg.
-This data set was obtained from the Robotics Data Set
-Repository (Radish)~\cite{howard2003radish}. Thanks go to Cyrill Stachniss for providing this data.
+For real data, we have used the \emph{albert-b-laser} dataset provided by
+Cyrill Stachniss from University of Freiburg. The dataset was captured by a
+B21r robot with a SICK PLS moving through a lab at University of Freiburg.
+This data set was obtained from the Robotics Data Set Repository
+(Radish)~\cite{howard2003radish}. Thanks go to Cyrill Stachniss for providing
+this data.
 
-\begin{figure}
+In all our experiments we do not use any occupancy prior. Although, Merali et
+al \cite{merali2013icra} suggest using an occupancy prior of 0.3 for better
+convergence. We use a step size of 50 for dual decomposition and piecewise constant 
+sensor model.
+
+%\begin{figure}
   %\includegraphics[width=\columnwidth]{../figures/hospital_trajectory.png}
-\end{figure}
-Sampling algorithms are liable to getting stuck in a local minima because we flip only one cell at a time.
+%\end{figure}
+\section{Conclusion}
+We note that sampling algorithms are liable to getting stuck in a local minima
+because we flip only one cell at a time. Even from the qualitative results for
+sampling based algorithm, we see that the walls are thinner than corresponding
+results in other algorithms which shows the inability of sampling based
+algorithms to form lower energy thicker walls for piecewise constant sensor
+model.
 
-\begin{figure}
-  \includegraphics[width=\columnwidth]{../figures/relativeconvergence.pdf}%
+We note that dual decomposition is faster because it focuses on disagreeing
+nodes. However, step size is crucial parameter that affects speed of
+convergence. On the other hand sum product belief propagation do not depends
+on any parameter factor, but has no preference for the disagreeing nodes.
+This combination obviously hints towards an algorithm where we perform 
+belief propagation over disagreeing nodes only. The state of art variations 
+of these algorithms like Sequential Tree Re-Weighted (TRW-S) belief
+propagation \cite{kolmogorov2006convergent}, accelerated dual Decomposition
+\cite{jojic2010accelerated} are step in this direction.
+However, even without using the state of art optimum algorithms since we get
+better performance than sampling methods. This only serves to prove our
+assertion that modern inference methods should be used occupancy grid mapping 
+when computation time is not a limiting factor.
+
+\begin{figure*}
+  \includegraphics[width=0.24\textwidth]{../figures/relativeconvergence.pdf}%
+  \includegraphics[width=0.24\textwidth]{../../Data/hospital_section_player/plot-time-energy.pdf}%
+  \includegraphics[width=0.24\textwidth]{../../Data/hospital_player/plot-time-energy.pdf}%
+  \includegraphics[width=0.24\textwidth]{../figures/convergence-albert-b.pdf}%
   \caption{Comparison of convergence of different algorithms on occupancy grid graph. While sampling methods like Metropolis hastings converge quickly they stay far from optimum energy. On the other hand modern minimization algorithms reach closer to an optimum value.}
   \label{fig:convergence-comparison}
-\end{figure}
+\end{figure*}
 \begin{figure*}
   %\includegraphics[width=0.2\textwidth]{../figures/cave_trajectory.png}%
   \includegraphics[width=0.16\textwidth]{../figures/cave_gt.png}%
   \includegraphics[width=0.16\textwidth]{../figures/cave_SICKSlowMetropolis.png}%
   \includegraphics[width=0.16\textwidth]{../figures/cave_SICKDDMCMC.png}%
   \includegraphics[width=0.16\textwidth]{../figures/cave_run_belief_propagation.png}%
-  \includegraphics[width=0.16\textwidth]{../figures/cave_dualdecomposition.png}%
-  \includegraphics[width=0.16\textwidth]{../figures/cave_TwoAssumptionAlgo.png}%
-  \caption{Qualitative results at the end of 200sec for each algorithm (from left to right) a) Ground truth with the trajectory of the robot b) Two assumption algorithm c) Metropolis Hastings without heat map d) Metropolis Hastings with heat map e) Belief Propagation  f) Dual decomposition}
+  \includegraphics[width=0.16\textwidth]{../figures/cave_dualdecomposition.png}\\
+  \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/gt-final.png}%
+  \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/TwoAssumptionAlgo.png}%
+  \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/SICKSlowMetropolis.png}%
+  \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/SICKDDMCMC.png}%
+  \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/run_belief_propagation.png}%
+  \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/dualdecomposition.png}\\
+  \includegraphics[width=0.16\textwidth]{../../Data/hospital_section_player/gt-final.png}%
+  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/TwoAssumptionAlgo.png}%
+  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/SICKSlowMetropolis.png}%
+  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/SICKDDMCMC.png}%
+  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/run_belief_propagation.png}%
+  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/dualdecomposition.png}%
+  \caption{Qualitative results (from left to right) a) Ground truth with the trajectory of the robot b) Two assumption algorithm c) Metropolis Hastings without heat map d) Metropolis Hastings with heat map e) Belief Propagation  f) Dual decomposition. Each row represent a different simulated dataset.}
   \label{fig:convergence-comparison-visuals}
 \end{figure*}
 
-% Data source
-I have used \emph{Player 3.0.2} and \emph{Stage 3.2.2} \cite{gerkey2003player} for simulating input data.
-\section{Conclusion}
-Dual decomposition converges better because it only focuses on disagreements.
+\begin{figure*}
+  \includegraphics[width=0.33\textwidth]{../../Data/albertb.sm/path.png}%
+  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/TwoAssumptionAlgo.png}%
+  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/SICKSlowMetropolis.png}\\
+  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/SICKDDMCMC.png}%
+  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/run_belief_propagation.png}%
+  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/dualdecomposition.png}%
+  \caption{Qualitative results at the end of 200sec for each algorithm (from left to right) a) Ground truth with the trajectory of the robot b) Two assumption algorithm c) Metropolis Hastings without heat map d) Metropolis Hastings with heat map e) Belief Propagation  f) Dual decomposition}
+  \label{fig:convergence-comparison-visuals-albertb}
+\end{figure*}
 
 \bibliographystyle{IEEEtran}
 \newcommand{\bibdatabase}{/home/vikasdhi/wrk/biblib/bibdb}
