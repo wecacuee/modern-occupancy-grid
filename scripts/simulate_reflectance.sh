@@ -1,6 +1,7 @@
 #!/bin/bash
 
 key=$1
+resolution=$2
 
 MY_DIR=`dirname ${BASH_SOURCE}`
 . $MY_DIR/${key}_config.sh
@@ -8,9 +9,9 @@ MY_DIR=`dirname ${BASH_SOURCE}`
 cd Data/$1_player/ || exit 1
 
 # generates laser_reflectance_all.bin
-../../bin/simulateddata $map_width $map_height #142.46 54.36
+#../../bin/simulateddata $map_width $map_height #142.46 54.36
 # generates groundtruth/ inputstrem/
-cmd="../../bin/visualize_ground_truth $map_width $map_height"
+cmd="../../bin/visualize_ground_truth $map_width $map_height $resolution ."
 echo $cmd
 $cmd
 avconv -i groundtruth/%d.png -b:v 5000k gt.mp4

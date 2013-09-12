@@ -111,6 +111,7 @@ int main(int argc, char** argv) {
     shiftPoses(laser_pose, scan_angles, laser_ranges, laser_reflectance,
         size_x, size_y, origin_x, origin_y);
     std::cout << "Laser spans (" << size_x << ", " << size_y << ")\n";
+    std::cout << "Laser count: " << laser_ranges.rows * laser_ranges.cols << "\n";
     cv::Vec2d size_bitmap(size_x, size_y);
     cv::Vec2i size_bitmap_px(size_x / cellsize(0), size_y / cellsize(1));
     cv::Vec2i origin_px(origin_x / cellsize(0), origin_y / cellsize(1));
