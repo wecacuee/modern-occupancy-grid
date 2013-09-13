@@ -44,7 +44,8 @@ Modern MAP methods for accurate and faster occupancy grid mapping
   sensor models have only used methods like expectation maximization
   or Gibbs sampling which have been succeeded by better methods of
   \emph{maximum a posteriori} (MAP) inference over graphical models.
-  In this paper, we propose the use of modern MAP inference methods along with
+  In this paper, we propose the use of modern MAP inference methods 
+  \cite{kappes2013comparative} along with
   the forward sensor model, that deliver more accurate and faster maps than
   previously used methods.
 \end{abstract}
@@ -91,30 +92,35 @@ being occupied or free. The variations of occupancy grid mapping
 algorithms differ on how these occupancy probabilities are computed.
 
 % * [X] What is the common trend?
-Most of the occupancy grid mapping algorithms make use of inverse sensor
-model by assuming that the occupancy of each cell can be estimated
+Most of the occupancy grid mapping algorithms 
+make assumption that the occupancy of each cell can be estimated
 independently of the other cells in the map.
 % * [X] What is wrong  with current approach?
 This is an inaccurate assumption and can lead to overconfident estimates of
-occupancy in noisy observations \cite{thrun2003learning,merali2013icra}. The
-main reason for using this assumption is the computational efficiency
+occupancy for noisy observations \cite{thrun2003learning,merali2013icra}. The
+main reason for making this assumption is the computational efficiency
 associated with independent cell assumption.
 % * [X] What is the common trend?
-However, a more accurate approach by using forward solution can be useful when
-more accurate reconstructions are required and when computational resources
-are not limited, for example, during post processing of the data.
+However, dropping the cell independence assumption can be useful when
+more accurate maps are required. 
+% * [X] Is the our approach indeed useful?
+Many simultaneous localization and mapping (SLAM) algorithms use
+sparse landmark based maps which make it unnecessary to have dense accurate
+maps in real time. 
+While post processing it is reasonable to use more accurate methods of
+mapping rather than faster ones as we are not limited by computational resources.
 
 % * [X] What are we proposing?
 % * [X] Has someone done this before? If yes, how are we different.
-Our contribution in this paper is two fold. Firstly, we introduce the factor
-graph approach of approaching occupancy grid mapping problem which, to the
-best of our knowledge, has not been applied to this problem. The work that
-closely matches our approach is that of \cite{merali2013icra} that uses Monte
-Carlo Markov chain (MCMC) Gibbs sampling to estimate accurate maps. It has been a
-common knowledge that MCMC methods are very likely to get stuck in a local
-minimum. In this paper, we evaluate modern maximum-a-posteriori (MAP) methods
-to compute maps that are more accurate given the accuracy as long as we have
-an accurate forward sensor model. 
+Our contribution in this paper is two fold. Firstly, we introduce the 
+graphical models based approach to occupancy grid mapping problem
+which, to the best of our knowledge, has not been applied to this problem. The
+work that closely matches our approach is that of \cite{merali2013icra} that
+uses Monte Carlo Markov chain (MCMC) Gibbs sampling to estimate accurate maps.
+It has been a common knowledge that MCMC methods are very likely to get stuck
+in a local minimum. In this paper, we evaluate modern maximum-a-posteriori
+(MAP) methods to compute maps that are more accurate given the accuracy as long
+as we have an accurate forward sensor model. 
 
 % TODO: Someone should verify, if this is a mentionable contribution.
 Secondly, we introduce a class of higher
@@ -123,15 +129,17 @@ methods like belief propagation and dual decomposition. Applying
 modern methods to higher order Markov random field (MRF) is in general
 exponential in the order of clique size.
 That is why often the problem of efficiently applying the factors is addressed
-for a certain class of factors \cite{komodakis2009beyond,leonardis2006efficient,potetz2007efficient}.
+for a certain class of factors 
+\cite{komodakis2009beyond,leonardis2006efficient,potetz2007efficient}.
 Following the same approach, we introduce a new class of pattern based higher
 order factors that can be used with both sum product belief propagation and
-dual decomposition.  Although inspired by \cite{komodakis2009beyond} and
+dual decomposition. Although inspired by \cite{komodakis2009beyond} and
 similarly named, our patterns are more general than those introduced by
 \cite{komodakis2009beyond}.
 
-\section{Related work} % History?
-Moravec and Elfes \cite{elfes1989using,moravec1988sensor,moravec1985high} proposed the
+\section{Related work}
+Moravec and Elfes \cite{elfes1989using,moravec1988sensor,moravec1985high} 
+proposed the
 seminal work in occupancy grids mapping. While the proposed algorithm worked
 well in practice and was computationally efficient, in some cases it provided
 overconfident occupancy estimates. Thrun \cite{thrun2003learning} argued that
@@ -141,8 +149,31 @@ algorithm for inference. More recently, Merali et al \cite{merali2013icra}
 proposed the use of Gibbs sampling algorithm for occupancy grid mapping.
 
 One of the main contribution of this paper is the application of modern MAP
-algorithms on occupancy grid mapping. We apply sum product belief propagation
-and dual decomposition to the mapping problem.
+algorithms on occupancy grid mapping. We apply sum product belief propagation 
+\cite{kschischang2001factor} and dual decomposition
+\cite{sontag2011introduction} to the mapping problem. Belief propagation
+introduced by \cite{pearl1986fusion} was introduced as an algorithm to compute
+marginals over graphs without loops.  Surprisingly, it was found to work well
+on graph with loops, even though it is not guaranteed to converge. Later it
+was found that the convergent solution to Belief propagation corresponds to
+the minima of so-called Bethe free energy \cite{yedidia2000generalized}, which
+not only provided a theoretical justification for application of belief
+propagation to graphs with loops, but also solves the convergence problem by 
+the existence of an objective function which can be minimized directly.
+
+% http://www.timeanddate.com/countdown/generic?iso=20130916T03&p0=422&msg=ICRA+deadline&csz=1
+\cite{wiegerinck2003fractional} Fractional belief propagation
+\cite{wainwright2005map} TRW belief propagation.
+\cite{kolmogorov2006convergent} TRW-S
+\cite{meltzer2009convergent} unifying
+\cite{jojic2010accelerated} Accelerated dual decomposition
+
+Dual decomposition 
+
+
+
+%Method of MAP inference have been subject to intensive
+%research in the field of computer vision and information theory \cite{kappes2013comparative}.
 
 % Work that has been in done in "method" that i.e MAP
 Minimization of cost (or energy) function over Factor graphs is a well studied
@@ -162,24 +193,36 @@ environment, problem is to figure out an optimal occupancy grid map. For the
 purpose of ground robots often 2D maps are enough for path planning and
 exploration.
 % define problem in probability terms
-The area to be mapped is divided into $N$ discrete cells. Let $x_i$ denote the state of cell $i$, which can take values from label set $L_i = \{0, 1\}$, where $0$ (resp. $1$) denotes that cell is free (resp. occupied). We define, the map $\map$ as a vector that defines state for all $N$ cells, $\map = [x_i]^\top_{1 \le i \le N}$. Hence map $\map$ takes values from sample space $\Omega = \prod_{1 \le i \le N}L_i$.
+The area to be mapped is divided into $N$ discrete cells. Let $x_i$ denote the
+state of cell $i$, which can take values from label set $L_i = \{0, 1\}$, where
+$0$ (resp. $1$) denotes that cell is free (resp. occupied). We define, the map
+$\map$ as a set that defines state for all $N$ cells, $\map = [x_i]^\top_{1
+\le i \le N}$. Hence map $\map$ takes values from sample space $\Omega =
+\prod_{1 \le i \le N}L_i$.
 
 Let $z_f$ denote the $f$\textsuperscript{th} laser range measurement when captured from pose $\rho_f$. 
 %We assume that the probability of observation $p(z_f| \rho_f, \map)$ (forward sensor model) be given.
-The problem is to find the probability of all cells of the map being occupied given all observations till time $t$, $\measurements = [z_f]^\top_{1 \le f \le t}$ and $\rho = [\rho_f]^\top_{1 \le f \le t}$.
+The problem is to find the probability of all cells of the map being occupied
+given all $t$ observations, $z = [z_f]^\top_{1 \le f \le t}$ and
+$\rho = [\rho_f]^\top_{1 \le f \le t}$.
 \begin{align}
   p(x_i = 1 | \measurements, \poses) &= \sum_{\map \in \Omega : x_i = 1} p(\map | \measurements , \poses) & \forall 1 \le i \le N 
   \label{eq:fullsolution}
 \end{align}
 In another formulation of problem, we can focus on the best overall occupancy of the map that maximizes the posterior probability:
 \begin{align}
-  \vect{x}* &= \argmax_{\map \in \Omega } p(\map | \measurements, \rho)
+  \vect{x}^* &= \argmax_{\map \in \Omega } p(\map | z, \rho)
   \label{eq:mapproblem}
 \end{align}
-Clearly, \eqref{eq:mapproblem} is a simpler problem than
-\eqref{eq:fullsolution}. If problem is \eqref{eq:fullsolution} is solved than
-problem \eqref{eq:mapproblem} is solved by just taking the label that maximizes
-the marginal probability.
+% Clearly, \eqref{eq:mapproblem} is a simpler problem than
+% \eqref{eq:fullsolution}. If problem is \eqref{eq:fullsolution} is solved than
+% problem \eqref{eq:mapproblem} is solved by just taking the label that maximizes
+% the marginal probability.
+Both the problems \eqref{eq:fullsolution} and \eqref{eq:mapproblem} are related
+problems but yield different results. While \eqref{eq:fullsolution} is
+useful to keep track of uncertainty in an incremental fashion,
+\eqref{eq:mapproblem} provides more meaningful result by providing a joint
+occupancy configuration that maximizes posterior probability.
 
 It is easy to see that any naive solution to any of the two problems would have complexity that is exponential in the number of cells. We can only hope to find an approximate solution of this problem.
 
