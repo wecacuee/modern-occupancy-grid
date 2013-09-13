@@ -155,6 +155,8 @@ nodes to restrict the size of sample space of high order neighborhood.
 
 \section{Problem definition}
 \newcommand{\map}{\vect{x}}
+\newcommand{\measurements}{\vect{z}}
+\newcommand{\poses}{\vect{\rho}}
 A robot equipped with a laser scanner and accurate odometry moves in a static
 environment, problem is to figure out an optimal occupancy grid map. For the
 purpose of ground robots often 2D maps are enough for path planning and
@@ -164,14 +166,14 @@ The area to be mapped is divided into $N$ discrete cells. Let $x_i$ denote the s
 
 Let $z_f$ denote the $f$\textsuperscript{th} laser range measurement when captured from pose $\rho_f$. 
 %We assume that the probability of observation $p(z_f| \rho_f, \map)$ (forward sensor model) be given.
-The problem is to find the probability of all cells of the map being occupied given all observations till time $t$, $z = [z_f]^\top_{1 \le f \le t}$ and $\rho = [\rho_f]^\top_{1 \le f \le t}$.
+The problem is to find the probability of all cells of the map being occupied given all observations till time $t$, $\measurements = [z_f]^\top_{1 \le f \le t}$ and $\rho = [\rho_f]^\top_{1 \le f \le t}$.
 \begin{align}
-  p(x_i = 1 | z, \rho) &= \sum_{\map \in \Omega : x_i = 1} p(\map | z , \rho) & \forall 1 \le i \le N 
+  p(x_i = 1 | \measurements, \poses) &= \sum_{\map \in \Omega : x_i = 1} p(\map | \measurements , \poses) & \forall 1 \le i \le N 
   \label{eq:fullsolution}
 \end{align}
 In another formulation of problem, we can focus on the best overall occupancy of the map that maximizes the posterior probability:
 \begin{align}
-  \vect{x}* &= \argmax_{\map \in \Omega } p(\map | z, \rho)
+  \vect{x}* &= \argmax_{\map \in \Omega } p(\map | \measurements, \rho)
   \label{eq:mapproblem}
 \end{align}
 Clearly, \eqref{eq:mapproblem} is a simpler problem than
@@ -189,7 +191,7 @@ that each grid cell is independent of all other map cells.
 %As a result instead of the static world assumption (\eqref{eq:staticWorldAssumption}), we use 
 \begin{align}
   %p(z_t|x_i, \sigma_{1:t-1}, \rho_t) = p(z_t|x_i, \rho_t)
-  p(x_i|z, \rho) &= \frac{p(z_t, \rho_t|x_i, \sigma_{1:t-1})p(x_i|\sigma_{1:t-1})}
+  p(x_i|\measurements, \rho) &= \frac{p(z_t, \rho_t|x_i, \sigma_{1:t-1})p(x_i|\sigma_{1:t-1})}
                          {p(z_t, \rho_t|\sigma_{1:t-1})}
 \end{align}
 % Thrun03ar : A common assumption in mapping is the static world assumption, which states that past sensor readings are conditionally independent given knowledge of the map \map, for any point in time t:
@@ -200,7 +202,7 @@ The current laser measurement $z_t$ are commonly assumed (static world assumptio
 \end{align}
 Using static world assumption (\eqref{eq:staticWorldAssumption}), we get:
 \begin{align}
- p(x_i|z, \rho) &= p(z_t, \rho_t|x_i)\frac{p(x_i|\sigma_{1:t-1})}
+ p(x_i|\measurements, \rho) &= p(z_t, \rho_t|x_i)\frac{p(x_i|\sigma_{1:t-1})}
                                            {p(z_t, \rho_t|\sigma_{1:t-1})}\\
                  &= \frac{p(x_i|z_t, \rho_t)p(z_t,\rho_t)} {p(x_i)}\frac{p(x_i|\sigma_{1:t-1})}{p(z_t, \rho_t|\sigma_{1:t-1})}\\
                  &= \frac{1}{Z'}\frac{p(x_i|z_t, \rho_t)p(x_i|\sigma_{1:t-1})}{p(x_i)}\\
@@ -220,14 +222,14 @@ where $Z'$ is a normalizing factor that is independent of $x_i$.
    $t$\textsuperscript{th} measurement. For a given map $\map$, the conditional
    probability of map being correct is
    \begin{align}
-     p(\map | z, \rho) &= p(\map | \sigma_{1:t-1}, z_t, \rho_t)\\
+     p(\map | \measurements, \rho) &= p(\map | \sigma_{1:t-1}, z_t, \rho_t)\\
                     &= \frac{p(z_t|\map , \sigma_{1:t-1}, \rho_t)p(\map| \sigma_{1:t-1}, \rho_t)}
                             {p(z_t|\sigma_{1:t-1}, \rho_t)}
      \label{eq:recursivesol}
    \end{align}
    Static world assumption, $p(z_t|\map, \sigma_{1:t-1}, \rho_t) = p(z_t|\map, \rho_t)$, simplifies \eqref{eq:recursivesol} to :
    \begin{align}
-     p(\map|z, \rho) &= \frac{p(z_t|\map, \rho_t)p(\map| \sigma_{1:t-1}, \rho_t)}
+     p(\map|\measurements, \rho) &= \frac{p(z_t|\map, \rho_t)p(\map| \sigma_{1:t-1}, \rho_t)}
                           {p(z_t|\sigma_{1:t-1}, \rho_t)}\\
                   &= \frac{p(z_t|\map, \rho_t)p(\rho_t|\map, \sigma_{1:t-1})p(\map| \sigma_{1:t-1})}
                           {p(z_t|\sigma_{1:t-1}, \rho_t)p(\rho_t|\sigma_{1:t-1})}
@@ -239,19 +241,19 @@ where $Z'$ is a normalizing factor that is independent of $x_i$.
    \end{align}
    Using independent pose assumption, we get a recursive formula for \eqref{eq:recursivesol}
    \begin{align}
-     p(\map | z, \rho) &= \frac{1}{Z} p(z_t|\map , \rho_t)p(\map| z_{1:t-1}, \rho_{1:t-1})\\
+     p(\map | \measurements, \rho) &= \frac{1}{Z} p(z_t|\map , \rho_t)p(\map| \measurements_{1:t-1}, \rho_{1:t-1})\\
                        &= \frac{1}{Z} \prod_{1 \le f \le t} p(z_f|\map, \rho_f)
      \label{eq:map}
    \end{align}
    where $Z$ is a normalizing constant independent of $\map$. The term $p(z_f|\vect{x}, p_f)$ is the \emph{forward sensor model}. Thrun et al. \cite{thrun2003learning} approach this problem by expectation maximization, while Merali et al. \cite{merali2013icra} use Gibbs sampling to find approximate solution. In this paper, we explore modern explore modern methods of finding maximum a posteriori estimate of this problem.
 
-   Modern MAP methods approach the problem \eqref{eq:map}, by making use of the fact that a laser measurement depends only a small portion of the entire map:
+   Modern MAP methods approach the problem \eqref{eq:map}, by making use of the fact that a laser measurement depends only on a small portion of the entire map:
    \begin{align}
      p(z_f |\vect{x}, \rho_f) = p(z_f|\vect{x}_f, \rho_f)
    \end{align}
    where $\vect{x}_f \subseteq \vect{x}$ is the small portion of the map on which the laser measurement $f$ depends. Rewriting, \eqref{eq:map} in new notation:
    \begin{align}
-     p(\map | z, \rho) &= \frac{1}{Z} \prod_{1 \le f \le t} p(z_f|\map_f, \rho_f)
+     p(\map | \measurements, \rho) &= \frac{1}{Z} \prod_{1 \le f \le t} p(z_f|\map_f, \rho_f)
      \label{eq:modernmap}
    \end{align}
    %However, the full solution is computationally intractable as its complexity is exponential in the number of cells.
