@@ -36,18 +36,21 @@ Modern MAP methods for accurate and faster occupancy grid mapping
 \begin{document}
 \maketitle
 \begin{abstract}
-  Using the inverse sensor model has been quite popular in occupancy grid mapping.
-% TODO: cite papers using inverse sensor model
-  However, it has been repeatedly shown \cite{thrun2003learning,merali2013icra} 
-  that applying inverse sensor model to mapping requires certain
-  assumptions that are not necessarily true. Even the papers that use forward 
-  sensor models have only used methods like expectation maximization
-  or Gibbs sampling which have been succeeded by better methods of
-  \emph{maximum a posteriori} (MAP) inference over graphical models.
-  In this paper, we propose the use of modern MAP inference methods 
-  \cite{kappes2013comparative} along with
-  the forward sensor model, that deliver more accurate and faster maps than
-  previously used methods.
+  %JCorso: if you want to cite papers in the abstract, then you can add the 
+  %\cite{thrun2003learning,merali2013icra}  back into the abstract, but I think 
+  %this is a rare and not advised practice (citing in the abstract).
+  %
+  %JCorso: XXX: is the ``more accurate maps more efficiently'' correct?
+Using the inverse sensor model has been popular in occupancy grid mapping. 
+However, it is widely known that applying the inverse sensor model to mapping 
+requires certain assumptions that are not necessarily true. Even work that uses 
+forward sensor models have relied on methods like expectation maximization or 
+Gibbs sampling which have been succeeded by more effective methods of maximum a 
+posteriori (MAP) inference over graphical models. In this paper, we propose the 
+use of modern MAP inference methods along with the forward sensor model.  Our 
+implementation and experimental results demonstrate that these modern inference 
+methods deliver more accurate maps more efficiently than previously used 
+methods.
 \end{abstract}
 \section{Introduction}
 % % Outline
@@ -59,83 +62,87 @@ Modern MAP methods for accurate and faster occupancy grid mapping
 % * [X] What are we proposing?
 % * [X] Has someone done this before? If yes, how are we different.
 
-Spatial understanding of the environment is required to make mobile robots more
-autonomous in unexplored environment to address a variety of problems like
-navigation, path planning, localization and collision avoidance. 
-The problem of estimating a spatial model of robot's
-environment is called robot mapping\cite{thrun2002robotic}. Even in
-environments where we have maps available, the environment may change over time
-which necessitates the mapping ability in a mobile robot.
-Mapping remains an active field of research \cite{meyer2012occupancy,nagla2012improved,merali2013icra}
-as it is an important problem for
-applications like indoor autonomous navigation, grasping, reconstruction and
-augmented reality.
-Mapping can be performed by employing information from a variety of range
-sensors like Sonars \cite{thrun2003learning}, laser scanners \cite{merali2013icra}
-and RGB-D Cameras \cite{newcombe2011kinectfusion}
-%, whelan2013robust, whelan2012kintinuous}. % too many citations
-Although there has been some work on mapping with bearing only sensors
-\cite{davison2007monoslam,kundu2011realtime}, use of range sensors still
-remains exciting because the maps build by former sensors are correct only up
-to a scale.
+Mobile robot problems like navigation, path planning, localization and collision 
+avoidance require an estimate of the robot's spatial environment; this 
+underlying problem is called robot mapping\cite{thrun2002robotic}.  Even in 
+environments where maps are available, the environment may change over time 
+necessitating a mapping ability on the mobile robot.  Robot mapping hence 
+remains an active field of research 
+\cite{meyer2012occupancy,nagla2012improved,merali2013icra} as it is an important 
+problem in application areas like indoor autonomous navigation, grasping, 
+reconstruction and augmented reality.
 
-% * [X] What are different ways of solving problem?
-Researchers have attempted topological and metric approaches to robotic mapping.
-Of the various techniques in metric mapping, occupancy grid mapping has been
-quite popular \cite{elfes1989using,moravec1988sensor} because of its ability
-to represent uncertainty and simplicity of implementation.
-% * [X] Do we focus on a particular way of solving?
-In this paper we focus on occupancy grid mapping, in which we divide the area
-or volume being mapped into square or cubic cells respectively. Each cell is
-associated to a random variable that represents the probability of the cell
-being occupied or free. The variations of occupancy grid mapping
-algorithms differ on how these occupancy probabilities are computed.
+% This paragraph just provides some information that should be widely known; I'm 
+% not sure it should be included.  At the least, it can be removed if space is 
+% an issue.
+Although robot mapping can be performed in a many ways---metric or topological; 
+with range sensors, like sonar \cite{thrun2003learning}, laser scanners 
+\cite{thrun2003learning} and RGBD \cite{newcombe2011kinectfusion}, or 
+bearing-only sensors \cite{davison2007monoslam,kundu2011realtime}---metric 
+mapping with range sensors is the most common.  Bearing-only sensors provide 
+estimates up to a scale factor; topological maps still require local metric 
+estimates for certain problems like navigation.  We hence focus on metric 
+mapping with range sensors, specifically, laser scanners.
 
-% * [X] What is the common trend?
-Most of the occupancy grid mapping algorithms 
-make assumption that the occupancy of each cell can be estimated
-independently of the other cells in the map.
-% * [X] What is wrong  with current approach?
-This is an inaccurate assumption and can lead to overconfident estimates of
-occupancy for noisy observations \cite{thrun2003learning,merali2013icra}. The
-main reason for making this assumption is the computational efficiency
-associated with independent cell assumption.
-% * [X] What is the common trend?
-However, dropping the cell independence assumption can be useful when
-more accurate maps are required. 
-% * [X] Is the our approach indeed useful?
-Many simultaneous localization and mapping (SLAM) algorithms use
-sparse landmark based maps which make it unnecessary to have dense accurate
-maps in real time. 
-While post processing it is reasonable to use more accurate methods of
-mapping rather than faster ones as we are not limited by computational resources.
+Occupancy grid mapping (OGM) is a popular and useful range-based mapping methods 
+\cite{elfes1989using,moravec1988sensor}.  It affords a simple implementation and 
+avoids a need to explicitly seek and match landmarks in the environment 
+\cite{XXX}.  In contrast, it discretizes the environment into cells, squares 
+(2D) or cubes (3D), and associates a random variable with each cell that 
+represents the probability of the cell being occupied or free.  
 
-% * [X] What are we proposing?
-% * [X] Has someone done this before? If yes, how are we different.
-Our contribution in this paper is two fold. Firstly, we introduce the 
-graphical models based approach to occupancy grid mapping problem
-which, to the best of our knowledge, has not been applied to this problem. The
-work that closely matches our approach is that of \cite{merali2013icra} that
-uses Monte Carlo Markov chain (MCMC) Gibbs sampling to estimate accurate maps.
-It has been a common knowledge that MCMC methods are very likely to get stuck
-in a local minimum. In this paper, we evaluate modern maximum-a-posteriori
-(MAP) methods to compute maps that are more accurate given the accuracy as long
-as we have an accurate forward sensor model. 
+
+OGM methods vary in how cell occupancy is estimated (see Sec.  
+\ref{sec:related}), but most of the occupancy grid mapping algorithms make use 
+of an inverse sensor model by assuming that the occupancy of each cell can be 
+estimated independently of the other cells in the map 
+\cite{elfes1989using,moravec1988sensor,newcombe2011kinectfusion}.  The main 
+reason for using this independence assumption is computational efficiency.  
+However, the assumption is inaccurate and can lead to overconfident estimates of 
+occupancy in noisy observations \cite{thrun2003learning,merali2013icra}. 
+
+To overcome this limitation, Thrun \cite{thrun2003learning} proposes a forward 
+sensor model and uses expectation maximization to estimate occupancy.  Following 
+in this line of work, more recently, Merali et al. \cite{merali2013icra} defines 
+a Gibbs sampling algorithm based on a conditional estimate of cell occupancy 
+given the rest of the map.   Although these methods have relaxed the assumptions 
+of independence, they remain computationally expensive and hence limited in 
+applicability.  For example, it is widely known that Gibbs sampling is 
+computationally expensive and can get caught in local maxima \cite{LiBOOK2002}.
+
+In contrast, in this paper, we explore the use of modern inference algorithms 
+for more effective occupancy grid mapping with forward sensor models.
+Our contribution in this paper is two fold. Firstly, we introduce the factor
+graph approach of approaching occupancy grid mapping problem, which, to the
+best of our knowledge, has not been applied to this problem.   This factor graph 
+formalism makes it plausible to apply modern fast inference algorithms, such as 
+loopy belief propagation \cite{kschischang2001factor} and dual decomposition 
+\cite{sontag2011introduction}.  
 
 % TODO: Someone should verify, if this is a mentionable contribution.
-Secondly, we introduce a class of higher
-order potentials that can be efficiently used with modern MAP inference 
-methods like belief propagation and dual decomposition. Applying 
-modern methods to higher order Markov random field (MRF) is in general
-exponential in the order of clique size.
-That is why often the problem of efficiently applying the factors is addressed
-for a certain class of factors 
-\cite{komodakis2009beyond,leonardis2006efficient,potetz2007efficient}.
-Following the same approach, we introduce a new class of pattern based higher
-order factors that can be used with both sum product belief propagation and
-dual decomposition. Although inspired by \cite{komodakis2009beyond} and
-similarly named, our patterns are more general than those introduced by
-\cite{komodakis2009beyond}.
+Secondly, we introduce a class of higher order potentials for our factor graph 
+approach.  Factor graph inference is exponential in neighborhood size, which 
+requires us to focus on a certain sub-class of potentials for tractability, such 
+as the linear constraint-nodes \cite{potetz2007efficient} or pattern-based 
+potentials \cite{komodakis2009beyond}.  We extend the pattern-based potentials, 
+which explicitly computes the potential only for certain factors matching a 
+given set of patterns and otherwise assigns a constant.  Whereas the 
+pattern-based potentials in \cite{komodakis2009beyond} define each pattern with 
+a fixed value for each node, we generalize these pattern-based potentials by 
+allowing for \textit{free} nodes whose value does not impact the computed 
+marginal.  
+
+We implement these contributions for effective occupancy grid mapping with a 
+forward sensor model and test our work on both simulated and real-data. Our 
+experiments demonstrate the effectiveness of our novel OGM approach, especially, 
+dual decomposition.  
+
+
+\section{Related work} 
+\label{sec:related}
+
+% History?
+Moravec and Elfes \cite{elfes1989using,moravec1988sensor,moravec1985high} proposed the
 
 \section{Related work}
 Moravec and Elfes \cite{elfes1989using,moravec1988sensor,moravec1985high} 
@@ -145,7 +152,7 @@ well in practice and was computationally efficient, in some cases it provided
 overconfident occupancy estimates. Thrun \cite{thrun2003learning} argued that
 forward sensor models are theoretically as well as experimentally superior to 
 inverse sensor models. He proposed the use of Expectation maximization
-algorithm for inference. More recently, Merali et al \cite{merali2013icra}
+algorithm for inference. More recently, Merali et al. \cite{merali2013icra}
 proposed the use of Gibbs sampling algorithm for occupancy grid mapping.
 
 One of the main contribution of this paper is the application of modern MAP
