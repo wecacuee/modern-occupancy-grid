@@ -16,7 +16,7 @@
    width="468.65875"
    id="svg2"
    inkscape:version="0.48.3.1 r9886"
-   sodipodi:docname="factorgraph.svg">
+   sodipodi:docname="factorgraph.pdf">
   <sodipodi:namedview
      pagecolor="#ffffff"
      bordercolor="#666666"
@@ -40,7 +40,7 @@
      inkscape:window-x="2228"
      inkscape:window-y="24"
      inkscape:window-maximized="0"
-     inkscape:current-layer="g7591" />
+     inkscape:current-layer="svg2" />
   <metadata
      id="metadata86">
     <rdf:RDF>
@@ -49,7 +49,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -1117,7 +1117,7 @@
        sodipodi:nodetypes="ccccccc" />
     <g
        transform="translate(-86.186686,13.030115)"
-       style="stroke-linecap:square;stroke-linejoin:round"
+       style="stroke-linecap:square;stroke-linejoin:round;display:none"
        id="axes_1">
       <g
          style="stroke-linecap:square;stroke-linejoin:round"
