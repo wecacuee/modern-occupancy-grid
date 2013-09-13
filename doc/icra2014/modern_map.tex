@@ -193,8 +193,14 @@ nodes to restrict the size of sample space of high order neighborhood.
 
 \section{Problem definition}
 \newcommand{\map}{\vect{x}}
-\newcommand{\measurements}{\vect{z}}
-\newcommand{\poses}{\vect{\rho}}
+\newcommand{\meas}{z}
+\newcommand{\measurements}{\vect{\meas}}
+\newcommand{\pose}{g}
+\newcommand{\poses}{\vect{\pose}}
+\newcommand{\unaryminus}{\scalebox{0.5}[0.5]{\( - \)}}
+\newcommand{\prevtime}{1:t\unaryminus1}
+%\newcommand{\pastobs}{\sigma_{\prevtime}}
+\newcommand{\pastobs}{\measurements_{1:t\unaryminus1}, \poses_{1:t\unaryminus1}}
 A robot equipped with a laser scanner and accurate odometry moves in a static
 environment, problem is to figure out an optimal occupancy grid map. For the
 purpose of ground robots often 2D maps are enough for path planning and
@@ -207,18 +213,18 @@ $\map$ as a set that defines state for all $N$ cells, $\map = [x_i]^\top_{1
 \le i \le N}$. Hence map $\map$ takes values from sample space $\Omega =
 \prod_{1 \le i \le N}L_i$.
 
-Let $z_f$ denote the $f$\textsuperscript{th} laser range measurement when captured from pose $\rho_f$. 
-%We assume that the probability of observation $p(z_f| \rho_f, \map)$ (forward sensor model) be given.
+Let $\meas_f$ denote the $f$\textsuperscript{th} laser range measurement when captured from pose $\pose_f$. 
+%We assume that the probability of observation $p(\meas_f| \pose_f, \map)$ (forward sensor model) be given.
 The problem is to find the probability of all cells of the map being occupied
-given all $t$ observations, $z = [z_f]^\top_{1 \le f \le t}$ and
-$\rho = [\rho_f]^\top_{1 \le f \le t}$.
+given all $t$ observations, $\measurements = [\meas_f]^\top_{1 \le f \le t}$ and
+$\poses = [\pose_f]^\top_{1 \le f \le t}$.
 \begin{align}
   p(x_i = 1 | \measurements, \poses) &= \sum_{\map \in \Omega : x_i = 1} p(\map | \measurements , \poses) & \forall 1 \le i \le N 
   \label{eq:fullsolution}
 \end{align}
 In another formulation of problem, we can focus on the best overall occupancy of the map that maximizes the posterior probability:
 \begin{align}
-  \vect{x}^* &= \argmax_{\map \in \Omega } p(\map | z, \rho)
+  \map^* &= \argmax_{\map \in \Omega } p(\map | \measurements, \poses)
   \label{eq:mapproblem}
 \end{align}
 % Clearly, \eqref{eq:mapproblem} is a simpler problem than
@@ -240,23 +246,23 @@ Commonly used occupancy grid mapping algorithms make simplifying assumption
 that each grid cell is independent of all other map cells. 
 %As a result instead of the static world assumption (\eqref{eq:staticWorldAssumption}), we use 
 \begin{align}
-  %p(z_t|x_i, \sigma_{1:t-1}, \rho_t) = p(z_t|x_i, \rho_t)
-  p(x_i|\measurements, \rho) &= \frac{p(z_t, \rho_t|x_i, \sigma_{1:t-1})p(x_i|\sigma_{1:t-1})}
-                         {p(z_t, \rho_t|\sigma_{1:t-1})}
+  %p(\meas_t|x_i, \measurements_{\prevtime} \poses_{1:t}) = p(\meas_t|x_i, \pose_t)
+  p(x_i|\measurements, \poses) &= \frac{p(\meas_t |x_i, \measurements_{\prevtime}, \poses)p(x_i|\measurements_{\prevtime}, \poses)}
+                         {p(\meas_t|\measurements_{\prevtime}, \poses)}
 \end{align}
 % Thrun03ar : A common assumption in mapping is the static world assumption, which states that past sensor readings are conditionally independent given knowledge of the map \map, for any point in time t:
-The current laser measurement $z_t$ are commonly assumed (static world assumption) \cite{thrun2003learning} to be independent of previous observations $\sigma_{1:t-1}$ given the map $x_i$ :
+The current laser measurement $\meas_t$ are commonly assumed (static world assumption) \cite{thrun2003learning} to be independent of previous observations $\pastobs$ given the map $x_i$ :
 \begin{align}
-  p(z_t, \rho_t|x_i, \sigma_{1:t-1}) &= p(z_t, \rho_t|x_i)
+  p(\meas_t |x_i, \measurements_{\prevtime}, \poses) &= p(\meas_t |x_i, \pose_t)
  \label{eq:staticWorldAssumption}
 \end{align}
 Using static world assumption (\eqref{eq:staticWorldAssumption}), we get:
 \begin{align}
- p(x_i|\measurements, \rho) &= p(z_t, \rho_t|x_i)\frac{p(x_i|\sigma_{1:t-1})}
-                                           {p(z_t, \rho_t|\sigma_{1:t-1})}\\
-                 &= \frac{p(x_i|z_t, \rho_t)p(z_t,\rho_t)} {p(x_i)}\frac{p(x_i|\sigma_{1:t-1})}{p(z_t, \rho_t|\sigma_{1:t-1})}\\
-                 &= \frac{1}{Z'}\frac{p(x_i|z_t, \rho_t)p(x_i|\sigma_{1:t-1})}{p(x_i)}\\
-                 &= \frac{1}{Z'}\prod_{1\le f \le t} \frac{p(x_i|z_f, \rho_f)}{p(x_i)}
+ p(x_i|\measurements, \poses) &= p(\meas_t, \pose_t|x_i)\frac{p(x_i|\pastobs)}
+                                           {p(\meas_t, \pose_t|\pastobs)}\\
+                 &= \frac{p(x_i|\meas_t, \pose_t)p(\meas_t,\pose_t) p(x_i|\pastobs)} {p(x_i) p(\meas_t, \pose_t|\pastobs)}\\
+                 &= \frac{1}{Z'}\frac{p(x_i|\meas_t, \pose_t)p(x_i|\pastobs)}{p(x_i)}\\
+                 &= \frac{1}{Z'}\prod_{1\le f \le t} \frac{p(x_i|\meas_f, \pose_f)}{p(x_i)}
 \end{align}
 where $Z'$ is a normalizing factor that is independent of $x_i$.
 
@@ -265,45 +271,44 @@ where $Z'$ is a normalizing factor that is independent of $x_i$.
 
    Here we present minimum assumption simplification of
    \eqref{eq:fullsolution} as done in \cite{thrun2003learning,merali2013icra}. 
-   For conciseness, we use 
-   %$\sigma_t = \{z_t, \rho_t\}$ to represent both range and pose of $t$\textsuperscript{th} laser measurement.
+   %For conciseness, we use 
+   %$\sigma_t = \{\meas_t, \pose_t\}$ to represent both range and pose of $t$\textsuperscript{th} laser measurement.
    %Similarly,
-   $\sigma_{1:t-1} = \{z_{1:t-1}, \rho_{1:t-1}\}$ to represent all but
-   $t$\textsuperscript{th} measurement. For a given map $\map$, the conditional
+   %$\pastobs = \{z_{\prevtime}, \pose_{\prevtime}\}$ to represent all but $t$\textsuperscript{th} measurement.
+   For a given map $\map$, the conditional
    probability of map being correct is
    \begin{align}
-     p(\map | \measurements, \rho) &= p(\map | \sigma_{1:t-1}, z_t, \rho_t)\\
-                    &= \frac{p(z_t|\map , \sigma_{1:t-1}, \rho_t)p(\map| \sigma_{1:t-1}, \rho_t)}
-                            {p(z_t|\sigma_{1:t-1}, \rho_t)}
+     p(\map | \measurements, \poses) &= \frac{p(\meas_t|\map , \measurements_{\prevtime}, \poses)p(\map| \measurements_{\prevtime},\poses)}
+                            {p(\meas_t|\measurements_{\prevtime}, \poses)}
      \label{eq:recursivesol}
    \end{align}
-   Static world assumption, $p(z_t|\map, \sigma_{1:t-1}, \rho_t) = p(z_t|\map, \rho_t)$, simplifies \eqref{eq:recursivesol} to :
+   Static world assumption, $p(\meas_t|\map, \measurements_{\prevtime} \poses) = p(\meas_t|\map, \pose_t)$, simplifies \eqref{eq:recursivesol} to :
    \begin{align}
-     p(\map|\measurements, \rho) &= \frac{p(z_t|\map, \rho_t)p(\map| \sigma_{1:t-1}, \rho_t)}
-                          {p(z_t|\sigma_{1:t-1}, \rho_t)}\\
-                  &= \frac{p(z_t|\map, \rho_t)p(\rho_t|\map, \sigma_{1:t-1})p(\map| \sigma_{1:t-1})}
-                          {p(z_t|\sigma_{1:t-1}, \rho_t)p(\rho_t|\sigma_{1:t-1})}
+     p(\map|\measurements, \poses) &= \frac{p(\meas_t|\map, \pose_t)p(\map| \measurements_{\prevtime}, \poses)}
+                          {p(\meas_t|\measurements_{\prevtime}, \poses)}\\
+                  &= \frac{p(\meas_t|\map, \pose_t)p(\pose_t|\map, \pastobs)p(\map| \pastobs)}
+                          {p(\meas_t|\measurements_{\prevtime}, \poses)p(\pose_t|\pastobs)}
    \end{align}
 
-   Another common assumption is that the pose of robot $\rho_t$ being independent of map $\map$:
+   Another common assumption is that the pose of robot $\pose_t$ being independent of map $\map$:
    \begin{align}
-     p(\rho_t|\map, \sigma_{1:t-1}) = p(\rho_t|\sigma_{1:t-1})
+     p(\pose_t|\map, \pastobs) = p(\pose_t|\pastobs)
    \end{align}
    Using independent pose assumption, we get a recursive formula for \eqref{eq:recursivesol}
    \begin{align}
-     p(\map | \measurements, \rho) &= \frac{1}{Z} p(z_t|\map , \rho_t)p(\map| \measurements_{1:t-1}, \rho_{1:t-1})\\
-                       &= \frac{1}{Z} \prod_{1 \le f \le t} p(z_f|\map, \rho_f)
+     p(\map | \measurements, \poses) &= \frac{1}{Z} p(\meas_t|\map , \pose_t)p(\map| \measurements_{\prevtime}, \poses_{\prevtime})\\
+                       &= \frac{1}{Z} \prod_{1 \le f \le t} p(\meas_f|\map, \pose_f)
      \label{eq:map}
    \end{align}
-   where $Z$ is a normalizing constant independent of $\map$. The term $p(z_f|\vect{x}, p_f)$ is the \emph{forward sensor model}. Thrun et al. \cite{thrun2003learning} approach this problem by expectation maximization, while Merali et al. \cite{merali2013icra} use Gibbs sampling to find approximate solution. In this paper, we explore modern explore modern methods of finding maximum a posteriori estimate of this problem.
+   where $Z$ is a normalizing constant independent of $\map$. The term $p(\meas_f|\map, p_f)$ is the \emph{forward sensor model}. Thrun et al. \cite{thrun2003learning} approach this problem by expectation maximization, while Merali et al. \cite{merali2013icra} use Gibbs sampling to find approximate solution. In this paper, we explore modern explore modern methods of finding maximum a posteriori estimate of this problem.
 
    Modern MAP methods approach the problem \eqref{eq:map}, by making use of the fact that a laser measurement depends only on a small portion of the entire map:
    \begin{align}
-     p(z_f |\vect{x}, \rho_f) = p(z_f|\vect{x}_f, \rho_f)
+     p(\meas_f |\map, \pose_f) = p(\meas_f|\map_f, \pose_f)
    \end{align}
-   where $\vect{x}_f \subseteq \vect{x}$ is the small portion of the map on which the laser measurement $f$ depends. Rewriting, \eqref{eq:map} in new notation:
+   where $\map_f \subseteq \map$ is the small portion of the map on which the laser measurement $f$ depends. Rewriting, \eqref{eq:map} in new notation:
    \begin{align}
-     p(\map | \measurements, \rho) &= \frac{1}{Z} \prod_{1 \le f \le t} p(z_f|\map_f, \rho_f)
+     p(\map | \measurements, \poses) &= \frac{1}{Z} \prod_{1 \le f \le t} p(\meas_f|\map_f, \pose_f)
      \label{eq:modernmap}
    \end{align}
    %However, the full solution is computationally intractable as its complexity is exponential in the number of cells.
@@ -316,9 +321,9 @@ The problem of Occupancy grid mapping can be expressed as energy minimization
 over a factor graph. Let all cells in the map be the variable nodes $V$ and all
 the laser measurements be factor nodes $F$. 
 There exists an undirected edge $(i, f)$, if and only if the laser
-range measurement $p(z_f|\vect{x}, \rho_f)$ depends on the cell occupancy 
+range measurement $p(\meas_f|\map, \pose_f)$ depends on the cell occupancy 
 $x_i$. In this paper, we assume that laser range measurement depends on only
-those cells that the laser passes through for given pose $\rho_f$. Though more
+those cells that the laser passes through for given pose $\pose_f$. Though more
 complicated models can lead to better accuracy, we show that with such a simple
 model we are able to achieve better accuracy than methods tried so far.
 Let $E$ be set of all such edges:
@@ -344,12 +349,12 @@ This defines our factor graph representation of occupancy grid mapping $G = (V, 
 % the cell is free (respectively occupied). Also denote the sample space of all the
 % cells in the map as $\Omega = \prod_{i \in V} L_i$.
 
-% Each laser measurement $f \in F$ corresponds to a function $\theta_f : \vect{x}_f \rightarrow \Real$ 
-% that depends only on the labels of the neighboring cells, $\vect{x}_f = \{x_i\}_{i
+% Each laser measurement $f \in F$ corresponds to a function $\theta_f : \map_f \rightarrow \Real$ 
+% that depends only on the labels of the neighboring cells, $\map_f = \{x_i\}_{i
 % \in n(f)}$, and evaluates to an
 % \emph{energy} value. Here $n(.)$ denotes the neighborhood in the factor graph $G$.
 % The \emph{energy} can be thought as the negative log likelihood of the given
-% state $\vect{x}_f$ being the correct state according to the laser measurement $f$.
+% state $\map_f$ being the correct state according to the laser measurement $f$.
 
 % In this formulation, we seek to determine the label of all the map cells that
 % maximizes the total likelihood across all measurements, which is equivalent to
@@ -358,24 +363,24 @@ We rewrite the problems \eqref{eq:fullsolution} and \eqref{eq:mapproblem} here
 in generic notation, along with use of factorization obtained in
 \eqref{eq:modernmap}, for generic explanation of algorithms.
 \begin{align}
-  P_i(x_i = l_i) &= \sum_{\map \in \Omega : x_i = l_i} P(\vect{x}) & \forall i \in V
+  P_i(x_i = l_i) &= \sum_{\map \in \Omega : x_i = l_i} P(\map) & \forall i \in V
   \label{eq:marginalgeneric}
   \\
-     \vect{x}* &= \argmax_{\vect{x} \in \Omega} P(\vect{x})
+     \map* &= \argmax_{\map \in \Omega} P(\map)
   \label{eq:mapgeneric}
   \\
-   P(\vect{x}) &= \frac{1}{Z}\prod_{f \in F} P_f(\vect{x}_f)
+   P(\map) &= \frac{1}{Z}\prod_{f \in F} P_f(\map_f)
   \label{eq:factorizationgeneric}
 \end{align}
 where  $l_i \in L_i$ denote an element from the label set $L_i$ of node $i \in V$.
 The equations \eqref{eq:fullsolution}, \eqref{eq:mapproblem} and
 \eqref{eq:modernmap} correspond to \eqref{eq:marginalgeneric},
 \eqref{eq:mapgeneric} and \eqref{eq:factorizationgeneric} respectively. Also
-note the corresponding equivalence of notation, $P_i(x_i = l_i) = p(x_i = l_i|z, \rho)$, $P(\vect{x}) = p(\vect{x}|z, \rho)$ and $P_f(\vect{x}_f) = p(z_f|\vect{x}_f, \rho_f)$.
+note the corresponding equivalence of notation, $P_i(x_i = l_i) = p(x_i = l_i|\measurements, \poses)$, $P(\map) = p(\map|\measurements, \poses)$ and $P_f(\map_f) = p(\meas_f|\map_f, \pose_f)$.
 
 Often, for computational reasons, this problem is approached in negative log
 likelihood or \emph{energy} domain. Let 
-$\theta_f(\vect{x}_f) = - \log P_f(\vect{x}_f)$ 
+$\theta_f(\map_f) = - \log P_f(\map_f)$ 
 denote the \emph{energy} for the laser measurement $f$. Note that here we
 assume that $P_f(\map_f) > 0$, which is practically achievable by
 choosing very low probability values instead of zero for highly improbable
@@ -383,7 +388,7 @@ cases. We will be using this non-zero probability assumption for the rest of the
 In energy domain, the problem \eqref{eq:mapgeneric}, along with
 \eqref{eq:factorizationgeneric}, can be rewritten as
 \begin{align}
-  \vect{x}* = \argmin_{\vect{x} \in \Omega} \sum_{f \in F} \theta_f(\vect{x}_f)
+  \map* = \argmin_{\map \in \Omega} \sum_{f \in F} \theta_f(\map_f)
 \end{align}
 \begin{figure}
   \includegraphics[width=\columnwidth]{../figures/factorgraph/factorgraph.pdf}
@@ -394,41 +399,41 @@ In energy domain, the problem \eqref{eq:mapgeneric}, along with
 \section{Forward sensor models}
 We explore here a few plausible sensor models
 \subsection{Gaussian sensor model}
-\newcommand{\actz}{\bar{z}_f(\vect{x}_f, \rho_f)}
+\newcommand{\actz}{\bar{\measurements}_f(\map_f, \pose_f)}
 In this sensor model, we assume that the laser measurements are affected by Gaussian noise. The forward sensor model is given by
 \begin{align}
-  p(z_f|\vect{x}_f, \rho_f) &=
-  \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(\actz - z_f)^2}{2\sigma^2}\right)
+  p(\meas_f|\map_f, \pose_f) &=
+  \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(\actz - \meas_f)^2}{2\sigma^2}\right)
   \label{eq:gaussiansensormodel}
 \end{align}
-where $\actz$ is the distance of first occupied cell in $\vect{x}_f$ starting from pose $\rho_f$. Also $\sigma$ is a measure of noise in laser measurement and it often depends on the distance measured. For our experiments we assume noise to linearly vary with distance as $\sigma = \sigma_0z_f$. 
+where $\actz$ is the distance of first occupied cell in $\map_f$ starting from pose $\pose_f$. Also $\sigma$ is a measure of noise in laser measurement and it often depends on the distance measured. For our experiments we assume noise to linearly vary with distance as $\sigma = \sigma_0z_f$. 
 
 In terms of negative log likelihood, the energy function becomes
 \begin{align}
-  \theta_f(\vect{x}_f) &= \frac{1}{2\sigma_0^2}\left(1 -
-  \frac{\actz}{z_f}\right)^2 + \log(\sqrt{2\pi}\sigma_0z_f)
+  \theta_f(\map_f) &= \frac{1}{2\sigma_0^2}\left(1 -
+  \frac{\actz}{\meas_f}\right)^2 + \log(\sqrt{2\pi}\sigma_0z_f)
 \end{align}
 % In terms of discrete set of cells that the laser passes through the energy function becomes
 % \begin{align}
-%   \theta_f(\vect{x}_f) &= \frac{1}{\sigma_0^2}\left(1 - \frac{\kappa(\vect{x}_f) \Delta}{z_f}\right)^2 + \log(2\pi\sigma_0z_f)
+%   \theta_f(\map_f) &= \frac{1}{\sigma_0^2}\left(1 - \frac{\kappa(\map_f) \Delta}{\meas_f}\right)^2 + \log(2\pi\sigma_0z_f)
 % \end{align}
-% where $\kappa(\vect{x}_f)$ denote the index of the first occupied cell in $\vect{x}_f$ and $\Delta$ is the cell size.
+% where $\kappa(\map_f)$ denote the index of the first occupied cell in $\map_f$ and $\Delta$ is the cell size.
 
 \subsection{Piecewise constant sensor model}
 The expected pattern of occupancy from a laser observation is two have last cell as occupied and others as free. So the simplest energy function would be 
 \begin{align}
-  \theta_f(\vect{x}_f) &= \begin{cases}
-              0 & \text{ if } \vect{x}_f = [0, 0 \dots 0, 1]^\top\\
+  \theta_f(\map_f) &= \begin{cases}
+              0 & \text{ if } \map_f = [0, 0 \dots 0, 1]^\top\\
            1000 & \text{ otherwise}
   \end{cases}
 \end{align}
-where $[0, 0 \dots 0, 1]$ means that all cells are $0$ except the last cell which is $1$. In this context, we consider $\vect{x}^f$ to be a vector of ordered cell labels through which laser measurement $f$ passes.
+where $[0, 0 \dots 0, 1]$ means that all cells are $0$ except the last cell which is $1$. In this context, we consider $\map^f$ to be a vector of ordered cell labels through which laser measurement $f$ passes.
 
 However, to resolve conflicts it is sometimes better to provide lower energy to all cells free case. Hence, we come with the following energy function.
 \begin{align}
-  \theta_f(\vect{x}_f) &= \begin{cases}
-                     0 & \text{ if } \vect{x}_f = \vect{R}_1\\
-                   900 & \text{ if } \vect{x}_f = \vect{R}_2\\
+  \theta_f(\map_f) &= \begin{cases}
+                     0 & \text{ if } \map_f = \vect{R}_1\\
+                   900 & \text{ if } \map_f = \vect{R}_2\\
                   1000 & \text{ otherwise}
   \end{cases}
   \label{eq:piecewiseconstant}
@@ -442,46 +447,46 @@ $P_f(.)$. Here, we take a consider a class of \emph{pattern-based} function
 that are similar (yet different) to those discussed by Komodakis et al
 \cite{komodakis2009beyond}. Pattern based functions are functions of the form:
 \begin{align}
-  P_f(\vect{x}_f) = \begin{cases}
-    \psi_{1} & \text{ if $\vect{x}_f \sim \vect{R}_1$}\\
+  P_f(\map_f) = \begin{cases}
+    \psi_{1} & \text{ if $\map_f \sim \vect{R}_1$}\\
             .&.\\
-    \psi_{m} & \text{ if $\vect{x}_f \sim \vect{R}_m$}\\
+    \psi_{m} & \text{ if $\map_f \sim \vect{R}_m$}\\
             .&.\\
     \psi_{\text{min}} & \text{ otherwise}
   \end{cases}
   \label{eq:patternfunction}
 \end{align}
 where $\vect{R}_m$ is one of the mutually exclusive $M$ patterns and operator
-$\vect{x}_f \sim \vect{R}_m$ denotes that vector $\vect{x}_f$ matches pattern
+$\map_f \sim \vect{R}_m$ denotes that vector $\map_f$ matches pattern
 $\vect{R}_m$.  
 %Usually $M$ is either a constant or linear in the size of neighborhood $n(f)$.
 %We further constrain the class of functions by requring each pattern
 A pattern $\vect{R}_m$ is defined by a non empty set of \emph{fixed} nodes
-$n^m_0(f) \subseteq n(f)$ from neighboring nodes to have fixed values $\vect{r}_m$, 
+$n^m_0(f) \subseteq n(f)$ from neighbouring nodes to have fixed values $\vect{r}_m$, 
 while the state of remaining \emph{free} nodes $n^m_*(f) = n(f) \setminus
-n^m_0(f)$ can have any values and they do not affects $P_f(\vect{x}_f)$.
+n^m_0(f)$ can have any values and they do not affects $P_f(\map_f)$.
 We assume that the number
-of patterns $M$ is much smaller than the sample space of $\vect{x}_f$.
+of patterns $M$ is much smaller than the sample space of $\map_f$.
 
 Here, we show that gaussian sensor
 model \eqref{eq:gaussiansensormodel} can also be represented as pattern based function. 
-We use the fact that the term $\bar{z}_f(\vect{x}_f, \rho_f)$, just depends on
+We use the fact that the term $\bar{\meas}_f(\map_f, \pose_f)$, just depends on
 first occupied cell. We define pattern $\vect{R}_m$ such that the first
 occupied cell is $m$\textsuperscript{th} cell in $n(f)$:
 \begin{align}
-  \vect{x}_f \sim \vect{R}_m = \begin{cases}
+  \map_f \sim \vect{R}_m = \begin{cases}
     1 & \text{ if $x_{fk} = 0 \, \forall k < m$ and $x_{fm} = 1$}\\
     0 & \text{ otherwise}
   \end{cases}
 \end{align}
-where $x_{fk}$ is the $k$\textsuperscript{th} element in $\vect{x}_f$. With
+where $x_{fk}$ is the $k$\textsuperscript{th} element in $\map_f$. With
 this formulation, we will have $M = n(f)$ patterns to describe the gaussian
 sensor model in the form \eqref{eq:patternfunction} with $\psi_m$ given by
 \begin{align}
-  \psi_m &= \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(\delta(m)- z_f)^2}{2\sigma^2}\right)
+  \psi_m &= \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(\delta(m)- \meas_f)^2}{2\sigma^2}\right)
 \end{align}
 where $\delta(m)$ is the distance of $m$\textsuperscript{th} cell from robot
-starting point $\rho_f$. Also note that in this formulation the only case for
+starting point $\pose_f$. Also note that in this formulation the only case for
 \emph{otherwise} is the one when all cells are $0$ (or free).
 
 It is clear that piecewise constant sensor model \eqref{eq:piecewiseconstant}
@@ -492,37 +497,37 @@ is an instance of pattern based functions.
 %otherwise case is not mutually exclusive with 
 
 \section{Metropolis Hastings}
-Markov Chain Monte Carlo (MCMC) methods allow us to sample from high dimensional probability distributions. The samples drawn using MCMC methods are not independent but correlated as a Markov chain. They work by moving in a random walk in the high dimensional space. Metropolis Hastings is one of the popular MCMC methods. The idea is to sample $\vect{x}$ from the probability distribution $p(\vect{x}|z, \rho)$ and after sufficient number of iterations, we should get sample that is close to the true map.
+Markov Chain Monte Carlo (MCMC) methods allow us to sample from high dimensional probability distributions. The samples drawn using MCMC methods are not independent but correlated as a Markov chain. They work by moving in a random walk in the high dimensional space. Metropolis Hastings is one of the popular MCMC methods. The idea is to sample $\map$ from the probability distribution $p(\map|\measurements, \poses)$ and after sufficient number of iterations, we should get sample that is close to the true map.
 
-In general, for Metropolis hastings a \emph{transition probability} $Q(\vect{x}',
-\vect{x}^r)$ is chosen, that depends on current sample $\vect{x}^r$ and guides
+In general, for Metropolis Hastings a \emph{transition probability} $Q(\map',
+\map^r)$ is chosen, that depends on current sample $\map^r$ and guides
 the random walk in the high-dimensional space. We randomly sample a point
-$\vect{x}'$ from from $Q(.)$ and it is either accepted or rejected based on the
+$\map'$ from from $Q(.)$ and it is either accepted or rejected based on the
 acceptance probability $a$:
 \begin{align}
-  a = \frac{P(\vect{x}')Q(\vect{x}^r, \vect{x}')}
-  {P(\vect{x}^r)Q(\vect{x}', \vect{x}^r)}
+  a = \frac{P(\map')Q(\map^r, \map')}
+  {P(\map^r)Q(\map', \map^r)}
 \end{align}
 
-If $a \ge 1$, then the new point $\vect{x}'$ is accepted otherwise it is accepted with probability $a$. Here acceptance means that the point in next iteration is taken as the sampled point otherwise the older point is retained:
+If $a \ge 1$, then the new point $\map'$ is accepted otherwise it is accepted with probability $a$. Here acceptance means that the point in next iteration is taken as the sampled point otherwise the older point is retained:
 \begin{align}
-  \vect{x}^{r+1} = \begin{cases}
-    \vect{x}' & \text{ if $\vect{x}'$ accepted}\\
-    \vect{x}^r & \text{ otherwise}\\
+  \map^{r+1} = \begin{cases}
+    \map' & \text{ if $\map'$ accepted}\\
+    \map^r & \text{ otherwise}\\
   \end{cases}
 \end{align}
 Interested reader is referred to \cite{mackay1998introduction} for further details about the Metropolis Hastings algorithm.
 
-For our problem, we need to sample map $\vect{x}$ from the probability
-distribution $p(\vect{x}|z, \rho)$. Note that when the transition probability
+For our problem, we need to sample map $\map$ from the probability
+distribution $p(\map|\measurements, \poses)$. Note that when the transition probability
 is symmetric, for example Gaussian distribution, the acceptance probability is
 simply the ratio of probabilities at the proposed point and the current point.
 We uniformly sample from all the cells in the map and flip the state of the
-sampled cell to get the proposal point $\vect{x}'$. Clearly, this transition probability is symmetric.
+sampled cell to get the proposal point $\map'$. Clearly, this transition probability is symmetric.
 % TODO: how to write this distribution in
 \begin{align}
-  Q(\vect{x}', \vect{x}^r) = \begin{cases}
-    \frac{1}{N} & \text{if $\|\vect{x}' - \vect{x}^r\|_1 = 1$}\\
+  Q(\map', \map^r) = \begin{cases}
+    \frac{1}{N} & \text{if $\|\map' - \map^r\|_1 = 1$}\\
       0 & \text{ otherwise}
   \end{cases}
   \label{eq:transitionprob}
@@ -533,19 +538,19 @@ in the map
 can change its state at a time. We will see this choice is one of the reasons of
 poor performance of Metropolis Hastings. Also note that the ratio of probability distributions can be simplified by using \eqref{eq:factorizationgeneric}
 \begin{align}
-  a &= \frac{P(\vect{x}')}{P(\vect{x}^r)}\\
-    &= \frac{\prod_{f \in F} P_f(\vect{x}'_f)}{\prod_{f \in F} P_f(\vect{x}^r_f)}\\
-    &= \frac{\prod_{f \in n(i)} P_f(\vect{x}'_f)}{\prod_{f \in n(i)} P_f(\vect{x}^r_f)}
+  a &= \frac{P(\map')}{P(\map^r)}\\
+    &= \frac{\prod_{f \in F} P_f(\map'_f)}{\prod_{f \in F} P_f(\map^r_f)}\\
+    &= \frac{\prod_{f \in n(i)} P_f(\map'_f)}{\prod_{f \in n(i)} P_f(\map^r_f)}
   \label{eq:acceptanceprob}
 \end{align}
-where $i$ is the cell whose state is different in $\vect{x}'$ and $\vect{x}^r$,
+where $i$ is the cell whose state is different in $\map'$ and $\map^r$,
 and $n(.)$ denotes the neighborhood of a vertex in graph $G$.
 
 The above simplification uses the fact that only those terms  that depend on
 state of $i$\textsuperscript{th} cell need to be computed. By definition
 of graph $G$ only the neighboring factors $f \in n(i)$ depend on state of cell $i$.
 
-% Now, we know that $\vect{x}'$ and $\vect{x}^r$ differ only by one cell or dimension, say $i$. Using this fact we can assert that only those subsets $\vect{x}_f$ of map can be different that contain
+% Now, we know that $\map'$ and $\map^r$ differ only by one cell or dimension, say $i$. Using this fact we can assert that only those subsets $\map_f$ of map can be different that contain
 % 
 \begin{algorithm}
   \KwData{
@@ -554,18 +559,18 @@ of graph $G$ only the neighboring factors $f \in n(i)$ depend on state of cell $
   %Step size $\alpha > 0$\;
   Maximum number of iterations $N$\;
   }
-  \KwResult{$\vect{x}^r$}
-  Initialize the map $\vect{x}^0$ randomly.\;
+  \KwResult{$\map^r$}
+  Initialize the map $\map^0$ randomly.\;
   $r = 0$\;
   \While {$r < N$} {
     Randomly choose a cell $i : i \in V$\;
-    Flip its state $x'_i = \neg x^r_i$ in $\vect{x}^r$ to get $\vect{x}'$\;
+    Flip its state $x'_i = \neg x^r_i$ in $\map^r$ to get $\map'$\;
     Compute acceptance probability $a$ by \eqref{eq:acceptanceprob}\;
     Sample random number $q : 0 \le q \le 1$\;
     \If {$a \ge 1$ or $a \ge q$} {
-      Accept proposed point, $\vect{x}^{r + 1} = \vect{x}'$\;
+      Accept proposed point, $\map^{r + 1} = \map'$\;
     } \Else {
-      Reject proposed point, $\vect{x}^{r + 1} = \vect{x}^r$\;
+      Reject proposed point, $\map^{r + 1} = \map^r$\;
     }
     $r \leftarrow r + 1$\;
   }
@@ -582,7 +587,7 @@ interesting as all factors usually agree on their state. The uncertainty lies
 usually lies along the boundaries of free and occupied regions. This is the
 region we want to focus on.
 
-We employ a \emph{heat map} to bias our sampling along the boundaries of free and occupied regions. We maintain a vector of cells $\vect{x}_h$ that form the ``interesting'' region of the map. In our experiments, we take the last cell spanned by each laser measurement as an ``interesting'' cell and add it to the \emph{heat map}, $\vect{x}_h$. We use a sampling bias of $1:4$ for cells outside heat map to cells within heat map.
+We employ a \emph{heat map} to bias our sampling along the boundaries of free and occupied regions. We maintain a vector of cells $\map_h$ that form the ``interesting'' region of the map. In our experiments, we take the last cell spanned by each laser measurement as an ``interesting'' cell and add it to the \emph{heat map}, $\map_h$. We use a sampling bias of $1:4$ for cells outside heat map to cells within heat map.
 
 We observe that Metropolis Hastings algorithm converges faster by using \emph{heat map}.
 
@@ -609,13 +614,13 @@ node $i \in V$ to node $f \in F$ for state $x_i = l_i$ at any iteration $r$ of t
 algorithm. With a similar convention we take $\msg{i}{f}{l_i}{r}$ to denote
 update in opposite direction. We use the following equations to update the messages depending whether the direction of edge is from variable node to factor node or vice versa:
 \begin{align}
-  \msg{f}{i}{l_i}{r+1} &= \sum_{\vect{x}_f \in \Omega_f: x_i = l_i}P_f(\vect{x}_f)\prod_{j \in n(f) \setminus i}\msg{j}{f}{x_j}{r}
+  \msg{f}{i}{l_i}{r+1} &= \sum_{\map_f \in \Omega_f: x_i = l_i}P_f(\map_f)\prod_{j \in n(f) \setminus i}\msg{j}{f}{x_j}{r}
   \label{eq:factor2node}
   \\
   \msg{i}{f}{l_i}{r+1} &= \prod_{h \in n(i) \setminus f}\msg{h}{i}{l_i}{r}
   \label{eq:node2factor}
 \end{align}
-where $\Omega_f = \prod_{i \in n(f)} L_i$ denotes the sample space of the neighborhood of factor $f$ in graph $G$.
+where $\Omega_f = \prod_{i \in n(f)} L_i$ denotes the sample space of the neighbourhood of factor $f$ in graph $G$.
 
 When the factor graph is a tree, then the recommended message update sequence
 is two pass sequence. The messages are updated starting from leaves towards the
@@ -625,7 +630,7 @@ various update sequences have been suggested of which easiest to implement is
 random update sequence i.e. a random edge is selected from the graph for each iteration.
 
 \subsection{Efficient sum product}
-We note that for Occupancy grid mapping the neighborhood of nodes in factor
+We note that for Occupancy grid mapping the neighbourhood of nodes in factor
 graph $G$ can be large. For example a typical laser scan might have maximum
 range of up to 50 m, which can cover up to 500 cells event at 10cm resolution.
 In such a factor graph, even the sample space $\Omega_f$ of neighbors
@@ -643,12 +648,12 @@ compute the probability of each pattern being true using messages as beliefs
 $\msg{i}{f}{x_i}{r}$
 \begin{align}
   &p(\vect{x_f} \sim \vect{R}_m) = \sum_{\vect{x_f} \sim \vect{R}_m} \prod_{j \in n(f)}\msg{j}{f}{x_j}{r}\\
-  %&= \prod_{j \in n^m_0(f)}\msg{j}{f}{R_{mj}}{r}\underbrace{\sum_{\vect{x}^*_f \in \Omega^*_f}\prod_{j \in n^m_*(f)}\msg{j}{f}{x_j}{r}}_{=1\text{, because $\vect{R}_m$ do not contraints $n^m_*(f)$}}\\
+  %&= \prod_{j \in n^m_0(f)}\msg{j}{f}{R_{mj}}{r}\underbrace{\sum_{\map^*_f \in \Omega^*_f}\prod_{j \in n^m_*(f)}\msg{j}{f}{x_j}{r}}_{=1\text{, because $\vect{R}_m$ do not contraints $n^m_*(f)$}}\\
   &= \prod_{j \in n^m_0(f)}\msg{j}{f}{R_{mj}}{r}\left(\sum_{\vect{x_f} \sim \vect{R}_m}\prod_{j \in n^m_*(f)}\msg{j}{f}{x_j}{r}\right)
 \end{align}
 where $R_{mj}$ is the fixed value of $j$\textsuperscript{th} node in pattern
 $\vect{R}_m$. The summation inside the bracket evaluates to one, because
-$\vect{x}_f \sim \vect{R}_m$ do not constraints state of any node in $n^m_*(f)$
+$\map_f \sim \vect{R}_m$ do not constraints state of any node in $n^m_*(f)$
 by definition. Hence, the probability of pattern is just the product of beliefs
 of fixed terms:
 \begin{align}
@@ -703,7 +708,7 @@ $x_i$.
 In each iteration of Dual Decomposition, we first minimize all the slave
 problems getting labels for each pair of variable followed by message update in
 case of disagreement. Optionally, we can only minimize only those factors that
-have at least one disagreeing node in their neighborhood. However, the
+have at least one disagreeing node in their neighbourhood. However, the
 performance gain obtained by such tweak is marginal.
 
 \begin{algorithm}
@@ -722,7 +727,7 @@ performance gain obtained by such tweak is marginal.
   \While{$r < N$} {
     %\tcp{For disagreeing factors}
     \For {$f \in F$} {% : \exists i, i' \in n(f) : x_i^f \ne x_{i'}^f$} {
-      $\vect{x}^f \assign \argmin\limits_{\vect{x}^f} \left( \theta_f(\vect{x}^f) + \sum\limits_{i \in n(f)}\msg{i}{f}{x^f_i} \right)$\;
+      $\map^f \assign \argmin\limits_{\map^f} \left( \theta_f(\map^f) + \sum\limits_{i \in n(f)}\msg{i}{f}{x^f_i} \right)$\;
     }
     \tcp{For disagreeing nodes}
     \For {$i \in V : \exists f, f' \in n(i) : x_i^{f'} \ne x_i^f$} {
@@ -767,29 +772,29 @@ Here we address the efficient slave minimization of pattern based functions (Sec
 The problem is to minimize the energy function along with the received messages.
 \begin{equation}
   \begin{split}
-    \text{minimize }  S(\vect{x}_f) &=\theta_f(\vect{x}^f) + \sum_{i \in n(f)}\msg{i}{f}{x_i^f} \\
-   \text{such that }  &\vect{x}^f \in \Omega_f
+    \text{minimize }  S(\map_f) &=\theta_f(\map^f) + \sum_{i \in n(f)}\msg{i}{f}{x_i^f} \\
+   \text{such that }  &\map^f \in \Omega_f
   \end{split}
 \end{equation}
-where $\theta_f(\vect{x}^f)$ is a pattern-based function of the form
+where $\theta_f(\map^f)$ is a pattern-based function of the form
 \begin{align}
-  \theta_f(\vect{x}^f) &= \begin{cases}
-                \Psi_m & \text{ if $\vect{x}_f \sim \vect{R}_m$}\\
+  \theta_f(\map^f) &= \begin{cases}
+                \Psi_m & \text{ if $\map_f \sim \vect{R}_m$}\\
      \Psi_{\text{max}} & \text{ otherwise}
   \end{cases}
 \end{align}
 
 A general minimization algorithm will take time of the order that is
-exponential in the number of cells a laser passes through as $\vect{x}^f$ can
+exponential in the number of cells a laser passes through as $\map^f$ can
 have $|L_i|^{|n(f)|}$ possible values.
 %However, minimizing pattern-based functions is relatively easy because 
 We can compute minimum for each pattern case and then take the minimum among all the patterns. While computing minimum for single pattern we can make use of the fact that certain nodes are fixed while other free:
 \begin{align}
-  &\argmin_{\vect{x}_f \sim \vect{R}_m} S(\vect{x}_f) 
-% &= \argmin_{\vect{x}_f \sim \vect{R}_m} \Psi_m + \msg{i}{f}{x_i^f}\\
-  = \Psi_m + \argmin_{\vect{x}_f \sim \vect{R}_m} \sum_{i \in n(f)}\msg{i}{f}{x_i^f}\\
+  &\argmin_{\map_f \sim \vect{R}_m} S(\map_f) 
+% &= \argmin_{\map_f \sim \vect{R}_m} \Psi_m + \msg{i}{f}{x_i^f}\\
+  = \Psi_m + \argmin_{\map_f \sim \vect{R}_m} \sum_{i \in n(f)}\msg{i}{f}{x_i^f}\\
   &= \Psi_m + \sum_{i \in n^m_0(f)}\msg{i}{f}{R_{mi}} 
-  + \argmin_{\vect{x}_f \sim \vect{R}_m} \sum_{i \in n^m_*(f)}\msg{i}{f}{x_i^f}
+  + \argmin_{\map_f \sim \vect{R}_m} \sum_{i \in n^m_*(f)}\msg{i}{f}{x_i^f}
 \end{align}
 
 We have to still make sure that the \emph{otherwise} case is mutually
@@ -804,20 +809,20 @@ patterns already considered.
 %If the number of patterns $M$ is small, we should
 %be able to do this minimization efficiently.
 % \begin{align}
-%   \argmin_{\vect{x}_f \in \Omega_f} S(\vect{x}_f) &= \argmin_{m \le M} \argmin_{\vect{x}_f \sim \vect{R}_m} S(\vect{x}_f)
+%   \argmin_{\map_f \in \Omega_f} S(\map_f) &= \argmin_{m \le M} \argmin_{\map_f \sim \vect{R}_m} S(\map_f)
 % \end{align}
 % 
 %\begin{align}
-%    \min \theta_f(\vect{x}_f) = \min &\left( 0 + \sum_{\vect{x}_f = \vect{P}_1, i \in n(f)}\msg{i}{f}{x_i},\right.\\
-%                            &900 + \sum_{\vect{x}_f = \vect{P}_2, i \in n(f)}\msg{i}{f}{x_i},\\
-%                            &\left.1000 + \min_{\vect{x}_f \not\in \{\vect{P}_1, \vect{P}_2\}} \sum_{i \in n(f)}\msg{i}{f}{x_i} \right)
+%    \min \theta_f(\map_f) = \min &\left( 0 + \sum_{\map_f = \vect{P}_1, i \in n(f)}\msg{i}{f}{x_i},\right.\\
+%                            &900 + \sum_{\map_f = \vect{P}_2, i \in n(f)}\msg{i}{f}{x_i},\\
+%                            &\left.1000 + \min_{\map_f \not\in \{\vect{P}_1, \vect{P}_2\}} \sum_{i \in n(f)}\msg{i}{f}{x_i} \right)
 %\end{align}
 For example, in case of piecewise constant sensor model, there are only two
 patterns that need to be checked for exclusivity. The otherwise term can be
 easily minimized by finding three best assignments that minimize 
 $\sum_{i \in n(f)}\msg{i}{f}{x_i}$.
 
-%choosing the minimizing state for each $i$ over all possible $\Omega(\vect{x}_f)$ by 
+%choosing the minimizing state for each $i$ over all possible $\Omega(\map_f)$ by 
 %simply choosing the minimizing $x_i \in L_i$ for each $i$. However, the
 %minimizing labels can coincide with patterns $\vect{P}_1$ and $\vect{P}_2$. The
 %solution is to find minimum three assignments of $\sum_{i \in
@@ -828,16 +833,16 @@ $\sum_{i \in n(f)}\msg{i}{f}{x_i}$.
 %Minimizing slave problem can be done efficiently for specific kinds of functions, for example, piecewise constant functions.
 %The problem is to minimize the energy function along with the received messages.
 %\begin{align}
-%  \min_{\vect{x}^f} \left( \theta(\vect{x}^f) + \sum_{i \in n(f)}\msg{i}{f}{x^f} \right)
+%  \min_{\map^f} \left( \theta(\map^f) + \sum_{i \in n(f)}\msg{i}{f}{x^f} \right)
 %\end{align}
-%A general minimization algorithm will take time of the order that is exponential in the number of cells a laser passes through as $\vect{x}^f$ can have $|L_i|^{|n(f)|}$ possible values. However, for our sensor model we can make use of the fact that the piecewise function needs to look for only two patterns. We should compute the total function value for these two patterns and the minimum value for the \emph{otherwise} case. 
+%A general minimization algorithm will take time of the order that is exponential in the number of cells a laser passes through as $\map^f$ can have $|L_i|^{|n(f)|}$ possible values. However, for our sensor model we can make use of the fact that the piecewise function needs to look for only two patterns. We should compute the total function value for these two patterns and the minimum value for the \emph{otherwise} case. 
 %\begin{align}
-%    \min \theta_f(\vect{x}_f) = \min &\left( 0 + \sum_{\vect{x}_f = \vect{P}_1, i \in n(f)}\msg{i}{f}{x_i},\right.\\
-%                            &900 + \sum_{\vect{x}_f = \vect{P}_2, i \in n(f)}\msg{i}{f}{x_i},\\
-%                            &\left.1000 + \min_{\vect{x}_f \not\in \{\vect{P}_1, \vect{P}_2\}} \sum_{i \in n(f)}\msg{i}{f}{x_i} \right)
+%    \min \theta_f(\map_f) = \min &\left( 0 + \sum_{\map_f = \vect{P}_1, i \in n(f)}\msg{i}{f}{x_i},\right.\\
+%                            &900 + \sum_{\map_f = \vect{P}_2, i \in n(f)}\msg{i}{f}{x_i},\\
+%                            &\left.1000 + \min_{\map_f \not\in \{\vect{P}_1, \vect{P}_2\}} \sum_{i \in n(f)}\msg{i}{f}{x_i} \right)
 %\end{align}
 %The third term can be easily minimized by 
-%%choosing the minimizing state for each $i$ over all possible $\Omega(\vect{x}_f)$ by 
+%%choosing the minimizing state for each $i$ over all possible $\Omega(\map_f)$ by 
 %simply choosing the minimizing $x_i \in L_i$ for each $i$. However, the minimizing labels can coincide with patterns $\vect{P}_1$ and $\vect{P}_2$. The solution is to find minimum three assignments of $\sum_{i \in n(f)}\msg{i}{f}{x_i}$ and pick the one that is not equal to $\vect{P}_1$ nor $\vect{P}_2$. 
 %
 %%
