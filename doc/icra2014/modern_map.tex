@@ -247,9 +247,11 @@ occupancy configuration maximizing posterior probability.
 Clearly, a na\"{i}ve solution to either problem would have complexity that is 
 exponential in the number of cells. We hence focus on an approximate solution to this problem.
 
-\section{Mapping by inverse sensor model}
-Commonly used occupancy grid mapping algorithms make simplifying assumption
-that each grid cell is independent of all other map cells. 
+\subsection{Mapping by inverse sensor model}
+Commonly used occupancy grid mapping algorithms
+\cite{elfes1989using,moravec1988sensor,newcombe2011kinectfusion} make
+simplifying assumption that each grid cell is independent of all other map
+cells. 
 \newcommand{\remaining}{\measurements_{\prevtime}, \poses_{\prevtime}}
 \begin{align}
   p(\map|\measurements, \poses) &= \prod_{1 \le i \le N} p(x_i|\measurements, \poses)
@@ -265,7 +267,7 @@ by simple Bayes formulation:
 %measurements before $t$\textsuperscript{th} measurement.
 By using commonly used
 static world assumption, $p(z_t, g_t|x_i, \remaining) = p(z_t, g_t|x_i)$, the
-above equation can be simplified to \cite{merali2013icra} :
+above equation can be simplified \cite{merali2013icra} to :
 % to be independent of
 % previous observations $\remaining$ given the map $x_i$ :
 % \begin{align}
@@ -285,7 +287,7 @@ where $Z'$ is a normalizing factor that is independent of $x_i$, $p(x_i)$ is
 the prior probability for cell $x_i$ and $p(x_i|z_f, g_f)$ is called the
 inverse sensor model.
 
-\section{Mapping by forward sensor model}
+\subsection{Mapping by forward sensor model}
 However, the independent cell assumption is inaccurate and can lead to
 overconfident estimates of occupancy in noisy observations
 \cite{thrun2003learning,merali2013icra}. In the absence of independent cell
@@ -323,7 +325,7 @@ Using independent pose assumption, we get a recursive formula for \eqref{eq:recu
 In this formulation, we make two assumptions, a) static world assumption, $p(z_t|\map,
 \poses) = p(z_t|\map, g_t)$ and b) pose-map independence,
 $p(g_t|\map, \remaining) = p(g_t|\remaining)$. With these assumption it can
-be proved that posterior evaluates to \cite{merali2013icra}:
+be proved \cite{merali2013icra} that posterior evaluates to :
 %\end{comment}
 \begin{align}
  p(\map | \measurements, \poses) &= \frac{1}{Z} p(z_t|\map , g_t)p(\map| \remaining)\\
@@ -352,7 +354,7 @@ With this formulation, we are in a position to describe the problem as
 simplification is necessary to keep the factor graph sparsely connected
 end hence tractable.
 
-\section{Representation as factor graph}
+\subsection{Representation as factor graph}
 \label{sec:notation}
 The problem of Occupancy grid mapping can be expressed as energy minimization
 over a factor graph. Let all cells in the map be the variable nodes $V$ and all
@@ -368,9 +370,10 @@ Let $E$ be set of all such edges:
 \end{align}
 The bipartite graph $G = (V, F, E)$ 
 represents the structure of factorization in \eqref{eq:modernmap} and hence
-called a factor graph (Fig.~\ref{fig:factor-graph}).
-Note that any neighborhood $n(i)$ of variable node only consists of factors,
-$n(i)\subseteq F \, \forall i \in V$ and vice versa.
+called a factor graph \cite{kschischang2001factor}
+(Fig.~\ref{fig:factor-graph}).  Note that any neighborhood $n(i)$ of variable
+node only consists of factors, $n(i)\subseteq F \, \forall i \in V$ and vice
+versa.
 
 \begin{figure}
   \includegraphics[width=\columnwidth]{../figures/factorgraph/factorgraph.pdf}
@@ -398,13 +401,18 @@ Please note the corresponding equivalence of notation, $P_i(x_i = l_i) \equiv p(
 p(z_f|\map_f, g_f)$.
 
 \section{Markov Chain Monte Carlo Metropolis Hastings}
-Markov Chain Monte Carlo (MCMC) methods allow us to sample from high
-dimensional probability distributions. The samples drawn using MCMC methods
-are not independent but correlated as a Markov chain. They work by moving a
-random walk in the high dimensional space. Metropolis Hastings is one of the
-popular MCMC methods. The idea is to sample $\map$ from the target probability
-distribution $P(\map)$ and after sufficient number of iterations,
-we should get sample that is close to the true map.
+We implement and evaluate a generalization of Merali's \cite{merali2013icra}
+Gibbs sampling algorithm for estimating maps.  Metropolis Hastings is another
+popular MCMC algorithm used for sampling from complex probability 
+distributions. Gibbs sampling can be shown to be a specialization of Metropolis
+Hastings \cite{mackay1998introduction}.
+
+% The class of Markov Chain Monte Carlo (MCMC) methods allow us to sample from
+% complex probability distributions. The samples drawn using MCMC
+% methods are not independent but correlated as a Markov chain.  They work by
+% moving a random walk in the high dimensional space and after sufficient number
+% of iterations, it is expected to yield samples from high probability region of the 
+% distribution.
 
 Metropolis hastings algorithm requires a \emph{transition probability} $Q(\map'|
 \map^r)$, that depends on current sample $\map^r$ and guides
@@ -426,12 +434,10 @@ If $a \ge 1$, then the new point $\map'$ is accepted otherwise it is accepted wi
 % \end{align}
 Interested reader is referred to \cite{mackay1998introduction} for further details about the Metropolis Hastings algorithm.
 
-For OG problem, 
-%we need to sample map $\map$ from the probability distribution $P(\map)$.
-we uniformly sample from all the cells in the map and flip the state of the
-sampled cell to get the proposal point $\map'$. This procedure can be
-represented in the form of transient probability:
-% TODO: how to write this distribution in
+For our experiments, we chose a symmetric uniform transition probability
+probability.  We uniformly sample a cell from the map and flip the state of the
+sampled cell to get the proposal point $\map'$. This is equivalent to sampling
+from the probability density:
 \begin{align}
   Q(\map'| \map^r) = \begin{cases}
     \frac{1}{N} & \text{if $\|\map' - \map^r\|_1 = 1$}\\
@@ -517,7 +523,14 @@ spanned by each laser measurement as an ``interesting'' cell and add it to the
 outside heat map to cells within heat map. We compare both Metropolis Hastings
 with and without heat map in our experiments.
 
-\section{Belief Propagation}
+\section{Modern inference algorithms}
+As discussed in Sec.~\ref{sec:related}, last decade saw a spurt in faster and
+more accurate MAP inference algorithms \cite{kappes2013comparative}. Because of
+their ability to handle higher order factors
+\cite{potetz2007efficient,komodakis2009beyond}, we evaluate belief propagation
+and dual decomposition on the problem of occupancy grid mapping.
+
+\subsection{Belief Propagation}
 \newcommand{\bpmsg}[4]{\mu^{#4}_{#1\rightarrow#2}(#3)}
 % TODO: Use introduction section of \cite{potetz2007efficient} to introduct belief propagation specifically 
 Sum product algorithm over factor graphs \cite{kschischang2001factor} is a
@@ -574,7 +587,7 @@ vertical sweeps has been shown to produce good results.
 For our implementation, we choose random update sequence i.e. a random edge is
 selected from the graph for each iteration of message update.
 
-\section{Subgradient Dual decomposition}
+\subsection{Subgradient Dual decomposition}
 \newcommand{\msg}[3]{\mu_{#1#2}(#3)}
 \newcommand{\assign}{\leftarrow}
 \newcommand{\Sx}{L_i}
@@ -684,7 +697,25 @@ only solves the MAP problem \eqref{eq:mapgeneric}, but not the marginal problem
 % \section{Belief propagation with disagreement tracking}
 % Intuitively, dual decomposition converges faster because it focuses on the disagreeing 
 
-\section{Sensor models}
+\section{Higher order factors and efficiency}
+
+The message update equation \eqref{eq:factor2node} in BP algorithm is
+exponential in the size of neighborhood of factor $f$. Observing that the
+neighbourhood size in our factor graph formulation can go up to hundreds to
+thousands of nodes; computing all such terms will be computationally
+expensive. Same is true for slave minimization \eqref{eq:slavemin} in DD algorithm.
+% If the range observation is 30m in an
+% occupancy grid with cell size of 10cm, the neighborhood size would be
+% approximately 300 and the sample space of neighboring nodes $\Omega_f$ will be
+% of the order $2^{300}$.
+
+In this section, we seek a generic class of factors that can be 
+efficiently applied to the belief propagation (BP) and dual decomposition (DD)
+algorithms. We begin by introducing common forward sensor models, that need to
+fit our class of factors followed by their generalization and then their 
+application to the BP and DD algorithms.
+
+\begin{comment} % May be move to experiments section
 Sensor models are mathematical representations of relationship between environment and sensor reading. We discuss here the sensor models that we use for our experiments.
 
 \subsection{Inverse sensor model}
@@ -703,6 +734,8 @@ and $p_{\text{occupied}} = 0.9411$ are probabilities associated with the cell
 being free and occupied respectively. The constant probability values used
 here are computed from log odds values provided by Merali et al.
 \cite{merali2013icra}.
+
+\end{comment}
 
 \subsection{Forward sensor models}
 \label{sec:forward}
@@ -761,26 +794,13 @@ where $Z$ is the normalization constant $\vect{R}_{f1} = [0, 0 \dots 0,
 1]^\top$ denotes all free but last occupied cell pattern and $\vect{R}_{f2} =
 [0, 0 \dots 0, 0]^\top$ denotes all free cells.
 
-\section{Pattern-based higher order factors}
+\subsection{Generalization to Pattern-based factors}
 \label{sec:patternfunctions}
-In this section, we seek a generic class of factors so that that it includes
-forward sensor models described in Sec.~\ref{sec:forward} and that can be 
-efficiently applied to the belief propagation (BP) and dual decomposition (DD)
-algorithms.
 
-The message update equation \eqref{eq:factor2node} in BP algorithm is
-exponential in the size of neighborhood of factor $f$. Observing that the
-neighbourhood size in our factor graph formulation can go up to hundreds to
-thousands of nodes; computing all such terms will be computationally
-expensive. Same is true for slave minimization \eqref{eq:slavemin} in DD algorithm.
-% If the range observation is 30m in an
-% occupancy grid with cell size of 10cm, the neighborhood size would be
-% approximately 300 and the sample space of neighboring nodes $\Omega_f$ will be
-% of the order $2^{300}$.
-
-We can efficiently compute \eqref{eq:factor2node} for certain class of
-$P_f(.)$. Here, we take a consider a class of \emph{pattern-based} higher
-order factors that are a generalization of those discussed by Komodakis et al.
+% We can efficiently compute \eqref{eq:factor2node} for certain class of
+% $P_f(.)$. 
+We define a consider a class of \emph{pattern-based} higher order factors that
+are a generalization of those discussed by Komodakis et al.
 \cite{komodakis2009beyond}. These are factors of the form:
 \begin{align}
   P'_f(\map_f) = \begin{cases}
