@@ -28,12 +28,12 @@ order factor graphs
 }
 \author[1]{Vikas Dhiman}
 \author[2]{Abhijit Kundu}
-\author[2]{Frank Dallaert}
+\author[2]{Frank Dellaert}
 \author[1]{Jason J. Corso}
-\affil[1]{{\tt\small\{vikasdhi,jcorso\}@buffalo.edu}}
 \affil[1]{ Department of Computer Science and Engineering, SUNY at Buffalo, NY, USA }
-\affil[2]{{\tt\small\{abhijit.kundu,frank\}@gatech.edu}}
+\affil[1]{{\tt\small\{vikasdhi,jcorso\}@buffalo.edu}}
 \affil[2]{College of Computing, Georgia Tech, GA, USA}
+\affil[2]{{\tt\small\{abhijit.kundu,frank\}@gatech.edu}}
 
 \begin{document}
 \maketitle
@@ -148,36 +148,51 @@ algorithm for inference. More recently, Merali et al. \cite{merali2013icra}
 proposed the use of Gibbs sampling algorithm for occupancy grid mapping.
 
 One of the main contribution of this paper is the application of modern MAP
-algorithms on occupancy grid mapping. We apply sum product belief propagation 
-\cite{kschischang2001factor} and dual decomposition
-\cite{sontag2011introduction} to the mapping problem. Belief propagation
+algorithms on occupancy grid mapping. Although they are numerous MAP inference 
+algorithms \cite{kappes2013comparative} that work well for difference kinds of
+problem, in this paper we focus belief propagation \cite{kschischang2001factor}
+and dual decomposition \cite{sontag2011introduction} mainly because of their 
+ability to handle higher order factors and ease of implementation.
+
+Belief propagation (BP)
 introduced by \cite{pearl1986fusion} was introduced as an algorithm to compute
-marginals over graphs without loops.  Surprisingly, it was found to work well
+marginals over trees.  Surprisingly, it was found to work well
 on graph with loops, even though it is not guaranteed to converge. Later it
 was found that the convergent solution to Belief propagation corresponds to
 the minima of so-called Bethe free energy \cite{yedidia2000generalized}, which
 not only provided a theoretical justification for application of belief
 propagation to graphs with loops, but also solves the convergence problem by 
 the existence of an objective function which can be minimized directly.
-
-% TODO:
-\cite{wiegerinck2003fractional} Fractional belief propagation
-\cite{wainwright2005map} TRW belief propagation.
-\cite{kolmogorov2006convergent} TRW-S
-\cite{meltzer2009convergent} unifying
-\cite{jojic2010accelerated} Accelerated dual decomposition
-
-%Method of MAP inference have been subject to intensive
-%research in the field of computer vision and information theory \cite{kappes2013comparative}.
-
-% Work that has been in done in "method" that i.e MAP
-Minimization of cost (or energy) function over Factor graphs is a well studied
-field and it has found numerous application in the field of information theory,
-computer vision and machine learning. A lot of work has been done in the field.
+Later, Fractional BP \cite{wiegerinck2003fractional} was introduced. 
+Inspired by the Bethe free energy formulation of BP, it suggested using a
+better free energy approximation by scaling the terms appropriately in the
+message update equation.  In an independent work, Wainwright et al.
+\cite{wainwright2005map} introduce Tree Re-Weighted (TRW) message passing
+algorithm that uses re-weighting of edges and messages similar to Fractional
+BP. They also formulate the MAP estimation problem as a linear program over the
+so-called marginal polytope.  The Langrangian dual of this LP problem is convex
+and provides the uppper bound to the original problem. The family of algorithms
+that optimize the Lagrangian dual of the original combinatorial problem are
+called dual decomposition (DD). The dual of the problem can be decomposed in
+different ways, for example, as set of spanning trees in TRW
+\cite{wainwright2005map} or one problem per factor
+\cite{sontag2011introduction}. Kolmogorov et al.  \cite{kschischang2001factor}
+improved over the work of \cite{wainwright2005map} to introduce a convergent
+algorithm called TRW-S.  More recently, accelerated dual decomposition
+\cite{jojic2010accelerated} was introduced that provably converges the upper
+bound faster than earlier approaches by smoothing the Lagrangian dual of the
+problem. 
 
 % Work on higher order potentials
-\cite{leonardis2006efficient}  propose decreasing the labels set of variable
-nodes to restrict the size of sample space of high order neighborhood. 
+Another contribution of our paper is regarding doing efficient inference over
+higher order factors (or potentials). Many researchers approach this problem
+by considering a class of functions for which higher order factors can used
+efficiently, for example, Potetz et al. introduce a class of potentials called
+linear constraint nodes \cite{potetz2007efficient} and Komodakis et al.
+approach patter-based class of potentials \cite{komodakis2009beyond}.
+Another approach to handle higher order potentials
+\cite{leonardis2006efficient}  is to adaptively restrict the sample space of
+nodes by using initial estimates. 
 
 \section{Problem definition}
 \newcommand{\map}{\vect{x}}
@@ -765,7 +780,7 @@ expensive. Same is true for slave minimization \eqref{eq:slavemin} in DD algorit
 
 We can efficiently compute \eqref{eq:factor2node} for certain class of
 $P_f(.)$. Here, we take a consider a class of \emph{pattern-based} higher
-order factors that are a generalization of those discussed by Komodakis et al
+order factors that are a generalization of those discussed by Komodakis et al.
 \cite{komodakis2009beyond}. These are factors of the form:
 \begin{align}
   P'_f(\map_f) = \begin{cases}
@@ -871,12 +886,12 @@ terms as \emph{free} nodes can take any value
 % \end{align}
 %Note that probabiltiy $p(\vect{x_f} \sim \vect{R}_m)$, depends only on the fixed nodes $n^m_0(f)$.
 Now, we are in position to efficiently compute \eqref{eq:factor2node}
-\begin{align}
-  \bpmsg{f}{i}{l_i}{r+1} &= \sum_{m \le M} \psi_m p(\vect{x_f} \sim \vect{R}_m)
+\begin{multline}
+  \bpmsg{f}{i}{l_i}{r+1} = \sum_{m \le M} \psi_m p(\vect{x_f} \sim \vect{R}_m|x_i = l_i)
   + \psi_{\text{min}} p_{\text{otherwise}}
   \label{eq:efficientbp}
-\end{align}
-where $p_{\text{otherwise}} = 1 - \sum_{m \le M}p(\vect{x_f} \sim \vect{R}_m)$.
+\end{multline}
+where $p_{\text{otherwise}} = 1 - \sum_{m \le M}p(\vect{x_f} \sim \vect{R}_m|x_i = l_i)$.
 
 The message update can be computed in $O(M|n(f)|)$ using \eqref{eq:efficientbp}, instead of $O(L_i^{n(f)-1})$ in the general case.
 
