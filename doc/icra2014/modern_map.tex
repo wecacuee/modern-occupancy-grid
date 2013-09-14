@@ -11,6 +11,7 @@
 \usepackage{verbatim} % For begin{comment} end{comment}
 \usepackage{authblk} % useful for multiple authors with different affiliations
 \usepackage{cite} % useful to show multiple citations in single square bracket
+\providecommand{\DontPrintSemicolon}{\dontprintsemicolon} % difference in versions
 
 \DeclareMathOperator*{\argmin}{arg\,min}
 \DeclareMathOperator*{\argmax}{arg\,max}
@@ -22,7 +23,8 @@
 
 
 \title{\Large \bf
-Modern MAP methods for accurate and faster occupancy grid mapping
+Modern MAP inference methods for accurate and faster occupancy grid mapping on higher
+order factor graphs
 }
 \author[1]{Vikas Dhiman}
 \author[2]{Abhijit Kundu}
@@ -36,11 +38,6 @@ Modern MAP methods for accurate and faster occupancy grid mapping
 \begin{document}
 \maketitle
 \begin{abstract}
-  %JCorso: if you want to cite papers in the abstract, then you can add the 
-  %\cite{thrun2003learning,merali2013icra}  back into the abstract, but I think 
-  %this is a rare and not advised practice (citing in the abstract).
-  %
-  %JCorso: XXX: is the ``more accurate maps more efficiently'' correct?
 Using the inverse sensor model has been popular in occupancy grid mapping. 
 However, it is widely known that applying the inverse sensor model to mapping 
 requires certain assumptions that are not necessarily true. Even work that uses 
@@ -87,10 +84,10 @@ mapping with range sensors, specifically, laser scanners.
 Occupancy grid mapping (OGM) is a popular and useful range-based mapping methods 
 \cite{elfes1989using,moravec1988sensor}.  It affords a simple implementation and 
 avoids a need to explicitly seek and match landmarks in the environment 
-\cite{XXX}.  In contrast, it discretizes the environment into cells, squares 
-(2D) or cubes (3D), and associates a random variable with each cell that 
-represents the probability of the cell being occupied or free.  
-
+\cite{sugihara1988some,betke1997landmarks}. In contrast, it discretizes the
+environment into cells, squares (2D) or cubes (3D), and associates a random
+variable with each cell that represents the probability of the cell being
+occupied or free.  
 
 OGM methods vary in how cell occupancy is estimated (see Sec.  
 \ref{sec:related}), but most of the occupancy grid mapping algorithms make use 
@@ -119,16 +116,15 @@ formalism makes it plausible to apply modern fast inference algorithms, such as
 loopy belief propagation \cite{kschischang2001factor} and dual decomposition 
 \cite{sontag2011introduction}.  
 
-% TODO: Someone should verify, if this is a mentionable contribution.
-Secondly, we introduce a class of higher order potentials for our factor graph 
+Secondly, we introduce a class of higher order factors for our factor graph 
 approach.  Factor graph inference is exponential in neighborhood size, which 
-requires us to focus on a certain sub-class of potentials for tractability, such 
+requires us to focus on a certain sub-class of factors for tractability, such 
 as the linear constraint-nodes \cite{potetz2007efficient} or pattern-based 
-potentials \cite{komodakis2009beyond}.  We extend the pattern-based potentials, 
+factors \cite{komodakis2009beyond}.  We extend the pattern-based factors, 
 which explicitly computes the potential only for certain factors matching a 
 given set of patterns and otherwise assigns a constant.  Whereas the 
-pattern-based potentials in \cite{komodakis2009beyond} define each pattern with 
-a fixed value for each node, we generalize these pattern-based potentials by 
+pattern-based factors in \cite{komodakis2009beyond} define each pattern with 
+a fixed value for each node, we generalize these pattern-based factors by 
 allowing for \textit{free} nodes whose value does not impact the computed 
 marginal.  
 
@@ -141,10 +137,6 @@ dual decomposition.
 \section{Related work} 
 \label{sec:related}
 
-% History?
-Moravec and Elfes \cite{elfes1989using,moravec1988sensor,moravec1985high} proposed the
-
-\section{Related work}
 Moravec and Elfes \cite{elfes1989using,moravec1988sensor,moravec1985high} 
 proposed the
 seminal work in occupancy grids mapping. While the proposed algorithm worked
@@ -168,16 +160,12 @@ not only provided a theoretical justification for application of belief
 propagation to graphs with loops, but also solves the convergence problem by 
 the existence of an objective function which can be minimized directly.
 
-% http://www.timeanddate.com/countdown/generic?iso=20130916T03&p0=422&msg=ICRA+deadline&csz=1
+% TODO:
 \cite{wiegerinck2003fractional} Fractional belief propagation
 \cite{wainwright2005map} TRW belief propagation.
 \cite{kolmogorov2006convergent} TRW-S
 \cite{meltzer2009convergent} unifying
 \cite{jojic2010accelerated} Accelerated dual decomposition
-
-Dual decomposition 
-
-
 
 %Method of MAP inference have been subject to intensive
 %research in the field of computer vision and information theory \cite{kappes2013comparative}.
@@ -201,12 +189,13 @@ nodes to restrict the size of sample space of high order neighborhood.
 \newcommand{\prevtime}{1:t\unaryminus1}
 %\newcommand{\pastobs}{\sigma_{\prevtime}}
 \newcommand{\pastobs}{\measurements_{1:t\unaryminus1}, \poses_{1:t\unaryminus1}}
-A robot equipped with a laser scanner and accurate odometry moves in a static
-environment, problem is to figure out an optimal occupancy grid map. For the
-purpose of ground robots often 2D maps are enough for path planning and
-exploration.
-% define problem in probability terms
-The area to be mapped is divided into $N$ discrete cells. Let $x_i$ denote the
+Consider a robot---equipped with a laser scanner---moving in a static
+environment.  We assume that position of robot associated with each laser
+measurement is given. Our task is to estimate occupied regions and free
+regions, so that robot can avoid collisions with occupied regions and plan its
+movement in free regions.
+%For the purpose of indoor ground robots 2D maps are often enough for path planning and exploration.
+We divide area to be mapped is divided into $N$ discrete cells. Let $x_i$ denote the
 state of cell $i$, which can take values from label set $L_i = \{0, 1\}$, where
 $0$ (resp. $1$) denotes that cell is free (resp. occupied). We define, the map
 $\map$ as a set that defines state for all $N$ cells, $\map = [x_i]^\top_{1
@@ -227,10 +216,6 @@ In another formulation of problem, we can focus on the best overall occupancy of
   \map^* &= \argmax_{\map \in \Omega } p(\map | \measurements, \poses)
   \label{eq:mapproblem}
 \end{align}
-% Clearly, \eqref{eq:mapproblem} is a simpler problem than
-% \eqref{eq:fullsolution}. If problem is \eqref{eq:fullsolution} is solved than
-% problem \eqref{eq:mapproblem} is solved by just taking the label that maximizes
-% the marginal probability.
 Both the problems \eqref{eq:fullsolution} and \eqref{eq:mapproblem} are related
 problems but yield different results. While \eqref{eq:fullsolution} is
 useful to keep track of uncertainty in an incremental fashion,
@@ -240,128 +225,139 @@ occupancy configuration that maximizes posterior probability.
 It is easy to see that any naive solution to any of the two problems would have complexity that is exponential in the number of cells. We can only hope to find an approximate solution of this problem.
 
 \section{Mapping by inverse sensor model}
-% assume independence
-%\eqref{eq:fullsolution} is usually simplified in robotic mapping algorithms by introducing two assumptions:
 Commonly used occupancy grid mapping algorithms make simplifying assumption
 that each grid cell is independent of all other map cells. 
-%As a result instead of the static world assumption (\eqref{eq:staticWorldAssumption}), we use 
+\newcommand{\remaining}{\measurements_{\prevtime}, \poses_{\prevtime}}
 \begin{align}
-  %p(\meas_t|x_i, \measurements_{\prevtime} \poses_{1:t}) = p(\meas_t|x_i, \pose_t)
-  p(x_i|\measurements, \poses) &= \frac{p(\meas_t |x_i, \measurements_{\prevtime}, \poses)p(x_i|\measurements_{\prevtime}, \poses)}
-                         {p(\meas_t|\measurements_{\prevtime}, \poses)}
+  p(\map|\measurements, \poses) &= \prod_{1 \le i \le N} p(x_i|\measurements, \poses)
 \end{align}
-% Thrun03ar : A common assumption in mapping is the static world assumption, which states that past sensor readings are conditionally independent given knowledge of the map \map, for any point in time t:
-The current laser measurement $\meas_t$ are commonly assumed (static world assumption) \cite{thrun2003learning} to be independent of previous observations $\pastobs$ given the map $x_i$ :
+The probability of each cell can be easily computed independent of each other,
+by simple Bayes formulation:
 \begin{align}
-  p(\meas_t |x_i, \measurements_{\prevtime}, \poses) &= p(\meas_t |x_i, \pose_t)
- \label{eq:staticWorldAssumption}
+  p(x_i|\measurements, \poses) &= \frac{p(\meas_t, \pose_t|x_i, \remaining)p(x_i|\remaining)}
+                         {p(\meas_t, \pose_t|\remaining)}.
 \end{align}
-Using static world assumption (\eqref{eq:staticWorldAssumption}), we get:
+%where
+%$\remaining = \{\measurements_{1:t-1}, \poses_{1:t-1}\}$ represents all
+%measurements before $t$\textsuperscript{th} measurement.
+By using commonly used
+static world assumption, $p(z_t, g_t|x_i, \remaining) = p(z_t, g_t|x_i)$, the
+above equation can be simplified to \cite{merali2013icra} :
+% to be independent of
+% previous observations $\remaining$ given the map $x_i$ :
+% \begin{align}
+%   p(z_t, g_t|x_i, \remaining) &= p(z_t, g_t|x_i)
+%  \label{eq:staticWorldAssumption}
+% \end{align}
+% Using static world assumption, we get:
 \begin{align}
- p(x_i|\measurements, \poses) &= p(\meas_t, \pose_t|x_i)\frac{p(x_i|\pastobs)}
-                                           {p(\meas_t, \pose_t|\pastobs)}\\
-                 &= \frac{p(x_i|\meas_t, \pose_t)p(\meas_t,\pose_t) p(x_i|\pastobs)} {p(x_i) p(\meas_t, \pose_t|\pastobs)}\\
-                 &= \frac{1}{Z'}\frac{p(x_i|\meas_t, \pose_t)p(x_i|\pastobs)}{p(x_i)}\\
-                 &= \frac{1}{Z'}\prod_{1\le f \le t} \frac{p(x_i|\meas_f, \pose_f)}{p(x_i)}
+ p(x_i|\measurements, \poses) 
+ % % We can uncomment this detail if we need full derivation.
+ % &= p(z_t, g_t|x_i)\frac{p(x_i|\remaining)} {p(z_t, g_t|\remaining)}\\
+ % &= \frac{p(x_i|z_t, g_t)p(z_t,g_t)} {p(x_i)}\frac{p(x_i|\remaining)}{p(z_t, g_t|\remaining)}\\
+ &= \frac{1}{Z'}\frac{p(x_i|\meas_t, \pose_t)}{p(x_i)}p(x_i|\remaining)\\
+ &= \frac{1}{Z'p^{t-1}(x_i)}\prod_{1\le f \le t} p(x_i|\meas_f, \pose_f)
 \end{align}
-where $Z'$ is a normalizing factor that is independent of $x_i$.
-
+where $Z'$ is a normalizing factor that is independent of $x_i$, $p(x_i)$ is
+the prior probability for cell $x_i$ and $p(x_i|z_f, g_f)$ is called the
+inverse sensor model.
 
 \section{Mapping by forward sensor model}
+However, the independent cell assumption is inaccurate and can lead to
+overconfident estimates of occupancy in noisy observations
+\cite{thrun2003learning,merali2013icra}. In the absence of independent cell
+assumption, we can still factorize the posterior probability in terms of the
+forward sensor models.
 
-   Here we present minimum assumption simplification of
-   \eqref{eq:fullsolution} as done in \cite{thrun2003learning,merali2013icra}. 
-   %For conciseness, we use 
-   %$\sigma_t = \{\meas_t, \pose_t\}$ to represent both range and pose of $t$\textsuperscript{th} laser measurement.
-   %Similarly,
-   %$\pastobs = \{z_{\prevtime}, \pose_{\prevtime}\}$ to represent all but $t$\textsuperscript{th} measurement.
-   For a given map $\map$, the conditional
-   probability of map being correct is
-   \begin{align}
-     p(\map | \measurements, \poses) &= \frac{p(\meas_t|\map , \measurements_{\prevtime}, \poses)p(\map| \measurements_{\prevtime},\poses)}
-                            {p(\meas_t|\measurements_{\prevtime}, \poses)}
-     \label{eq:recursivesol}
-   \end{align}
-   Static world assumption, $p(\meas_t|\map, \measurements_{\prevtime} \poses) = p(\meas_t|\map, \pose_t)$, simplifies \eqref{eq:recursivesol} to :
-   \begin{align}
-     p(\map|\measurements, \poses) &= \frac{p(\meas_t|\map, \pose_t)p(\map| \measurements_{\prevtime}, \poses)}
-                          {p(\meas_t|\measurements_{\prevtime}, \poses)}\\
-                  &= \frac{p(\meas_t|\map, \pose_t)p(\pose_t|\map, \pastobs)p(\map| \pastobs)}
-                          {p(\meas_t|\measurements_{\prevtime}, \poses)p(\pose_t|\pastobs)}
-   \end{align}
+\begin{comment} % Uncomment this for more detailed version
+For a given map $\map$, the conditional probability of map being correct is
+\begin{align}
+ p(\map | \measurements, \poses) &= p(\map | \remaining, z_t, g_t)\\
+                &= \frac{p(z_t|\map , \remaining, g_t)p(\map| \remaining, g_t)}
+                        {p(z_t|\remaining, g_t)}
+ \label{eq:recursivesol}
+\end{align}
 
-   Another common assumption is that the pose of robot $\pose_t$ being independent of map $\map$:
-   \begin{align}
-     p(\pose_t|\map, \pastobs) = p(\pose_t|\pastobs)
-   \end{align}
-   Using independent pose assumption, we get a recursive formula for \eqref{eq:recursivesol}
-   \begin{align}
-     p(\map | \measurements, \poses) &= \frac{1}{Z} p(\meas_t|\map , \pose_t)p(\map| \measurements_{\prevtime}, \poses_{\prevtime})\\
-                       &= \frac{1}{Z} \prod_{1 \le f \le t} p(\meas_f|\map, \pose_f)
-     \label{eq:map}
-   \end{align}
-   where $Z$ is a normalizing constant independent of $\map$. The term $p(\meas_f|\map, p_f)$ is the \emph{forward sensor model}. Thrun et al. \cite{thrun2003learning} approach this problem by expectation maximization, while Merali et al. \cite{merali2013icra} use Gibbs sampling to find approximate solution. In this paper, we explore modern explore modern methods of finding maximum a posteriori estimate of this problem.
+Static world assumption, $p(\meas_t|\map, \remaining, \pose_t) = p(\meas_t|\map, \pose_t)$, simplifies \eqref{eq:recursivesol} to :
+\begin{align}
+ p(\map|\measurements, \poses) &= \frac{p(\meas_t|\map, \pose_t)p(\map| \remaining, \pose_t)}
+                      {p(\meas_t|\remaining, \pose_t)}\\
+              &= \frac{p(\meas_t|\map, \pose_t)p(\pose_t|\map, \remaining)p(\map| \remaining)}
+                      {p(\meas_t|\remaining, \pose_t)p(\pose_t|\remaining)}
+\end{align}
 
-   Modern MAP methods approach the problem \eqref{eq:map}, by making use of the fact that a laser measurement depends only on a small portion of the entire map:
-   \begin{align}
-     p(\meas_f |\map, \pose_f) = p(\meas_f|\map_f, \pose_f)
-   \end{align}
-   where $\map_f \subseteq \map$ is the small portion of the map on which the laser measurement $f$ depends. Rewriting, \eqref{eq:map} in new notation:
-   \begin{align}
-     p(\map | \measurements, \poses) &= \frac{1}{Z} \prod_{1 \le f \le t} p(\meas_f|\map_f, \pose_f)
-     \label{eq:modernmap}
-   \end{align}
-   %However, the full solution is computationally intractable as its complexity is exponential in the number of cells.
+Another common assumption is that the pose of robot $g_t$ being independent of map $\map$:
+\begin{align}
+ p(g_t|\map, \remaining) = p(g_t|\remaining)
+\end{align}
+Using independent pose assumption, we get a recursive formula for \eqref{eq:recursivesol}
+\end{comment}
+%\begin{comment} % Uncomment this for brief version
+%\begin{align}
+% p(\map | \measurements, \poses) &= p(\map | \remaining, z_t, g_t)
+% \label{eq:recursivesol}
+%\end{align}
+In this formulation, we make two assumptions, a) static world assumption, $p(z_t|\map,
+\poses) = p(z_t|\map, g_t)$ and b) pose-map independence,
+$p(g_t|\map, \remaining) = p(g_t|\remaining)$. With these assumption it can
+be proved that posterior evaluates to \cite{merali2013icra}:
 %\end{comment}
+\begin{align}
+ p(\map | \measurements, \poses) &= \frac{1}{Z} p(z_t|\map , g_t)p(\map| \remaining)\\
+                               &= \frac{1}{Z} p(\map)\prod_{1 \le f \le t}
+ p(z_f|\map, g_f),
+ \label{eq:map}
+\end{align}
+where $Z$ is a normalizing constant independent of $\map$ and $p(\map)$ is
+the prior. For the rest of the paper we assume no prior information about
+the maps, hence prior is a constant and included in the normalizing
+constant $Z$. 
 
+The problem of estimating occupancy map is intractable with the above
+formulation as it still depends on the entire map that has an exponentially
+big sample space. However, we can make use of the fact that
+a laser measurement $f$ depends only a small portion of the map $\map_f
+\subseteq \map$, hence simplifying the formulation to
+\begin{align}
+ p(\map | \measurements, \poses) &= \frac{1}{Z} \prod_{1 \le f \le t}
+ p(z_f|\map_f, g_f).
+ \label{eq:modernmap}
+\end{align}
+The term $p(z_f|\map_f, p_f)$ is called the \emph{forward sensor model}.
+With this formulation, we are in a position to describe the problem as
+\emph{factor graph}. As we will in the next section, the above
+simplification is necessary to keep the factor graph sparsely connected
+end hence tractable.
 
-\section{Representation as factor graph and Notation}
+\section{Representation as factor graph}
 \label{sec:notation}
 The problem of Occupancy grid mapping can be expressed as energy minimization
 over a factor graph. Let all cells in the map be the variable nodes $V$ and all
 the laser measurements be factor nodes $F$. 
 There exists an undirected edge $(i, f)$, if and only if the laser
-range measurement $p(\meas_f|\map, \pose_f)$ depends on the cell occupancy 
+range measurement $p(\meas_f|\map_f, \pose_f)$ depends on the cell occupancy 
 $x_i$. In this paper, we assume that laser range measurement depends on only
-those cells that the laser passes through for given pose $\pose_f$. Though more
-complicated models can lead to better accuracy, we show that with such a simple
-model we are able to achieve better accuracy than methods tried so far.
+those cells that the laser passes through for given pose $\pose_f$. 
 Let $E$ be set of all such edges:
 % Mathematically,
 \begin{align}
   E = \{(i, f) : i \in V, f \in F, \text{laser $f$ passes through cell $i$}\}
 \end{align}
-This defines our factor graph representation of occupancy grid mapping $G = (V, F, E)$.
+The bipartite graph $G = (V, F, E)$ 
+represents the structure of factorization in \eqref{eq:modernmap} and hence
+called a factor graph (Fig.~\ref{fig:factor-graph}).
+Note that any neighborhood $n(i)$ of variable node only consists of factors,
+$n(i)\subseteq F \, \forall i \in V$ and vice versa.
 
-%Let $n(.)$ denote neighborhood in factor graph $G = \{V, F, E\}$.
-%
-%% unncessary
-% i.e
-% \begin{align}
-%   n(k) &= \begin{cases}
-%   \{f \in F: (i, f) \in E\} & \text{ if $k \in V$}\\
-%   \{i \in V: (i, f) \in E\} & \text{ if $k \in F$}
-%   \end{cases}
-% \end{align}
-%
-% As before each cell $i \in V$ takes values
-% from a discrete set of labels $L_i = \{0, 1\}$, where $0$ (respectively $1$) means that
-% the cell is free (respectively occupied). Also denote the sample space of all the
-% cells in the map as $\Omega = \prod_{i \in V} L_i$.
+\begin{figure}
+  \includegraphics[width=\columnwidth]{../figures/factorgraph/factorgraph.pdf}
+  \caption{Representation of occupancy grid mapping as factor graph}
+  \label{fig:factor-graph}
+\end{figure}
 
-% Each laser measurement $f \in F$ corresponds to a function $\theta_f : \map_f \rightarrow \Real$ 
-% that depends only on the labels of the neighboring cells, $\map_f = \{x_i\}_{i
-% \in n(f)}$, and evaluates to an
-% \emph{energy} value. Here $n(.)$ denotes the neighborhood in the factor graph $G$.
-% The \emph{energy} can be thought as the negative log likelihood of the given
-% state $\map_f$ being the correct state according to the laser measurement $f$.
-
-% In this formulation, we seek to determine the label of all the map cells that
-% maximizes the total likelihood across all measurements, which is equivalent to
-% minimizing the total \emph{energy} over all factors.
-We rewrite the problems \eqref{eq:fullsolution} and \eqref{eq:mapproblem} here
-in generic notation, along with use of factorization obtained in
-\eqref{eq:modernmap}, for generic explanation of algorithms.
+To keep the notation generic and concise we introduce new notation
+to rewrite the problems \eqref{eq:fullsolution} and \eqref{eq:mapproblem}
+along with factorization obtained in \eqref{eq:modernmap}
 \begin{align}
   P_i(x_i = l_i) &= \sum_{\map \in \Omega : x_i = l_i} P(\map) & \forall i \in V
   \label{eq:marginalgeneric}
@@ -373,160 +369,48 @@ in generic notation, along with use of factorization obtained in
   \label{eq:factorizationgeneric}
 \end{align}
 where  $l_i \in L_i$ denote an element from the label set $L_i$ of node $i \in V$.
-The equations \eqref{eq:fullsolution}, \eqref{eq:mapproblem} and
-\eqref{eq:modernmap} correspond to \eqref{eq:marginalgeneric},
-\eqref{eq:mapgeneric} and \eqref{eq:factorizationgeneric} respectively. Also
-note the corresponding equivalence of notation, $P_i(x_i = l_i) = p(x_i = l_i|\measurements, \poses)$, $P(\map) = p(\map|\measurements, \poses)$ and $P_f(\map_f) = p(\meas_f|\map_f, \pose_f)$.
+Please note the corresponding equivalence of notation, $P_i(x_i = l_i) \equiv p(x_i
+= l_i|\measurements, \poses)$, $P(\map) \equiv p(\map|\measurements, \poses)$ and $P_f(\map_f)
+\equiv
+p(z_f|\map_f, g_f)$.
 
-Often, for computational reasons, this problem is approached in negative log
-likelihood or \emph{energy} domain. Let 
-$\theta_f(\map_f) = - \log P_f(\map_f)$ 
-denote the \emph{energy} for the laser measurement $f$. Note that here we
-assume that $P_f(\map_f) > 0$, which is practically achievable by
-choosing very low probability values instead of zero for highly improbable
-cases. We will be using this non-zero probability assumption for the rest of the paper. 
-In energy domain, the problem \eqref{eq:mapgeneric}, along with
-\eqref{eq:factorizationgeneric}, can be rewritten as
-\begin{align}
-  \map* = \argmin_{\map \in \Omega} \sum_{f \in F} \theta_f(\map_f)
-\end{align}
-\begin{figure}
-  \includegraphics[width=\columnwidth]{../figures/factorgraph/factorgraph.pdf}
-  \caption{Diagrammatic conversion of Occupancy Grid to a factor graph.}
-  \label{fig:factor-graph}
-\end{figure}
+\section{Markov Chain Monte Carlo Metropolis Hastings}
+Markov Chain Monte Carlo (MCMC) methods allow us to sample from high
+dimensional probability distributions. The samples drawn using MCMC methods
+are not independent but correlated as a Markov chain. They work by moving a
+random walk in the high dimensional space. Metropolis Hastings is one of the
+popular MCMC methods. The idea is to sample $\map$ from the target probability
+distribution $P(\map)$ and after sufficient number of iterations,
+we should get sample that is close to the true map.
 
-\section{Forward sensor models}
-We explore here a few plausible sensor models
-\subsection{Gaussian sensor model}
-\newcommand{\actz}{\bar{\measurements}_f(\map_f, \pose_f)}
-In this sensor model, we assume that the laser measurements are affected by Gaussian noise. The forward sensor model is given by
-\begin{align}
-  p(\meas_f|\map_f, \pose_f) &=
-  \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(\actz - \meas_f)^2}{2\sigma^2}\right)
-  \label{eq:gaussiansensormodel}
-\end{align}
-where $\actz$ is the distance of first occupied cell in $\map_f$ starting from pose $\pose_f$. Also $\sigma$ is a measure of noise in laser measurement and it often depends on the distance measured. For our experiments we assume noise to linearly vary with distance as $\sigma = \sigma_0z_f$. 
-
-In terms of negative log likelihood, the energy function becomes
-\begin{align}
-  \theta_f(\map_f) &= \frac{1}{2\sigma_0^2}\left(1 -
-  \frac{\actz}{\meas_f}\right)^2 + \log(\sqrt{2\pi}\sigma_0z_f)
-\end{align}
-% In terms of discrete set of cells that the laser passes through the energy function becomes
-% \begin{align}
-%   \theta_f(\map_f) &= \frac{1}{\sigma_0^2}\left(1 - \frac{\kappa(\map_f) \Delta}{\meas_f}\right)^2 + \log(2\pi\sigma_0z_f)
-% \end{align}
-% where $\kappa(\map_f)$ denote the index of the first occupied cell in $\map_f$ and $\Delta$ is the cell size.
-
-\subsection{Piecewise constant sensor model}
-The expected pattern of occupancy from a laser observation is two have last cell as occupied and others as free. So the simplest energy function would be 
-\begin{align}
-  \theta_f(\map_f) &= \begin{cases}
-              0 & \text{ if } \map_f = [0, 0 \dots 0, 1]^\top\\
-           1000 & \text{ otherwise}
-  \end{cases}
-\end{align}
-where $[0, 0 \dots 0, 1]$ means that all cells are $0$ except the last cell which is $1$. In this context, we consider $\map^f$ to be a vector of ordered cell labels through which laser measurement $f$ passes.
-
-However, to resolve conflicts it is sometimes better to provide lower energy to all cells free case. Hence, we come with the following energy function.
-\begin{align}
-  \theta_f(\map_f) &= \begin{cases}
-                     0 & \text{ if } \map_f = \vect{R}_1\\
-                   900 & \text{ if } \map_f = \vect{R}_2\\
-                  1000 & \text{ otherwise}
-  \end{cases}
-  \label{eq:piecewiseconstant}
-\end{align}
-where $\vect{R}_1 = [0, 0 \dots 0, 1]^\top$ and $\vect{R}_2 = [0, 0 \dots 0, 0]^\top$.
-
-\subsection{Pattern-based functions}
-\label{sec:patternfunctions}
-However, we can efficiently compute \eqref{eq:factor2node} for certain class of
-$P_f(.)$. Here, we take a consider a class of \emph{pattern-based} function
-that are similar (yet different) to those discussed by Komodakis et al
-\cite{komodakis2009beyond}. Pattern based functions are functions of the form:
-\begin{align}
-  P_f(\map_f) = \begin{cases}
-    \psi_{1} & \text{ if $\map_f \sim \vect{R}_1$}\\
-            .&.\\
-    \psi_{m} & \text{ if $\map_f \sim \vect{R}_m$}\\
-            .&.\\
-    \psi_{\text{min}} & \text{ otherwise}
-  \end{cases}
-  \label{eq:patternfunction}
-\end{align}
-where $\vect{R}_m$ is one of the mutually exclusive $M$ patterns and operator
-$\map_f \sim \vect{R}_m$ denotes that vector $\map_f$ matches pattern
-$\vect{R}_m$.  
-%Usually $M$ is either a constant or linear in the size of neighborhood $n(f)$.
-%We further constrain the class of functions by requring each pattern
-A pattern $\vect{R}_m$ is defined by a non empty set of \emph{fixed} nodes
-$n^m_0(f) \subseteq n(f)$ from neighbouring nodes to have fixed values $\vect{r}_m$, 
-while the state of remaining \emph{free} nodes $n^m_*(f) = n(f) \setminus
-n^m_0(f)$ can have any values and they do not affects $P_f(\map_f)$.
-We assume that the number
-of patterns $M$ is much smaller than the sample space of $\map_f$.
-
-Here, we show that gaussian sensor
-model \eqref{eq:gaussiansensormodel} can also be represented as pattern based function. 
-We use the fact that the term $\bar{\meas}_f(\map_f, \pose_f)$, just depends on
-first occupied cell. We define pattern $\vect{R}_m$ such that the first
-occupied cell is $m$\textsuperscript{th} cell in $n(f)$:
-\begin{align}
-  \map_f \sim \vect{R}_m = \begin{cases}
-    1 & \text{ if $x_{fk} = 0 \, \forall k < m$ and $x_{fm} = 1$}\\
-    0 & \text{ otherwise}
-  \end{cases}
-\end{align}
-where $x_{fk}$ is the $k$\textsuperscript{th} element in $\map_f$. With
-this formulation, we will have $M = n(f)$ patterns to describe the gaussian
-sensor model in the form \eqref{eq:patternfunction} with $\psi_m$ given by
-\begin{align}
-  \psi_m &= \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(\delta(m)- \meas_f)^2}{2\sigma^2}\right)
-\end{align}
-where $\delta(m)$ is the distance of $m$\textsuperscript{th} cell from robot
-starting point $\pose_f$. Also note that in this formulation the only case for
-\emph{otherwise} is the one when all cells are $0$ (or free).
-
-It is clear that piecewise constant sensor model \eqref{eq:piecewiseconstant}
-%Here we show that piecewise constant sensor model \eqref{eq:piecewiseconstant}
-is an instance of pattern based functions.
-%The first two cases of
-%\eqref{eq:piecewiseconstant} are already in pattern-based format, but the
-%otherwise case is not mutually exclusive with 
-
-\section{Metropolis Hastings}
-Markov Chain Monte Carlo (MCMC) methods allow us to sample from high dimensional probability distributions. The samples drawn using MCMC methods are not independent but correlated as a Markov chain. They work by moving in a random walk in the high dimensional space. Metropolis Hastings is one of the popular MCMC methods. The idea is to sample $\map$ from the probability distribution $p(\map|\measurements, \poses)$ and after sufficient number of iterations, we should get sample that is close to the true map.
-
-In general, for Metropolis Hastings a \emph{transition probability} $Q(\map',
-\map^r)$ is chosen, that depends on current sample $\map^r$ and guides
+Metropolis hastings algorithm requires a \emph{transition probability} $Q(\map'|
+\map^r)$, that depends on current sample $\map^r$ and guides
 the random walk in the high-dimensional space. We randomly sample a point
 $\map'$ from from $Q(.)$ and it is either accepted or rejected based on the
-acceptance probability $a$:
+\emph{acceptance probability} $a$:
 \begin{align}
-  a = \frac{P(\map')Q(\map^r, \map')}
-  {P(\map^r)Q(\map', \map^r)}
+  a = \frac{P(\map')Q(\map^r| \map')}
+  {P(\map^r)Q(\map'| \map^r)}
 \end{align}
 
-If $a \ge 1$, then the new point $\map'$ is accepted otherwise it is accepted with probability $a$. Here acceptance means that the point in next iteration is taken as the sampled point otherwise the older point is retained:
-\begin{align}
-  \map^{r+1} = \begin{cases}
-    \map' & \text{ if $\map'$ accepted}\\
-    \map^r & \text{ otherwise}\\
-  \end{cases}
-\end{align}
+If $a \ge 1$, then the new point $\map'$ is accepted otherwise it is accepted with probability $a$. Here acceptance means that the point in next iteration is taken as the sampled point otherwise the older point is retained.
+% Mathematically
+% \begin{align}
+%   \map^{r+1} = \begin{cases}
+%     \map' & \text{ if $\map'$ accepted}\\
+%     \map^r & \text{ otherwise}\\
+%   \end{cases}
+% \end{align}
 Interested reader is referred to \cite{mackay1998introduction} for further details about the Metropolis Hastings algorithm.
 
-For our problem, we need to sample map $\map$ from the probability
-distribution $p(\map|\measurements, \poses)$. Note that when the transition probability
-is symmetric, for example Gaussian distribution, the acceptance probability is
-simply the ratio of probabilities at the proposed point and the current point.
-We uniformly sample from all the cells in the map and flip the state of the
-sampled cell to get the proposal point $\map'$. Clearly, this transition probability is symmetric.
+For OG problem, 
+%we need to sample map $\map$ from the probability distribution $P(\map)$.
+we uniformly sample from all the cells in the map and flip the state of the
+sampled cell to get the proposal point $\map'$. This procedure can be
+represented in the form of transient probability:
 % TODO: how to write this distribution in
 \begin{align}
-  Q(\map', \map^r) = \begin{cases}
+  Q(\map'| \map^r) = \begin{cases}
     \frac{1}{N} & \text{if $\|\map' - \map^r\|_1 = 1$}\\
       0 & \text{ otherwise}
   \end{cases}
@@ -534,21 +418,35 @@ sampled cell to get the proposal point $\map'$. Clearly, this transition probabi
 \end{align}
 where $N$ is the number of cells in the map and $\|.\|_1$ is the L1-norm. The
 first case in \eqref{eq:transitionprob} enforces that only one cell (or dimension)
-in the map
-can change its state at a time. We will see this choice is one of the reasons of
-poor performance of Metropolis Hastings. Also note that the ratio of probability distributions can be simplified by using \eqref{eq:factorizationgeneric}
+in the map can change its state. Since this is a symmetric transition
+probability, the acceptance ratio is just the ration of target probabilities.
+%We will see this choice is one of the reasons of poor performance of Metropolis Hastings.
+Also note that the ratio of probability distributions can be efficiently
+computed because of the factorization obtained in
+\eqref{eq:factorizationgeneric}:
 \begin{align}
-  a &= \frac{P(\map')}{P(\map^r)}\\
-    &= \frac{\prod_{f \in F} P_f(\map'_f)}{\prod_{f \in F} P_f(\map^r_f)}\\
-    &= \frac{\prod_{f \in n(i)} P_f(\map'_f)}{\prod_{f \in n(i)} P_f(\map^r_f)}
+  a &= \frac{P(\map')}{P(\map^r)}
+    %&= \frac{\prod_{f \in F} P_f(\map'_f)}{\prod_{f \in F} P_f(\map^r_f)}\\
+    = \frac{\prod_{f \in n(i)} P_f(\map'_f)}{\prod_{f \in n(i)} P_f(\map^r_f)}
   \label{eq:acceptanceprob}
 \end{align}
-where $i$ is the cell whose state is different in $\map'$ and $\map^r$,
-and $n(.)$ denotes the neighborhood of a vertex in graph $G$.
-
+where $i$ is the (sampled) cell whose state is different in $\map'$ and $\map^r$,
+and $n(.)$ denotes the neighborhood of a vertex in graph $G$.  
 The above simplification uses the fact that only those terms  that depend on
 state of $i$\textsuperscript{th} cell need to be computed. By definition
 of graph $G$ only the neighboring factors $f \in n(i)$ depend on state of cell $i$.
+
+It is in general difficult to detect when the sampling algorithm has converged.
+In practice, we often run the sampling algorithm for a fixed number of
+iterations. Alg.~\ref{alg:metropolis} lists the pseudo code for Metropolis
+Hastings algorithm.
+
+% In our experiments, we use this sampling method as a representative of Merali et al
+% \cite{merali2013icra} work.
+% Also note that Gibbs sampling is a special case of Metropolis Hastings and our
+% implementation of Metropolis Hastings for a binary variable exactly matches the
+% Gibbs sampling because acceptance ratio evaluates to the conditional
+% probability $\frac{P(x'_i|\map_{\neg i})}{\map_P(x^r_i|\map_{\neg i})}$ that 
 
 % Now, we know that $\map'$ and $\map^r$ differ only by one cell or dimension, say $i$. Using this fact we can assert that only those subsets $\map_f$ of map can be different that contain
 % 
@@ -575,6 +473,7 @@ of graph $G$ only the neighboring factors $f \in n(i)$ depend on state of cell $
     $r \leftarrow r + 1$\;
   }
   \caption{Metropolis Hastings}
+  \label{alg:metropolis}
 \end{algorithm}
 
 \subsection{Heat map}
@@ -587,12 +486,16 @@ interesting as all factors usually agree on their state. The uncertainty lies
 usually lies along the boundaries of free and occupied regions. This is the
 region we want to focus on.
 
-We employ a \emph{heat map} to bias our sampling along the boundaries of free and occupied regions. We maintain a vector of cells $\map_h$ that form the ``interesting'' region of the map. In our experiments, we take the last cell spanned by each laser measurement as an ``interesting'' cell and add it to the \emph{heat map}, $\map_h$. We use a sampling bias of $1:4$ for cells outside heat map to cells within heat map.
+We employ a \emph{heat map} to bias our sampling along the boundaries of free
+and occupied regions. We maintain a vector of cells $\map_h$ that form the
+``interesting'' region of the map. In our experiments, we take the last cell
+spanned by each laser measurement as an ``interesting'' cell and add it to the
+\emph{heat map}, $\map_h$. We use a sampling bias of $1:4$ for cells
+outside heat map to cells within heat map. We compare both Metropolis Hastings
+with and without heat map in our experiments.
 
-We observe that Metropolis Hastings algorithm converges faster by using \emph{heat map}.
-
-\section{Sum product}
-\newcommand{\msg}[4]{\mu^{#4}_{#1\rightarrow#2}(#3)}
+\section{Belief Propagation}
+\newcommand{\bpmsg}[4]{\mu^{#4}_{#1\rightarrow#2}(#3)}
 % TODO: Use introduction section of \cite{potetz2007efficient} to introduct belief propagation specifically 
 Sum product algorithm over factor graphs \cite{kschischang2001factor} is a
 powerful yet simple algorithm to compute marginals  of
@@ -609,110 +512,96 @@ considering all other neighbors except the destination. These messages are
 defined on a directed edge, with a different message value for each state of
 the variable node involved. 
 
-Let $\msg{f}{i}{l_i}{r}$ represent message from
+Let $\bpmsg{f}{i}{l_i}{r}$ represent message from
 node $i \in V$ to node $f \in F$ for state $x_i = l_i$ at any iteration $r$ of the
-algorithm. With a similar convention we take $\msg{i}{f}{l_i}{r}$ to denote
+algorithm. With a similar convention we take $\bpmsg{i}{f}{l_i}{r}$ to denote
 update in opposite direction. We use the following equations to update the messages depending whether the direction of edge is from variable node to factor node or vice versa:
 \begin{align}
-  \msg{f}{i}{l_i}{r+1} &= \sum_{\map_f \in \Omega_f: x_i = l_i}P_f(\map_f)\prod_{j \in n(f) \setminus i}\msg{j}{f}{x_j}{r}
+  \bpmsg{f}{i}{l_i}{r+1} &= \sum_{\map_f \in \Omega_f: x_i = l_i}P_f(\map_f)\prod_{j \in n(f) \setminus i}\bpmsg{j}{f}{x_j}{r}
   \label{eq:factor2node}
   \\
-  \msg{i}{f}{l_i}{r+1} &= \prod_{h \in n(i) \setminus f}\msg{h}{i}{l_i}{r}
+  \bpmsg{i}{f}{l_i}{r+1} &= \prod_{h \in n(i) \setminus f}\bpmsg{h}{i}{l_i}{r}
   \label{eq:node2factor}
 \end{align}
-where $\Omega_f = \prod_{i \in n(f)} L_i$ denotes the sample space of the neighbourhood of factor $f$ in graph $G$.
-
-When the factor graph is a tree, then the recommended message update sequence
-is two pass sequence. The messages are updated starting from leaves towards the
-root node in the first pass, and from root node leaves in the second pass,
-where we have freedom to choose the root node. However, for graphs with loops
-various update sequences have been suggested of which easiest to implement is
-random update sequence i.e. a random edge is selected from the graph for each iteration.
-
-\subsection{Efficient sum product}
-We note that for Occupancy grid mapping the neighbourhood of nodes in factor
-graph $G$ can be large. For example a typical laser scan might have maximum
-range of up to 50 m, which can cover up to 500 cells event at 10cm resolution.
-In such a factor graph, even the sample space $\Omega_f$ of neighbors
-$n(f)$ of factor $f$ can be very large; of the order of $2^{500}$  in above
-example. This makes message update step in \eqref{eq:factor2node}
-computationally expensive.
-
-To efficiently compute \eqref{eq:factor2node} for pattern-based functions defined Section~\ref{sec:patternfunctions}, we need the messages to be normalized. The messages $\msg{i}{f}{l_i}{r}$ are often normalized over the label set $L_i$ to sum up to one:
+where $\Omega_f = \prod_{i \in n(f)} L_i$ denotes the sample space of the
+neighborhood of factor $f$ in graph $G$. On convergence the belief of variable
+nodes can be computed by the product of incoming messages:
 \begin{align}
-  \sum_{l_i \in L_i} \msg{i}{f}{l_i}{r} = 1
+  P(x_i = l_i) &= \prod_{f \in n(i)}\bpmsg{f}{i}{l_i}{r}
 \end{align}
+This is called the \emph{sum-product} belief propagation (BP) algorithm.
 
-Using this property, we can efficiently compute \eqref{eq:factor2node}. We
-compute the probability of each pattern being true using messages as beliefs
-$\msg{i}{f}{x_i}{r}$
+One can compute the maximizing assignment instead of marginals by computing
+the max-product instead of sum product in \eqref{eq:factor2node} and finally 
+choosing the maximizing assignment of incoming messages:
 \begin{align}
-  &p(\vect{x_f} \sim \vect{R}_m) = \sum_{\vect{x_f} \sim \vect{R}_m} \prod_{j \in n(f)}\msg{j}{f}{x_j}{r}\\
-  %&= \prod_{j \in n^m_0(f)}\msg{j}{f}{R_{mj}}{r}\underbrace{\sum_{\map^*_f \in \Omega^*_f}\prod_{j \in n^m_*(f)}\msg{j}{f}{x_j}{r}}_{=1\text{, because $\vect{R}_m$ do not contraints $n^m_*(f)$}}\\
-  &= \prod_{j \in n^m_0(f)}\msg{j}{f}{R_{mj}}{r}\left(\sum_{\vect{x_f} \sim \vect{R}_m}\prod_{j \in n^m_*(f)}\msg{j}{f}{x_j}{r}\right)
+  \bpmsg{f}{i}{l_i}{r+1} &= \max_{\map_f \in \Omega_f: x_i =
+l_i}P_f(\map_f)\prod_{j \in n(f) \setminus i}\bpmsg{j}{f}{x_j}{r}\\
+x_i^* &= \argmax_{x_i \in L_i} \prod_{f \in n(i)}\bpmsg{f}{i}{l_i}{r}.
 \end{align}
-where $R_{mj}$ is the fixed value of $j$\textsuperscript{th} node in pattern
-$\vect{R}_m$. The summation inside the bracket evaluates to one, because
-$\map_f \sim \vect{R}_m$ do not constraints state of any node in $n^m_*(f)$
-by definition. Hence, the probability of pattern is just the product of beliefs
-of fixed terms:
-\begin{align}
-  p(\vect{x_f} \sim \vect{R}_m)&= \prod_{j \in n^m_0(f)}\msg{j}{f}{R_{mj}}{r}.
-\end{align}
+This form of the algorithm is called \emph{max-product} BP.
 
-Unlike \eqref{eq:factor2node}, we do not leave out target node
-$i$ from product terms, instead we temporarily replace the beliefs
-$\msg{i}{f}{x_i}{r}$ with deterministic values to obtain the same effect
-\begin{align}
-  \msg{i}{f}{x_i}{r} = \begin{cases}
-    1 & \text{if $x_i = l_i$}\\
-    0 & \text{otherwise}
-  \end{cases}
-\end{align}
-%Note that probabiltiy $p(\vect{x_f} \sim \vect{R}_m)$, depends only on the fixed nodes $n^m_0(f)$.
-Now, we are in position to compute \eqref{eq:factor2node}
-\begin{align}
-  \msg{f}{i}{l_i}{r+1} &= \sum_{m \le M} \psi_m p(\vect{x_f} \sim \vect{R}_m)
-  + \psi_{\text{min}} p_{\text{otherwise}}
-  \label{eq:efficientbp}
-\end{align}
-where $p_{\text{otherwise}} = 1 - \sum_{m \le M}p(\vect{x_f} \sim \vect{R}_m)$.
+Belief propagation was initially designed to work on factor graphs without
+loops. In such a case one can start message update from the leaf nodes and
+a node can be ``triggerred'' to pass on the messages when messages from all 
+but one neighbors are available. However, for graphs with loops various update
+sequences have been suggested that vary from problem to problem. For example,
+in vision problems, where the factor graph is a 2D grid, horizontal and then
+vertical sweeps has been shown to produce good results.
+For our implementation, we choose random update sequence i.e. a random edge is
+selected from the graph for each iteration of message update.
 
-The message update can be computed in $O(M|n(f)|)$ using \eqref{eq:efficientbp}, instead of $O(L_i^{n(f)-1})$ in the general case.
-
-\section{Dual decomposition}
-\renewcommand{\msg}[3]{\mu_{#1#2}(#3)}
+\section{Subgradient Dual decomposition}
+\newcommand{\msg}[3]{\mu_{#1#2}(#3)}
 \newcommand{\assign}{\leftarrow}
 \newcommand{\Sx}{L_i}
+
 Dual decomposition algorithm employs Lagrangian relaxation technique from
 integer programming to minimize. Here we explain the implementation of the
-algorithm without going into mathematical derivations. Interested user is
+algorithm without going into mathematical proofs. Interested user is
 referred to
 \cite{sontag2011introduction,jojic2010accelerated,komodakis2009beyond} for
 proofs and more variations of the algorithm. 
 
-Pseudo code for Dual decomposition is provided in
+The underlying idea for dual decomposition is to split the maximization
+problem into \emph{slave} problems that can be efficiently maximized. In a
+factor graph formulation the natural \emph{slave} problem is one corresponding
+to each factor:
+\begin{align}
+  \map^f &= \argmax\limits_{\map^f} P_f(\map^f)
+  \prod\limits_{i \in n(f)}\exp\left(-\msg{i}{f}{x^f_i} \right)
+\end{align}
+where $\map^f = \{x_i^f\}_{i \in n(f)}$ is the optimum assignment 
+as determined by the corresponding \emph{slave}
+problem. And $\msg{i}{f}{x^f_i}$ is the message (also the Lagrangian
+multiplier) from node $i$ to $f$ about state $x^f_i$. 
+The above slave problem is usually written in the form of 
+negative log likelihood:
+\begin{align}
+  \map^f &= \argmin\limits_{\map^f} \theta_f(\map^f)
+  +\sum\limits_{i \in n(f)}\msg{i}{f}{x^f_i}
+  \label{eq:slavemin}
+\end{align}
+where $\theta_f(\map^f) = -\log P_f(\map^f)$ is the negative log
+likelihood corresponding to the factor.
+
+In each iteration of the algorithm all slave problems are allowed to choose
+their optimum assignment independently. If all the factors agree on the
+assignments, then we have reached the global optima. Often this is
+not the case. In case of disagreement, we decrease the belief of all the
+disagreeing slave problem in about their respective optimums by sending
+appropriate messages. It can be shown that as long as we can increase the
+messages by decreasing step size in each iteration, the algorithm is guaranteed
+to converge to an approximate solution of the original problem
+\cite{sontag2011introduction}.
+
+Pseudo code for dual decomposition (DD) is provided in
 Alg~\ref{alg:dualdecompostion}. Apart from input factor graph $G = (V, F, E)$
-and label set $\{\Sx\}_{i \in V}$ introduced in Sec~\ref{sec:notation}, Dual
+and label set $\{\Sx\}_{i \in V}$ introduced in Sec~\ref{sec:notation}, dual
 decomposition depends on a step size $\alpha$.
 
-The idea for Dual decomposition is to split the minimization problem into
-\emph{slave} problems that can be efficiently minimized. In case of
-disagreement for minimizing label among slave problems, the messages to slave
-problems are updated until the slave problems agree with each other. We
-maintain the minimizing label for variable node $i$, computed by slave problem
-corresponding to $f$ as $x^f_i$. Also, we use $\msg{i}{f}{x_i}$ to denote
-messages from node $i$ to slave problem corresponding to $f$ regarding state
-$x_i$.
-
-In each iteration of Dual Decomposition, we first minimize all the slave
-problems getting labels for each pair of variable followed by message update in
-case of disagreement. Optionally, we can only minimize only those factors that
-have at least one disagreeing node in their neighbourhood. However, the
-performance gain obtained by such tweak is marginal.
-
 \begin{algorithm}
-  \dontprintsemicolon
+  \DontPrintSemicolon
   \KwData{\;
   Factor Graph $G = (V, F, E)$\;
   %Label set $\{\Sx\}_{i \in V}$\;
@@ -728,6 +617,8 @@ performance gain obtained by such tweak is marginal.
     %\tcp{For disagreeing factors}
     \For {$f \in F$} {% : \exists i, i' \in n(f) : x_i^f \ne x_{i'}^f$} {
       $\map^f \assign \argmin\limits_{\map^f} \left( \theta_f(\map^f) + \sum\limits_{i \in n(f)}\msg{i}{f}{x^f_i} \right)$\;
+      %$\map^f \assign \argmax\limits_{\map^f} P_f(\map^f)
+      %\prod\limits_{i \in n(f)}\exp\left(-\msg{i}{f}{x^f_i} \right)$\;
     }
     \tcp{For disagreeing nodes}
     \For {$i \in V : \exists f, f' \in n(i) : x_i^{f'} \ne x_i^f$} {
@@ -740,125 +631,28 @@ performance gain obtained by such tweak is marginal.
   \label{alg:dualdecompostion}
   \caption{Subgradient Dual Decomposition}
 \end{algorithm}
-We can compute the minimum energy assignment from dual decomposition messages.
+Upon convergence or completing maximum number of iterations, we can compute the
+optimal assignment for variable nodes with disagreeing \emph{slave} from the
+messages:
 \begin{align}
-  x_i \assign \argmax\limits_{x_i \in \Sx} \sum\limits_{f \in n(i)} \msg{i}{f}{x_i}
+  x_i &= \argmax\limits_{x_i \in \Sx} \sum\limits_{f \in n(i)}\msg{i}{f}{x_i}.
 \end{align}
-However, the above computation is only valid if the node has at least a pair of disagreeing factors. In case of agreement, we simply take the agreed upon assignment or if the node is not connected to any factors, we take a random assignment.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Unncessary
-% \begin{algorithm}
-%   \dontprintsemicolon
-%   \KwData{\;
-%     The Variable Node $i \in V$\;
-%     Factor Graph $G = (V, F, E)$\;
-%     Label set $\Sx$\;
-%     Labels $\{x^f_i\}_{f \in n(i)} $\;
-%     Messages $\{\msg{i}{f}{x_i}\}$\;
-%   }
-%   \KwResult{Minimum energy label $x_i$}
-%   \tcc{Check for disagreement}
-%   \If{$\exists f, f' \in n(i) : x^{f'}_i \ne x^f_i$}{
-%     $x_i \assign \argmax\limits_{x_i \in \Sx} \sum\limits_{f \in n(i)} \msg{i}{f}{x_i}$\;
-%   } \Else {
-%     \tcc{Take any agreed label}
-%     $x_i \assign x^f_i : f \in n(i)$\;
-%   }
-%   \caption{Label from Dual decomposition messages }
-%   \label{alg:compute-assignment}
-% \end{algorithm}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Unncessary
-\subsection{Efficient slave minimization}
-Here we address the efficient slave minimization of pattern based functions (Sec.~\ref{sec:patternfunctions}). 
-The problem is to minimize the energy function along with the received messages.
-\begin{equation}
-  \begin{split}
-    \text{minimize }  S(\map_f) &=\theta_f(\map^f) + \sum_{i \in n(f)}\msg{i}{f}{x_i^f} \\
-   \text{such that }  &\map^f \in \Omega_f
-  \end{split}
-\end{equation}
-where $\theta_f(\map^f)$ is a pattern-based function of the form
-\begin{align}
-  \theta_f(\map^f) &= \begin{cases}
-                \Psi_m & \text{ if $\map_f \sim \vect{R}_m$}\\
-     \Psi_{\text{max}} & \text{ otherwise}
-  \end{cases}
-\end{align}
+Note that the above equation is only valid for disagreeing \emph{slaves}. When the 
+the \emph{slaves} agree, we can simply pick the agreed upon value.
 
-A general minimization algorithm will take time of the order that is
-exponential in the number of cells a laser passes through as $\map^f$ can
-have $|L_i|^{|n(f)|}$ possible values.
-%However, minimizing pattern-based functions is relatively easy because 
-We can compute minimum for each pattern case and then take the minimum among all the patterns. While computing minimum for single pattern we can make use of the fact that certain nodes are fixed while other free:
-\begin{align}
-  &\argmin_{\map_f \sim \vect{R}_m} S(\map_f) 
-% &= \argmin_{\map_f \sim \vect{R}_m} \Psi_m + \msg{i}{f}{x_i^f}\\
-  = \Psi_m + \argmin_{\map_f \sim \vect{R}_m} \sum_{i \in n(f)}\msg{i}{f}{x_i^f}\\
-  &= \Psi_m + \sum_{i \in n^m_0(f)}\msg{i}{f}{R_{mi}} 
-  + \argmin_{\map_f \sim \vect{R}_m} \sum_{i \in n^m_*(f)}\msg{i}{f}{x_i^f}
-\end{align}
+Note that the Subgradient DD algorithm depends on a parameter step size. We
+note that step size is important attribute and affects the speed of the
+algorithm. To illustrate that we show the convergence of dual decomposition
+with different step size on \emph{cave} dataset in
+Fig.~\ref{fig:dualdecomposition-stepsize}. Note that erring on higher side
+causes oscillations, while erring lower side can cause convergence to be too
+slow.
 
-We have to still make sure that the \emph{otherwise} case is mutually
-exclusive with all other patterns.  This can be done in two different ways,
-depending on how big is the sample space for \emph{otherwise} case. If the
-sample space for \emph{otherwise} case is small (like in the gaussian sensor
-model), we simply go over all the entire sample space to find minimum value.
-Otherwise, we depend on the sample space covered by patterns being small. In this case 
-we keep finding best minimizations of $\sum_{i \in n(f)} \msg{i}{f}{x_i^f}$
-untill we get a minimization that does not match any of the
-patterns already considered. 
-%If the number of patterns $M$ is small, we should
-%be able to do this minimization efficiently.
-% \begin{align}
-%   \argmin_{\map_f \in \Omega_f} S(\map_f) &= \argmin_{m \le M} \argmin_{\map_f \sim \vect{R}_m} S(\map_f)
-% \end{align}
-% 
-%\begin{align}
-%    \min \theta_f(\map_f) = \min &\left( 0 + \sum_{\map_f = \vect{P}_1, i \in n(f)}\msg{i}{f}{x_i},\right.\\
-%                            &900 + \sum_{\map_f = \vect{P}_2, i \in n(f)}\msg{i}{f}{x_i},\\
-%                            &\left.1000 + \min_{\map_f \not\in \{\vect{P}_1, \vect{P}_2\}} \sum_{i \in n(f)}\msg{i}{f}{x_i} \right)
-%\end{align}
-For example, in case of piecewise constant sensor model, there are only two
-patterns that need to be checked for exclusivity. The otherwise term can be
-easily minimized by finding three best assignments that minimize 
-$\sum_{i \in n(f)}\msg{i}{f}{x_i}$.
+Another limitation of dual decomposition is an optimization algorithm, hence it
+only solves the MAP problem \eqref{eq:mapgeneric}, but not the marginal problem
+\eqref{eq:marginalgeneric}.
 
-%choosing the minimizing state for each $i$ over all possible $\Omega(\map_f)$ by 
-%simply choosing the minimizing $x_i \in L_i$ for each $i$. However, the
-%minimizing labels can coincide with patterns $\vect{P}_1$ and $\vect{P}_2$. The
-%solution is to find minimum three assignments of $\sum_{i \in
-%n(f)}\msg{i}{f}{x_i}$ and pick the one that is not equal to $\vect{P}_1$ nor
-%$\vect{P}_2$. 
-
-%\subsection{Efficient slave minimization of piecewise constant factor}
-%Minimizing slave problem can be done efficiently for specific kinds of functions, for example, piecewise constant functions.
-%The problem is to minimize the energy function along with the received messages.
-%\begin{align}
-%  \min_{\map^f} \left( \theta(\map^f) + \sum_{i \in n(f)}\msg{i}{f}{x^f} \right)
-%\end{align}
-%A general minimization algorithm will take time of the order that is exponential in the number of cells a laser passes through as $\map^f$ can have $|L_i|^{|n(f)|}$ possible values. However, for our sensor model we can make use of the fact that the piecewise function needs to look for only two patterns. We should compute the total function value for these two patterns and the minimum value for the \emph{otherwise} case. 
-%\begin{align}
-%    \min \theta_f(\map_f) = \min &\left( 0 + \sum_{\map_f = \vect{P}_1, i \in n(f)}\msg{i}{f}{x_i},\right.\\
-%                            &900 + \sum_{\map_f = \vect{P}_2, i \in n(f)}\msg{i}{f}{x_i},\\
-%                            &\left.1000 + \min_{\map_f \not\in \{\vect{P}_1, \vect{P}_2\}} \sum_{i \in n(f)}\msg{i}{f}{x_i} \right)
-%\end{align}
-%The third term can be easily minimized by 
-%%choosing the minimizing state for each $i$ over all possible $\Omega(\map_f)$ by 
-%simply choosing the minimizing $x_i \in L_i$ for each $i$. However, the minimizing labels can coincide with patterns $\vect{P}_1$ and $\vect{P}_2$. The solution is to find minimum three assignments of $\sum_{i \in n(f)}\msg{i}{f}{x_i}$ and pick the one that is not equal to $\vect{P}_1$ nor $\vect{P}_2$. 
-%
-%%
-%% Algorithm~\ref{alg:efficient-minimize} gives pseudo code for minimizing the last term.
-%% \begin{algorithm}
-%%   \SetKwFunction{ArgSortNElements}{ArgSortNElements}
-%%   $e_i = \min\limits_{x_i \in L_i} \msg{i}{f}{x_i} \hfill, \forall i \in n(f)$\;
-%%   $x^*_i = \argmin\limits_{x_i \in L_i} \msg{i}{f}{x_i} \hfill, \forall i \in n(f)$\;
-%%   $\delta_{if}(x_i) = \msg{i}{f}{x_i} - e_i \hfill, \forall i \in n(f), x_i \in L_i, x_i \ne x^*_i$\;
-%%   $I = \ArgSortNElements(\delta_{if}(x_i), \lceil{\log_{|L_i|}{3}}\rceil)$\;
-%%   \caption{Efficient minimization of piecewise constant function}
-%%   \label{alg:efficient-minimize}
-%% \end{algorithm}
-
-\subsection{Selection of step size}
-Step size is critical choice as it affects the speed with which Dual decomposition converges. Fig~\ref{fig:dualdecomposition-stepsize} shows convergence with different step size.
+%\subsection{Selection of step size}
 \begin{figure}
   \includegraphics[width=\columnwidth]{../figures/dualdecomposition-stepsize-inc500.pdf}
   \caption{The rate of convergence in dual decomposition depends on step size}
@@ -867,6 +661,242 @@ Step size is critical choice as it affects the speed with which Dual decompositi
 % \section{Belief propagation with disagreement tracking}
 % Intuitively, dual decomposition converges faster because it focuses on the disagreeing 
 
+\section{Sensor models}
+Sensor models are mathematical representations of relationship between environment and sensor reading. We discuss here the sensor models that we use for our experiments.
+
+\subsection{Inverse sensor model}
+Inverse sensor model describes the environment given the sensor reading. We use
+the following inverse sensor model \cite{merali2013icra}
+\begin{align}
+  p(x_i=1|z_f, g_f) &= \begin{cases}
+  p_{\text{free}} & \text{ if $i \in n(f)_{1:-1}$}\\
+  p_{\text{occupied}} & \text{ if $i = n(f)_{-1}$}\\
+                  0.5 & \text{ otherwise}
+  \end{cases},
+\end{align}
+where $n(f)_{1:-1}$ denotes all but last cell traversed by the laser,
+$n(f)_{-1}$ denotes the last cell reached by laser, $p_{\text{free}} = 0.0588$
+and $p_{\text{occupied}} = 0.9411$ are probabilities associated with the cell
+being free and occupied respectively. The constant probability values used
+here are computed from log odds values provided by Merali et al.
+\cite{merali2013icra}.
+
+\subsection{Forward sensor models}
+\label{sec:forward}
+Forward sensor models estimate the sensor reading given the environment.
+Hence, these models can be more close the actual behaviour of the sensors.
+In this section we describe consider two commonly used sensor models.
+
+\subsubsection{Gaussian sensor model}
+\newcommand{\actz}{\bar{z}_f(\map_f, g_f)}
+In this sensor model, we assume that the laser measurements are affected by
+Gaussian noise. The forward sensor model is given by
+\begin{align}
+  p(z_f|\map_f, g_f) &=
+  \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(\actz - z_f)^2}{2\sigma^2}\right)
+  \label{eq:gaussiansensormodel}
+\end{align}
+where $\actz$ is the distance of first occupied cell in $\map_f$ starting
+from pose $g_f$. Also $\sigma$ is a measure of noise in laser measurement and
+it often depends on the distance measured. For our experiments we assume noise
+to linearly vary with distance as $\sigma = \sigma_0z_f$. 
+
+% In terms of negative log likelihood, the energy function becomes
+% \begin{align}
+%   \theta_f(\map_f) &= \frac{1}{2\sigma_0^2}\left(1 -
+%   \frac{\actz}{z_f}\right)^2 + \log(\sqrt{2\pi}\sigma_0z_f)
+% \end{align}
+
+\subsubsection{Piecewise constant sensor model}
+It is common in graphical models to have very simple factors that assign high
+probability to expected configuration and very low probability to all other
+states. 
+% A sensor model on these lines would look like
+% \begin{align}
+%   p(z_f|\map_f, g_f) &= \frac{1}{Z}\begin{cases}
+%               1 & \text{ if } \map_f = [0, 0 \dots 0, 1]^\top\\
+%     \exp(-1000) & \text{ otherwise}
+% \end{cases}
+% \end{align}
+%where $Z$ is the normalization constant and $[0, 0 \dots 0, 1]$ means that all
+%cells are $0$ except the last cell which is $1$. 
+%In this context, we consider
+%$\map^f$ to be a vector of ordered cell labels through which laser
+%measurement $f$ passes.
+%
+However, we chose to prefer free space over occupied ones. Hence, we come with
+the following energy function that we use in all our experiments.
+\begin{align}
+  p(z_f|\map_f, g_f) &= \frac{1}{Z}\begin{cases}
+                       1 & \text{ if } \map_f = \vect{R}_{f1}\\
+              \exp(-900) & \text{ if } \map_f = \vect{R}_{f2}\\
+           \exp(-1000) & \text{ otherwise}
+  \end{cases}
+  \label{eq:piecewiseconstant}
+\end{align}
+where $Z$ is the normalization constant $\vect{R}_{f1} = [0, 0 \dots 0,
+1]^\top$ denotes all free but last occupied cell pattern and $\vect{R}_{f2} =
+[0, 0 \dots 0, 0]^\top$ denotes all free cells.
+
+\section{Pattern-based higher order factors}
+\label{sec:patternfunctions}
+In this section, we seek a generic class of factors so that that it includes
+forward sensor models described in Sec.~\ref{sec:forward} and that can be 
+efficiently applied to the belief propagation (BP) and dual decomposition (DD)
+algorithms.
+
+The message update equation \eqref{eq:factor2node} in BP algorithm is
+exponential in the size of neighborhood of factor $f$. Observing that the
+neighbourhood size in our factor graph formulation can go up to hundreds to
+thousands of nodes; computing all such terms will be computationally
+expensive. Same is true for slave minimization \eqref{eq:slavemin} in DD algorithm.
+% If the range observation is 30m in an
+% occupancy grid with cell size of 10cm, the neighborhood size would be
+% approximately 300 and the sample space of neighboring nodes $\Omega_f$ will be
+% of the order $2^{300}$.
+
+We can efficiently compute \eqref{eq:factor2node} for certain class of
+$P_f(.)$. Here, we take a consider a class of \emph{pattern-based} higher
+order factors that are a generalization of those discussed by Komodakis et al
+\cite{komodakis2009beyond}. These are factors of the form:
+\begin{align}
+  P'_f(\map_f) = \begin{cases}
+    \psi_{m} & \text{ if $\map_f \sim \vect{R}_m$} \,\,\, \forall 1 \le m \le M\\
+    \psi_{\text{min}} & \text{ otherwise}
+  \end{cases}
+  \label{eq:patternfunction}
+\end{align}
+where $\vect{R}_m$ is one of the mutually exclusive $M$ patterns and
+expression $\map_f \sim \vect{R}_m$ denotes that vector $\map_f$
+``matches'' pattern $\vect{R}_m$.  
+%Usually $M$ is either a constant or linear in the size of neighborhood $n(f)$.
+%We further constrain the class of functions by requring each pattern
+A pattern, $\vect{R}_m = (n^m_0(f), \vect{r}^m)$, is defined by a non empty set
+of \emph{fixed} nodes $n^m_0(f) \subseteq n(f)$ that are supposed to have
+desired values $\vect{r}^m$, while the state of remaining \emph{free} nodes
+$n^m_*(f) = n(f) \setminus n^m_0(f)$ can have any values from the label set 
+and they do not affect factor value $P_f(\map_f)$. A configuration
+$\map_f$ ``matches`` pattern $\vect{R}_m$ if the state of \emph{fixed}
+nodes in same as desired values, $x_i = r_{mi} \forall i \in n^m_0(f)$.
+For efficient computation we assume that number of patterns $M$ is much
+smaller than the sample space $\Omega_f$.
+
+It is clear that piecewise constant sensor model \eqref{eq:piecewiseconstant}
+is an instance of pattern based functions. It is also possible to represent
+Gaussian sensor model \eqref{eq:gaussiansensormodel} as a pattern based
+factor. We use the fact that
+the term $\bar{z}_f(\map_f, g_f)$, just depends on first occupied cell. We
+define pattern $\vect{R}_m$ such that the first occupied cell is
+$m$\textsuperscript{th} cell in $n(f)$:
+\begin{align}
+  n^m_0(f) &= n(f)_{1:m}\\
+\vect{r}^m &= \{ r^m_{i} = 0 \}_{i \in n(f)_{1:m-1}} \text{ and } r^m_{n(f)_m} = 0\\
+       R_m &= (n^m_0, \vect{r}^m)
+\end{align}
+where $n(f)_{k}$ is the $k$\textsuperscript{th} cell that is traced by laser. With
+this formulation, we will have $M = n(f)$ patterns to describe the gaussian
+sensor model in the form \eqref{eq:patternfunction} with $\psi_m$ given by
+\begin{align}
+  \psi_m &= \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(\delta(m)- z_f)^2}{2\sigma^2}\right)
+\end{align}
+where $\delta(m)$ is the distance of $m$\textsuperscript{th} cell from robot
+starting point $g_f$. Also note that in this formulation the only case for
+\emph{otherwise} is the one when all cells are $0$ (or free).
+
+%The first two cases of
+%\eqref{eq:piecewiseconstant} are already in pattern-based format, but the
+%otherwise case is not mutually exclusive with 
+
+\subsection{Efficient sum product}
+% We note that for Occupancy grid mapping the neighborhood of nodes in factor
+% graph $G$ can be large. For example a typical laser scan might have maximum
+% range of up to 50 m, which can cover up to 500 cells event at 10cm resolution.
+% In such a factor graph, even the sample space $\Omega_f$ of neighbors
+% $n(f)$ of factor $f$ can be very large; of the order of $2^{500}$  in above
+% example. This makes message update step in \eqref{eq:factor2node}
+% computationally expensive.
+
+To efficiently compute \eqref{eq:factor2node} for pattern-based factors
+defined %Section~\ref{sec:patternfunctions},
+we need the messages to be
+normalized. The messages $\bpmsg{i}{f}{l_i}{r}$ are can be easily normalized
+over the label set $L_i$ to sum up to one:
+\begin{align}
+  \sum_{l_i \in L_i} \bpmsg{i}{f}{l_i}{r} = 1
+\end{align}
+
+Now, the messages are a valid probability measure for source variable node.
+Using this property, we can efficiently compute \eqref{eq:factor2node}. We
+compute the probability of each pattern being true
+%as beliefs $\bpmsg{i}{f}{x_i}{r}$
+% \begin{align}
+%   p(\vect{x_f} \sim \vect{R}_m) 
+%   %= \sum_{\vect{x_f} \sim \vect{R}_m} \prod_{j \in n(f)}\bpmsg{j}{f}{x_j}{r}\\
+%   %&= \prod_{j \in n^m_0(f)}\bpmsg{j}{f}{R_{mj}}{r}\underbrace{\sum_{\map^*_f \in \Omega^*_f}\prod_{j \in n^m_*(f)}\bpmsg{j}{f}{x_j}{r}}_{=1\text{, because $\vect{R}_m$ do not contraints $n^m_*(f)$}}\\
+%   %&= \prod_{j \in n^m_0(f)}\bpmsg{j}{f}{R_{mj}}{r}\left(\sum_{\vect{x_f} \sim \vect{R}_m}\prod_{j \in n^m_*(f)}\bpmsg{j}{f}{x_j}{r}\right)
+%   &= \prod_{j \in n^m_0(f)}\bpmsg{j}{f}{R_{mj}}{r}
+% \end{align}
+% where $R_{mj}$ is the fixed value of $j$\textsuperscript{th} node in pattern 
+% $\vect{R}_m$.
+%The summation inside the bracket evaluates to one, because
+%$\map_f \sim \vect{R}_m$ do not constraints state of any node in $n^m_*(f)$
+%by definition. 
+The probability of pattern is just the product of beliefs of \emph{fixed}
+terms as \emph{free} nodes can take any value
+\begin{multline}
+  p(\vect{x_f} \sim \vect{R}_m|x_i = l_i) \\
+  = \begin{cases}
+0 & \text{if $i \in n^m_0(f)$ and $l_i \ne r^m_i$}\\
+  \prod\limits_{j \in n^m_0(f) \setminus i}\bpmsg{j}{f}{r^m_j}{r} & \text{otherwise}
+  \end{cases}
+\end{multline}
+
+% Note that we have not treated the node being marginalized specially.  Unlike
+% \eqref{eq:factor2node}, we do not leave out target node $i$ from product
+% terms, instead we temporarily replace the beliefs $\bpmsg{i}{f}{x_i}{r}$ with
+% deterministic values to achieve the same effect
+% \begin{align}
+%   \bpmsg{i}{f}{x_i}{r} = \begin{cases}
+%     1 & \text{if $x_i = l_i$}\\
+%     0 & \text{otherwise}
+%   \end{cases}
+% \end{align}
+%Note that probabiltiy $p(\vect{x_f} \sim \vect{R}_m)$, depends only on the fixed nodes $n^m_0(f)$.
+Now, we are in position to efficiently compute \eqref{eq:factor2node}
+\begin{align}
+  \bpmsg{f}{i}{l_i}{r+1} &= \sum_{m \le M} \psi_m p(\vect{x_f} \sim \vect{R}_m)
+  + \psi_{\text{min}} p_{\text{otherwise}}
+  \label{eq:efficientbp}
+\end{align}
+where $p_{\text{otherwise}} = 1 - \sum_{m \le M}p(\vect{x_f} \sim \vect{R}_m)$.
+
+The message update can be computed in $O(M|n(f)|)$ using \eqref{eq:efficientbp}, instead of $O(L_i^{n(f)-1})$ in the general case.
+
+\subsection{Efficient dual decomposition}
+In similar lines of BP, slave minimization \eqref{eq:slavemin} in dual
+decomposition can be done efficiently for \emph{pattern-based} factors.
+We note that slave function is composed of two terms, the factor itself and
+the messages. Since the factor is a pattern based function, we can address
+the minimization for each pattern and later taking the minima of minimums for
+all patterns. While minimizing for a pattern we can make use of the fact that
+the value of $\theta_f$ is constant for a pattern and hence we need to focus
+only on minimizing the messages. Minimizing messages is trivial by
+as each term can be minimized independently.
+
+Minimizing the \emph{otherwise} case of patterns can be tricky as naive
+minimization can result in values that matches one of the explicit patterns.
+Depending on how big we expect the space of \emph{otherwise} case to be, we
+can approach it in two different ways.  If the space for \emph{otherwise} case
+is small (like in the gaussian sensor model), we simply go over all the entire
+sample space to find minimum value. Otherwise, we depend on the sample space
+covered by patterns being small. In this case we keep finding n-best
+minimizations of messages until we get a minimization that does not match any
+of the patterns already considered.  
+For example, in case of piecewise constant sensor model, there are only two
+patterns that need to be checked for exclusion. The otherwise term can be
+easily minimized by finding three best assignments that minimize the messages
+term.
+
 \section{Experiments} 
 We run experiments on simulated as well real data.
 The simulated data is generated using \emph{Player/Stage} \cite{gerkey2003player}
@@ -874,9 +904,11 @@ project. We use multiple map bitmaps bundled along with player/stage library.
 The robot motion is generated using the wander driver. The robot is allowed to
 wander in the map for 2 minutes aggregating approximately 270,000 laser measurements.
 The qualitative results are shown in
-Fig~\ref{fig:convergence-comparison-visuals} for several simulated dataset. To evaluate the
-convergence rate of each algorithm, we plot total energy of the graph with
-respect CPU ticks taken by the algorithm. The plot of energy convergence with respect to time for cave dataset is shown in Fig~\ref{fig:convergence-comparison}.
+Fig~\ref{fig:convergence-comparison-visuals} for several simulated dataset. To
+evaluate the convergence rate of each algorithm, we plot total energy of the
+graph with respect CPU ticks taken by the algorithm. The plot of energy
+convergence with respect to time for cave dataset is shown in
+Fig~\ref{fig:convergence-comparison}.
 
 For real data, we have used the \emph{albert-b-laser} dataset provided by
 Cyrill Stachniss from University of Freiburg. The dataset was captured by a
@@ -913,6 +945,7 @@ assertion that modern inference methods should be used occupancy grid mapping
 when computation time is not a limiting factor.
 
 \begin{figure*}
+  % TODO: Fix graph to converge at the same time
   \includegraphics[width=0.24\textwidth]{../figures/relativeconvergence.pdf}%
   \includegraphics[width=0.24\textwidth]{../../Data/hospital_section_player/plot-time-energy.pdf}%
   \includegraphics[width=0.24\textwidth]{../../Data/hospital_player/plot-time-energy.pdf}%
@@ -956,7 +989,7 @@ when computation time is not a limiting factor.
 \end{figure*}
 
 \bibliographystyle{IEEEtran}
-\bibliography{modern_map}
+\bibliography{/home/vikasdhi/wrk/biblib/bibdb}
   
 \end{document}
 
