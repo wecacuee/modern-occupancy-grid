@@ -190,39 +190,47 @@ nodes to restrict the size of sample space of high order neighborhood.
 %\newcommand{\pastobs}{\sigma_{\prevtime}}
 \newcommand{\pastobs}{\measurements_{1:t\unaryminus1}, \poses_{1:t\unaryminus1}}
 Consider a robot---equipped with a laser scanner---moving in a static
-environment.  We assume that position of robot associated with each laser
+environment, and assume the position of robot associated with each laser
 measurement is given. Our task is to estimate occupied regions and free
 regions, so that robot can avoid collisions with occupied regions and plan its
 movement in free regions.
 %For the purpose of indoor ground robots 2D maps are often enough for path planning and exploration.
-We divide area to be mapped is divided into $N$ discrete cells. Let $x_i$ denote the
+We divide the area to be mapped into $N$ discrete cells. Let $x_i$ denote the
 state of cell $i$, which can take values from label set $L_i = \{0, 1\}$, where
-$0$ (resp. $1$) denotes that cell is free (resp. occupied). We define, the map
-$\map$ as a set that defines state for all $N$ cells, $\map = [x_i]^\top_{1
-\le i \le N}$. Hence map $\map$ takes values from sample space $\Omega =
+$0$ (resp. $1$) denotes that the cell is free (resp. occupied). 
+For convenience, we denote the full map (the state for all $N$ cells) as $\map = [x_i]^\top_{1
+\le i \le N}$ taking values from sample space $\Omega =
 \prod_{1 \le i \le N}L_i$.
 
-Let $\meas_f$ denote the $f$\textsuperscript{th} laser range measurement when captured from pose $\pose_f$. 
-%We assume that the probability of observation $p(\meas_f| \pose_f, \map)$ (forward sensor model) be given.
+
+Let $\meas_f$ denote the $f$\textsuperscript{th} laser range measurement when 
+captured from (known) pose $\pose_f$. 
+%We assume that the probability of observation $p(\meas_f| \pose_f, \map)$ 
+%(forward sensor model) be given.
 The problem is to find the probability of all cells of the map being occupied
 given all $t$ observations, $\measurements = [\meas_f]^\top_{1 \le f \le t}$ and
-$\poses = [\pose_f]^\top_{1 \le f \le t}$.
+$\poses = [\pose_f]^\top_{1 \le f \le t}$:
+%
 \begin{align}
-  p(x_i = 1 | \measurements, \poses) &= \sum_{\map \in \Omega : x_i = 1} p(\map | \measurements , \poses) & \forall 1 \le i \le N 
-  \label{eq:fullsolution}
+  p(x_i = 1 | \measurements, \poses) &= \sum_{\map \in \Omega : x_i = 1} p(\map 
+  | \measurements , \poses) & \forall 1 \le i \le N \enspace. \label{eq:fullsolution}
 \end{align}
-In another formulation of problem, we can focus on the best overall occupancy of the map that maximizes the posterior probability:
+%
+Alternatively, we can focus on the maximum posterior map:
+%
 \begin{align}
   \map^* &= \argmax_{\map \in \Omega } p(\map | \measurements, \poses)
   \label{eq:mapproblem}
 \end{align}
-Both the problems \eqref{eq:fullsolution} and \eqref{eq:mapproblem} are related
-problems but yield different results. While \eqref{eq:fullsolution} is
+%
+Problems \eqref{eq:fullsolution} and \eqref{eq:mapproblem} are related
+but yield different results. While \eqref{eq:fullsolution} is
 useful to keep track of uncertainty in an incremental fashion,
-\eqref{eq:mapproblem} provides more meaningful result by providing a joint
-occupancy configuration that maximizes posterior probability.
-
-It is easy to see that any naive solution to any of the two problems would have complexity that is exponential in the number of cells. We can only hope to find an approximate solution of this problem.
+\eqref{eq:mapproblem} provides a more meaningful result in the joint
+occupancy configuration maximizing posterior probability.
+%
+Clearly, a na\"{i}ve solution to either problem would have complexity that is 
+exponential in the number of cells. We hence focus on an approximate solution to this problem.
 
 \section{Mapping by inverse sensor model}
 Commonly used occupancy grid mapping algorithms make simplifying assumption
