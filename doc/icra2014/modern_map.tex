@@ -375,10 +375,11 @@ Let $E$ be set of all such edges:
 \end{align}
 The bipartite graph $G = (V, F, E)$ 
 represents the structure of factorization in \eqref{eq:modernmap} and hence
-called a factor graph \cite{kschischang2001factor}
-(Fig.~\ref{fig:factor-graph}).  Note that any neighborhood $n(i)$ of variable
-node only consists of factors, $n(i)\subseteq F \, \forall i \in V$ and vice
-versa.
+called a factor graph \cite{kschischang2001factor}.  Note that any
+neighborhood $n(i)$ of variable node only consists of factors, $n(i)\subseteq
+F \, \forall i \in V$ and vice versa. Fig.~\ref{fig:factor-graph} shows factor
+graph diagrammatically. Note that observed nodes form the part of factor and
+are not part of the factor graph.
 
 \begin{figure}
   \includegraphics[width=\columnwidth]{../figures/factorgraph/factorgraph3.pdf}
@@ -1034,8 +1035,8 @@ convergence. We use a step size of 50 for dual decomposition and piecewise
 constant sensor model. Also, we prefer piecewise constant sensor model over
 gaussian sensor model because of former being faster which is a consequence of
 having fewer patterns in the pattern based factor formulation.
-
-
+We have implemented the algorithms in C++ and the code will be released upon
+the acceptance of the paper.
 
 \subsection{Discussion}
 As evident from convergence comparison in
@@ -1060,11 +1061,13 @@ This combination obviously hints towards an algorithm where we perform
 belief propagation over disagreeing nodes only. The state of art variations 
 of these algorithms like Sequential Tree Re-Weighted (TRW-S) belief
 propagation \cite{kolmogorov2006convergent}, accelerated dual Decomposition
-\cite{jojic2010accelerated} are step in this direction.
-However, even without using the state of art optimum algorithms since we get
-better performance than sampling methods. This only serves to prove our
-assertion that modern inference methods should be used occupancy grid mapping 
-when computation time is not a limiting factor.
+\cite{jojic2010accelerated} are step in this direction. Also, recent
+comparative study \cite{kappes2013comparative} points towards other candidate
+methods, e.g. polyhedra based methodsa, that work better than dual
+decomposition class of methods.  However, even without using the state of art
+optimum algorithms since we get better performance than sampling methods. This
+only serves to prove our assertion that modern inference methods should be
+used occupancy grid mapping when computation time is not a limiting factor. 
 
 \begin{figure*}
   %\includegraphics[width=0.2\textwidth]{../figures/cave_trajectory.png}%
