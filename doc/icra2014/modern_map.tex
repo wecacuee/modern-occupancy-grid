@@ -531,17 +531,17 @@ outside heat map to cells within heat map. We compare both Metropolis Hastings
 with and without heat map in our experiments.
 
 \section{Modern inference algorithms}
-As discussed in Sec.~\ref{sec:related}, last decade saw a spurt in faster and
+As discussed in Sec.~\ref{sec:related}, last decade gave rise to faster and
 more accurate MAP inference algorithms \cite{kappes2013comparative}. Because of
 their ability to handle higher order factors
-\cite{potetz2007efficient,komodakis2009beyond}, we evaluate belief propagation
-and dual decomposition on the problem of occupancy grid mapping.
+\cite{potetz2007efficient,komodakis2009beyond}, we explore belief propagation
+and dual decomposition in the problem of occupancy grid mapping.
 
 \subsection{Belief Propagation}
 \newcommand{\bpmsg}[4]{\mu^{#4}_{#1\rightarrow#2}(#3)}
 % TODO: Use introduction section of \cite{potetz2007efficient} to introduct belief propagation specifically 
 Sum product algorithm over factor graphs \cite{kschischang2001factor} is a
-powerful yet simple algorithm to compute marginals  of
+powerful yet simple algorithm to compute marginals of
 expression (of the form \eqref{eq:fullsolution}) that can be decomposed into
 factors of the form \eqref{eq:modernmap}. The algorithm provides exact
 marginals in the case when the graphs have no loops. For general case the
@@ -555,10 +555,11 @@ considering all other neighbors except the destination. These messages are
 defined on a directed edge, with a different message value for each state of
 the variable node involved. 
 
-Let $\bpmsg{f}{i}{l_i}{r}$ represent message from
+Let $\bpmsg{f}{i}{l_i}{r}$ represent the message from
 node $i \in V$ to node $f \in F$ for state $x_i = l_i$ at any iteration $r$ of the
 algorithm. With a similar convention we take $\bpmsg{i}{f}{l_i}{r}$ to denote
-update in opposite direction. We use the following equations to update the messages depending whether the direction of edge is from variable node to factor node or vice versa:
+an update in the opposite direction. We use the following equations to update 
+the messages depending on whether the direction of edge is from variable node to factor node or vice versa:
 \begin{align}
   \bpmsg{f}{i}{l_i}{r+1} &= \sum_{\map_f \in \Omega_f: x_i = l_i}P_f(\map_f)\prod_{j \in n(f) \setminus i}\bpmsg{j}{f}{x_j}{r}
   \label{eq:factor2node}
@@ -567,7 +568,7 @@ update in opposite direction. We use the following equations to update the messa
   \label{eq:node2factor}
 \end{align}
 where $\Omega_f = \prod_{i \in n(f)} L_i$ denotes the sample space of the
-neighborhood of factor $f$ in graph $G$. On convergence the belief of variable
+neighborhood of factor $f$ in graph $G$. On convergence, the belief of variable
 nodes can be computed by the product of incoming messages:
 \begin{align}
   P(x_i = l_i) &= \prod_{f \in n(i)}\bpmsg{f}{i}{l_i}{r}
@@ -585,8 +586,8 @@ x_i^* &= \argmax_{x_i \in L_i} \prod_{f \in n(i)}\bpmsg{f}{i}{l_i}{r}.
 This form of the algorithm is called \emph{max-product} BP.
 
 Belief propagation was initially designed to work on factor graphs without
-loops. In such a case one can start message update from the leaf nodes and
-a node can be ``triggerred'' to pass on the messages when messages from all 
+loops. In such a case one can start message updates from the leaf nodes and
+a node can be ``triggered'' to pass on the messages when messages from all 
 but one neighbors are available. However, for graphs with loops various update
 sequences have been suggested that vary from problem to problem. For example,
 in vision problems, where the factor graph is a 2D grid, horizontal and then
@@ -599,9 +600,9 @@ selected from the graph for each iteration of message update.
 \newcommand{\assign}{\leftarrow}
 \newcommand{\Sx}{L_i}
 
-Dual decomposition algorithm employs Lagrangian relaxation technique from
-integer programming to minimize. Here we explain the implementation of the
-algorithm without going into mathematical proofs. Interested user is
+The dual decomposition algorithm employs Lagrangian relaxation from
+integer programming to minimize the energy. Here we explain the implementation of the
+algorithm without going into mathematical proofs. The interested reader is
 referred to
 \cite{sontag2011introduction,jojic2010accelerated,komodakis2009beyond} for
 proofs and more variations of the algorithm. 
@@ -632,16 +633,20 @@ In each iteration of the algorithm all slave problems are allowed to choose
 their optimum assignment independently. If all the factors agree on the
 assignments, then we have reached the global optima. Often this is
 not the case. In case of disagreement, we decrease the belief of all the
-disagreeing slave problem in about their respective optimums by sending
+disagreeing slave problems about their respective optimums by sending
 appropriate messages. It can be shown that as long as we can increase the
-messages by decreasing step size in each iteration, the algorithm is guaranteed
+messages by decreasing the step size in each iteration, the algorithm is guaranteed
 to converge to an approximate solution of the original problem
 \cite{sontag2011introduction}.
 
 Pseudo code for dual decomposition (DD) is provided in
-Alg~\ref{alg:dualdecompostion}. Apart from input factor graph $G = (V, F, E)$
+Alg~\ref{alg:dualdecomposition}. Apart from input factor graph $G = (V, F, E)$
 and label set $\{\Sx\}_{i \in V}$ introduced in Sec~\ref{sec:notation}, dual
 decomposition depends on a step size $\alpha$.
+We note that step size is important attribute and affects the speed of the algorithm. 
+%To illustrate that we show the convergence of dual decomposition with different step size on \emph{cave} dataset in Fig.~\ref{fig:dualdecomposition-stepsize}. 
+Note that erring on higher side causes oscillations, while erring lower side can cause convergence to be too slow.
+
 
 \begin{algorithm}
   \DontPrintSemicolon
@@ -671,10 +676,10 @@ decomposition depends on a step size $\alpha$.
     }
     $r \leftarrow r + 1$\;
   }
-  \label{alg:dualdecompostion}
   \caption{Subgradient Dual Decomposition}
+  \label{alg:dualdecomposition}
 \end{algorithm}
-Upon convergence or completing maximum number of iterations, we can compute the
+Upon convergence or completing a maximum number of iterations, we can compute the
 optimal assignment for variable nodes with disagreeing \emph{slave} from the
 messages:
 \begin{align}
@@ -683,17 +688,9 @@ messages:
 Note that the above equation is only valid for disagreeing \emph{slaves}. When the 
 the \emph{slaves} agree, we can simply pick the agreed upon value.
 
-Note that the Subgradient DD algorithm depends on a parameter step size. We
-note that step size is important attribute and affects the speed of the
-algorithm. To illustrate that we show the convergence of dual decomposition
-with different step size on \emph{cave} dataset in
-Fig.~\ref{fig:dualdecomposition-stepsize}. Note that erring on higher side
-causes oscillations, while erring lower side can cause convergence to be too
-slow.
-
-Another limitation of dual decomposition is an optimization algorithm, hence it
+Dual decomposition is an optimization algorithm; hence it
 only solves the MAP problem \eqref{eq:mapgeneric}, but not the marginal problem
-\eqref{eq:marginalgeneric}.
+\eqref{eq:marginalgeneric}, which may be considered a limitation.
 
 %\subsection{Selection of step size}
 % \section{Belief propagation with disagreement tracking}
