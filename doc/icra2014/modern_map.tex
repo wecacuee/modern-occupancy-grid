@@ -950,7 +950,10 @@ Fig.~\ref{fig:convergence-comparison-visuals} for several simulated dataset. To
 evaluate the convergence rate of each algorithm, we plot total energy of the
 graph with respect CPU ticks taken by the algorithm. The plot of energy
 convergence with respect to time for cave dataset is shown in
-Fig.~\ref{fig:convergence-comparison}.
+Fig.~\ref{fig:convergence-comparison}.  These data clearly show the improvement 
+from moving to belief propagation and dual decomposition, which, in all cases, 
+lead to lower energies faster than our baselines.  DD outperforms BP in typical 
+cases.
 
 For real data, we have used the \emph{albert-b-laser} dataset provided by
 Cyrill Stachniss from University of Freiburg. The dataset was captured by a
@@ -959,8 +962,8 @@ This data set was obtained from the Robotics Data Set Repository
 (Radish)~\cite{howard2003radish}. Thanks go to Cyrill Stachniss for providing
 this data.
 
-In all our experiments we do not use any occupancy prior. Although, Merali et
-al \cite{merali2013icra} suggest using an occupancy prior of 0.3 for better
+In all our experiments we do not use any occupancy prior, although Merali et
+al. \cite{merali2013icra} suggest using an occupancy prior of 0.3 for better
 convergence. We use a step size of 50 for dual decomposition and piecewise constant 
 sensor model.
 
@@ -988,18 +991,7 @@ when computation time is not a limiting factor.
 
 
 \showcaptionsetup{subfloat}
-\begin{figure*}
-  % TODO: Fix graph to converge at the same time
-  \subfloat[Convergence on cave dataset]{\includegraphics[width=0.30\textwidth]{../figures/relativeconvergence.pdf}}%
-  \subfloat[Convergence on hospital section dataset]{\includegraphics[width=0.30\textwidth]{../../Data/hospital_section_player/plot-time-energy.pdf}}\\
-  \subfloat[Convergence on hospital dataset]{\includegraphics[width=0.30\textwidth]{../../Data/hospital_player/plot-time-energy.pdf}}%
-  \subfloat[Convergence on albert-b dataset]{\includegraphics[width=0.30\textwidth]{../figures/convergence-albert-b.pdf}}%
-  \subfloat[Convergence with different step size in dual decomposition]{\includegraphics[width=0.30\textwidth]{../figures/dualdecomposition-stepsize-inc500.pdf}}
-  \caption{Comparison of convergence of different algorithms on occupancy grid graph. While sampling methods like Metropolis hastings converge quickly they stay far from optimum energy. On the other hand modern minimization algorithms reach closer to an optimum value.}
-  \label{fig:convergence-comparison}
-\end{figure*}
-  %\caption{The rate of convergence in dual decomposition depends on step size}
-  %\label{fig:dualdecomposition-stepsize}
+
 \begin{figure*}
   %\includegraphics[width=0.2\textwidth]{../figures/cave_trajectory.png}%
   \includegraphics[width=0.16\textwidth]{../../Data/cave_player/gt-final.png}%
@@ -1029,6 +1021,19 @@ when computation time is not a limiting factor.
   \caption{Qualitative results (from left to right) a) Ground truth with the trajectory of the robot b) Two assumption algorithm c) Metropolis Hastings without heat map d) Metropolis Hastings with heat map e) Belief Propagation  f) Dual decomposition. Each row represent a different simulated dataset.}
   \label{fig:convergence-comparison-visuals}
 \end{figure*}
+
+\begin{figure*}
+  % TODO: Fix graph to converge at the same time
+  \subfloat[Convergence on cave dataset]{\includegraphics[width=0.30\textwidth]{../figures/relativeconvergence.pdf}}%
+  \subfloat[Convergence on hospital section dataset]{\includegraphics[width=0.30\textwidth]{../../Data/hospital_section_player/plot-time-energy.pdf}}\\
+  \subfloat[Convergence on hospital dataset]{\includegraphics[width=0.30\textwidth]{../../Data/hospital_player/plot-time-energy.pdf}}%
+  \subfloat[Convergence on albert-b dataset]{\includegraphics[width=0.30\textwidth]{../figures/convergence-albert-b.pdf}}%
+  \subfloat[Convergence with different step size in dual decomposition]{\includegraphics[width=0.30\textwidth]{../figures/dualdecomposition-stepsize-inc500.pdf}}
+  \caption{Comparison of convergence of different algorithms on occupancy grid graph. While sampling methods like Metropolis hastings converge quickly they stay far from optimum energy. On the other hand modern minimization algorithms reach closer to an optimum value.}
+  \label{fig:convergence-comparison}
+\end{figure*}
+  %\caption{The rate of convergence in dual decomposition depends on step size}
+  %\label{fig:dualdecomposition-stepsize}
 
 \bibliographystyle{IEEEtran}
 \bibliography{modern_map}
