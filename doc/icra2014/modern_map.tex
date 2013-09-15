@@ -90,11 +90,9 @@ environment into cells, squares (2D) or cubes (3D), and associates a random
 variable with each cell that represents the probability of the cell being
 occupied or free.  
 
-OGM methods vary in how cell occupancy is estimated (see Sec.  
-\ref{sec:related}), but most methods make use 
+OGM methods vary in how cell occupancy is estimated, but most methods make use 
 of an inverse sensor model by assuming that the occupancy of each cell can be 
-estimated independently of the other cells in the map 
-\cite{elfes1989using,moravec1988sensor,newcombe2011kinectfusion}.  The main 
+estimated independently of the other cells in the map \cite{elfes1989using,moravec1988sensor,moravec1985high,newcombe2011kinectfusion}.  The main 
 reason for using this independence assumption is computational efficiency.  
 However, the assumption is inaccurate and can lead to overconfident estimates of 
 occupancy in noisy observations \cite{thrun2003learning,merali2013icra}. 
@@ -135,65 +133,70 @@ experiments demonstrate the effectiveness of our novel OGM approach, especially,
 dual decomposition.  
 
 
-\section{Related work} 
+\section{Background and Related work} 
 \label{sec:related}
 
-Moravec and Elfes \cite{elfes1989using,moravec1988sensor,moravec1985high} 
-proposed the
-seminal work in occupancy grids mapping. While the proposed algorithm worked
-well in practice and was computationally efficient, in some cases it provided
-overconfident occupancy estimates. Thrun \cite{thrun2003learning} argued that
-forward sensor models are theoretically as well as experimentally superior to 
-inverse sensor models. He proposed the use of Expectation maximization
-algorithm for inference. More recently, Merali et al. \cite{merali2013icra}
-proposed the use of Gibbs sampling algorithm for occupancy grid mapping.
+%%% Jason: This paragraph is redundant: all of this related work is in the 
+%introduction already and there is hence no need to have it in the related work 
+%section too.
+%
+%Moravec and Elfes \cite{elfes1989using,moravec1988sensor,moravec1985high} 
+%proposed the seminal work in occupancy grids mapping. While their method works 
+%well in practice and is computationally efficient, it is prone to providing 
+%overconfident occupancy estimates. Thrun \cite{thrun2003learning} argues that 
+%forward sensor models are theoretically and experimentally superior to inverse 
+%sensor models. He proposes an expectation maximization algorithm for inference. 
+%More recently, Merali et al. \cite{merali2013icra} propose the use of Gibbs 
+%sampling algorithm for OGM.
 
-One of the main contribution of this paper is the application of modern MAP
-algorithms on occupancy grid mapping. Although they are numerous MAP inference 
-algorithms \cite{kappes2013comparative} that work well for difference kinds of
-problem, in this paper we focus belief propagation \cite{kschischang2001factor}
-and dual decomposition \cite{sontag2011introduction} mainly because of their 
-ability to handle higher order factors and ease of implementation.
+A main contribution of our paper is the application of modern MAP algorithms to 
+occupancy grid mapping. Although they are many MAP inference algorithms 
+\cite{kappes2013comparative} that work well for various problem, in this paper, 
+we focus on belief propagation \cite{kschischang2001factor} and dual 
+decomposition \cite{sontag2011introduction} mainly because of their ability to 
+handle higher order factors. % and ease of implementation.
 
-Belief propagation (BP)
-introduced by \cite{pearl1986fusion} was introduced as an algorithm to compute
-marginals over trees.  Surprisingly, it was found to work well
-on graph with loops, even though it is not guaranteed to converge. Later it
-was found that the convergent solution to Belief propagation corresponds to
-the minima of so-called Bethe free energy \cite{yedidia2000generalized}, which
-not only provided a theoretical justification for application of belief
-propagation to graphs with loops, but also solves the convergence problem by 
-the existence of an objective function which can be minimized directly.
-Later, Fractional BP \cite{wiegerinck2003fractional} was introduced. 
-Inspired by the Bethe free energy formulation of BP, it suggested using a
-better free energy approximation by scaling the terms appropriately in the
-message update equation.  In an independent work, Wainwright et al.
-\cite{wainwright2005map} introduce Tree Re-Weighted (TRW) message passing
-algorithm that uses re-weighting of edges and messages similar to Fractional
-BP. They also formulate the MAP estimation problem as a linear program over the
-so-called marginal polytope.  The Langrangian dual of this LP problem is convex
-and provides the uppper bound to the original problem. The family of algorithms
-that optimize the Lagrangian dual of the original combinatorial problem are
-called dual decomposition (DD). The dual of the problem can be decomposed in
-different ways, for example, as set of spanning trees in TRW
-\cite{wainwright2005map} or one problem per factor
-\cite{sontag2011introduction}. Kolmogorov et al.  \cite{kschischang2001factor}
-improved over the work of \cite{wainwright2005map} to introduce a convergent
-algorithm called TRW-S.  More recently, accelerated dual decomposition
-\cite{jojic2010accelerated} was introduced that provably converges the upper
-bound faster than earlier approaches by smoothing the Lagrangian dual of the
+Belief propagation (BP) \cite{pearl1986fusion} was introduced as an algorithm to 
+compute marginals over trees.  Surprisingly, it was found to work well on graph 
+with loops even though it is not guaranteed to converge. Later it was found 
+that the convergent solution to belief propagation corresponds to the minima of 
+so-called Bethe free energy \cite{yedidia2000generalized}, which not only 
+provided a theoretical justification for application of belief propagation to 
+graphs with loops, but also solves the convergence problem by the existence of 
+an objective function which can be minimized directly.  Later, Fractional BP 
+\cite{wiegerinck2003fractional} was introduced.  Inspired by the Bethe free 
+energy formulation of BP, it suggested using a better free energy approximation 
+by scaling the terms appropriately in the message update equation.  
+
+In an 
+independent work, Wainwright et al.  \cite{wainwright2005map} introduce Tree 
+Re-Weighted (TRW) message passing algorithm that uses re-weighting of edges and 
+messages similar to Fractional BP. They also formulate the MAP estimation 
+problem as a linear program over the so-called marginal polytope.  The 
+Langrangian dual of this LP problem is convex and provides the upper bound to 
+the original problem. The family of algorithms that optimize the Lagrangian dual 
+of the original combinatorial problem are called dual decomposition (DD). The 
+dual of the problem can be decomposed in different ways, for example, as set of 
+spanning trees in TRW \cite{wainwright2005map} or one problem per factor 
+\cite{sontag2011introduction}. Kolmogorov et al.  \cite{kschischang2001factor} 
+improved over the work of \cite{wainwright2005map} to introduce a convergent 
+algorithm called TRW-S.  More recently, accelerated dual decomposition 
+\cite{jojic2010accelerated} was introduced that provably converges the upper 
+bound faster than earlier approaches by smoothing the Lagrangian dual of the 
 problem. 
 
 % Work on higher order potentials
-Another contribution of our paper is regarding doing efficient inference over
+Another contribution of our paper how we perform efficient inference with 
 higher order factors (or potentials). Many researchers approach this problem
 by considering a class of functions for which higher order factors can used
 efficiently, for example, Potetz et al. introduce a class of potentials called
 linear constraint nodes \cite{potetz2007efficient} and Komodakis et al.
-approach patter-based class of potentials \cite{komodakis2009beyond}.
+approach pattern-based class of potentials \cite{komodakis2009beyond}.
 Another approach to handle higher order potentials
 \cite{leonardis2006efficient}  is to adaptively restrict the sample space of
-nodes by using initial estimates. 
+nodes by using initial estimates.   Our work proposes a generalization of the 
+pattern-based potentials of \cite{komodakis2009beyond} allowing for 
+\textit{free} nodes to appear within a pattern.
 
 \section{Problem definition}
 \newcommand{\map}{\vect{x}}
