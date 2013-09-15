@@ -265,13 +265,14 @@ by simple Bayes formulation:
 \begin{align}
   p(x_i|\measurements, \poses) &= \frac{p(\meas_t, \pose_t|x_i, \remaining)p(x_i|\remaining)}
                          {p(\meas_t, \pose_t|\remaining)}.
+  \label{eq:assumeindependence}
 \end{align}
 %where
 %$\remaining = \{\measurements_{1:t-1}, \poses_{1:t-1}\}$ represents all
 %measurements before $t$\textsuperscript{th} measurement.
-By using commonly used
-static world assumption, $p(z_t, g_t|x_i, \remaining) = p(z_t, g_t|x_i)$, the
-above equation can be simplified \cite{merali2013icra} to :
+Assuming a static world, $p(z_t, g_t|x_i, \remaining) = p(z_t, g_t|x_i)$, as is 
+commonly done, the
+above equation (\ref{eq:assumeindependence}) can be simplified \cite{merali2013icra} to:
 % to be independent of
 % previous observations $\remaining$ given the map $x_i$ :
 % \begin{align}
@@ -289,12 +290,12 @@ above equation can be simplified \cite{merali2013icra} to :
 \end{align}
 where $Z'$ is a normalizing factor that is independent of $x_i$, $p(x_i)$ is
 the prior probability for cell $x_i$ and $p(x_i|z_f, g_f)$ is called the
-inverse sensor model.
+\textit{inverse sensor model}.
 
 \subsection{Mapping by forward sensor model}
 However, the independent cell assumption is inaccurate and can lead to
 overconfident estimates of occupancy in noisy observations
-\cite{thrun2003learning,merali2013icra}. In the absence of independent cell
+\cite{thrun2003learning,merali2013icra}. In the absence of the independent cell
 assumption, we can still factorize the posterior probability in terms of the
 forward sensor models.
 
@@ -328,13 +329,13 @@ Using independent pose assumption, we get a recursive formula for \eqref{eq:recu
 %\end{align}
 In this formulation, we make two assumptions, a) static world assumption, $p(z_t|\map,
 \poses) = p(z_t|\map, g_t)$ and b) pose-map independence,
-$p(g_t|\map, \remaining) = p(g_t|\remaining)$. With these assumption it can
-be proved \cite{merali2013icra} that posterior evaluates to :
+$p(g_t|\map, \remaining) = p(g_t|\remaining)$. With these assumptions,
+the posterior evaluates \cite{merali2013icra} to
 %\end{comment}
 \begin{align}
  p(\map | \measurements, \poses) &= \frac{1}{Z} p(z_t|\map , g_t)p(\map| \remaining)\\
                                &= \frac{1}{Z} p(\map)\prod_{1 \le f \le t}
- p(z_f|\map, g_f),
+ p(z_f|\map, g_f)\enspace,
  \label{eq:map}
 \end{align}
 where $Z$ is a normalizing constant independent of $\map$ and $p(\map)$ is
@@ -343,8 +344,8 @@ the maps, hence prior is a constant and included in the normalizing
 constant $Z$. 
 
 The problem of estimating occupancy map is intractable with the above
-formulation as it still depends on the entire map that has an exponentially
-big sample space. However, we can make use of the fact that
+formulation as it still depends on the entire map, which has an exponential
+sample space. However, we can make use of the fact that
 a laser measurement $f$ depends only a small portion of the map $\map_f
 \subseteq \map$, hence simplifying the formulation to
 \begin{align}
@@ -356,11 +357,11 @@ The term $p(z_f|\map_f, p_f)$ is called the \emph{forward sensor model}.
 With this formulation, we are in a position to describe the problem as
 \emph{factor graph}. As we will in the next section, the above
 simplification is necessary to keep the factor graph sparsely connected
-end hence tractable.
+and hence tractable.
 
 \subsection{Representation as factor graph}
 \label{sec:notation}
-The problem of Occupancy grid mapping can be expressed as energy minimization
+The occupancy grid mapping problem can be expressed as energy minimization
 over a factor graph. Let all cells in the map be the variable nodes $V$ and all
 the laser measurements be factor nodes $F$. 
 There exists an undirected edge $(i, f)$, if and only if the laser
