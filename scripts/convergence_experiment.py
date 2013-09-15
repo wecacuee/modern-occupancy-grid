@@ -8,7 +8,7 @@ def exec_config():
         ("bin/SICK_DDMCMC", 
          {"legend" : "Metropolis Hastings with heatmap"}),
         ("bin/SICKSlowMetropolis",
-         {"legend" : "Metropolis Hastings"}),
+         {"legend" : "Metropolis Hastings [4]"}),
         ("bin/dualdecomposition",
          {"legend" : "Dual Decomposition"}),
         ("bin/TwoAssumptionAlgorithm",

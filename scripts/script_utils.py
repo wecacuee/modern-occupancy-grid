@@ -53,6 +53,9 @@ class ExecutableConfig(object):
     def dir(self):
         return self._conf['dir']
 
+    def plotfigurefname(self):
+        return "%s/plot-time-energy.pdf" % self._conf['dir']
+
     def cmd(self):
         return [self._exe] + self._conf["args"]
 

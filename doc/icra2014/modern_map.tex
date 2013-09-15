@@ -11,7 +11,7 @@
 \usepackage{verbatim} % For begin{comment} end{comment}
 \usepackage{authblk} % useful for multiple authors with different affiliations
 \usepackage{cite} % useful to show multiple citations in single square bracket
-\usepackage{subfig}
+\usepackage[caption=false]{subfig}
 \providecommand{\DontPrintSemicolon}{\dontprintsemicolon} % difference in versions
 
 \DeclareMathOperator*{\argmin}{arg\,min}
@@ -644,7 +644,8 @@ Alg~\ref{alg:dualdecomposition}. Apart from input factor graph $G = (V, F, E)$
 and label set $\{\Sx\}_{i \in V}$ introduced in Sec~\ref{sec:notation}, dual
 decomposition depends on a step size $\alpha$.
 We note that step size is important attribute and affects the speed of the algorithm. 
-%To illustrate that we show the convergence of dual decomposition with different step size on \emph{cave} dataset in Fig.~\ref{fig:dualdecomposition-stepsize}. 
+To illustrate that we show the convergence of dual decomposition with different
+step size on \emph{cave} dataset in Fig.~\ref{fig:convergence-comparison}\subref{fig:dualdecomposition-stepsize}. 
 Note that erring on higher side causes oscillations, while erring lower side can cause convergence to be too slow.
 
 
@@ -1014,7 +1015,7 @@ when computation time is not a limiting factor.
   % \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/dualdecomposition.png}\\
   \includegraphics[height=0.16\textwidth,                                   angle=90]{../../Data/albertb.sm/path.png}%
   \includegraphics[height=0.16\textwidth, trim=65px 125px 20px 175px, clip, angle=90]{../../Data/albertb.sm/TwoAssumptionAlgo.png}%
-  \includegraphics[height=0.16\textwidth, trim=65px 125px 20px 175px, clip, angle=90]{../../Data/albertb.sm/SICKSlowMetropolis.png}%
+  \includegraphics[height=0.16\textwidth, trim=65px 126px 20px 175px, clip, angle=90]{../../Data/albertb.sm/SICKSlowMetropolis.png}%
   \includegraphics[height=0.16\textwidth, trim=65px 125px 20px 175px, clip, angle=90]{../../Data/albertb.sm/SICKDDMCMC.png}%
   \includegraphics[height=0.16\textwidth, trim=65px 125px 20px 175px, clip, angle=90]{../../Data/albertb.sm/run_belief_propagation.png}%
   \includegraphics[height=0.16\textwidth, trim=65px 125px 20px 175px, clip, angle=90]{../../Data/albertb.sm/dualdecomposition.png}%
@@ -1024,11 +1025,19 @@ when computation time is not a limiting factor.
 
 \begin{figure*}
   % TODO: Fix graph to converge at the same time
-  \subfloat[Convergence on cave dataset]{\includegraphics[width=0.30\textwidth]{../figures/relativeconvergence.pdf}}%
-  \subfloat[Convergence on hospital section dataset]{\includegraphics[width=0.30\textwidth]{../../Data/hospital_section_player/plot-time-energy.pdf}}\\
-  \subfloat[Convergence on hospital dataset]{\includegraphics[width=0.30\textwidth]{../../Data/hospital_player/plot-time-energy.pdf}}%
-  \subfloat[Convergence on albert-b dataset]{\includegraphics[width=0.30\textwidth]{../figures/convergence-albert-b.pdf}}%
-  \subfloat[Convergence with different step size in dual decomposition]{\includegraphics[width=0.30\textwidth]{../figures/dualdecomposition-stepsize-inc500.pdf}}
+  \subfloat[Convergence on cave dataset]{%
+  \includegraphics[width=0.30\textwidth]{../../Data/cave_player/plot-time-energy.pdf}}%
+  \subfloat[Convergence on hospital section dataset]{%
+  \includegraphics[width=0.30\textwidth]{../../Data/hospital_section_player/plot-time-energy.pdf}}%
+  \subfloat[Convergence on :TODO: dataset]{%
+  \includegraphics[width=0.30\textwidth]{../../Data/hospital_player/plot-time-energy.pdf}}\\
+  \subfloat[Convergence on hospital dataset]{%
+  \includegraphics[width=0.30\textwidth]{../../Data/hospital_player/plot-time-energy.pdf}}%
+  \subfloat[Convergence on albert-b dataset]{%
+  \includegraphics[width=0.30\textwidth]{../../Data/albertb.sm/plot-time-energy.pdf}}%
+  \subfloat[Convergence with different step size in dual decomposition]{%
+    \label{fig:dualdecomposition-stepsize}%
+  \includegraphics[width=0.30\textwidth]{../../Data/plot-time-energy-step.pdf}}
   \caption{Comparison of convergence of different algorithms on occupancy grid graph. While sampling methods like Metropolis hastings converge quickly they stay far from optimum energy. On the other hand modern minimization algorithms reach closer to an optimum value.}
   \label{fig:convergence-comparison}
 \end{figure*}
