@@ -11,10 +11,14 @@ class ExecutableConfig(script_utils.ExecutableConfig):
         return "Data/%s-plot-time-energy-step=%d.npy" % (
             self.key(), self._conf["stepsize"])
 
+    def plotfigurefname(self):
+        return "Data/plot-time-energy-step.pdf"
+
 def executables():
     return [ExecutableConfig( 
             DUALDECOMPOSITION,
              {"legend" : "Step size=%d" % step,
               "stepsize" : step,
+              "dir" : "Data/",
               "args" : [MAP_SIZE, MAP_SIZE, CELLSIZE, "--step=%d" % step] })
             for step in [20, 50, 100, 200, 500] ]
