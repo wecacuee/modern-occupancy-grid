@@ -16,10 +16,7 @@ def _plot_time_energy_two_assumption(exe, times, energy):
 
 if __name__ == '__main__':
     conf = sys.argv[1]
-    if "step" in conf:
-        fig = plt.figure(figsize=(1.618*4, 4))
-    else:
-        fig = plt.figure(figsize=(1.618*3, 3))
+    fig = plt.figure(figsize=(1.618*4, 4))
     fig.subplots_adjust(bottom=0.16)
 
     config = imp.load_source('config', conf)
