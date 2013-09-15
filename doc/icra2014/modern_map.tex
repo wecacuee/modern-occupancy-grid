@@ -648,6 +648,13 @@ To illustrate that we show the convergence of dual decomposition with different
 step size on \emph{cave} dataset in Fig.~\ref{fig:convergence-comparison}\subref{fig:dualdecomposition-stepsize}. 
 Note that erring on higher side causes oscillations, while erring lower side can cause convergence to be too slow.
 
+  %\subfloat[Convergence with different step size in dual decomposition]{%
+\begin{figure}
+  \includegraphics[width=\columnwidth]{../../Data/plot-time-energy-step.pdf}%
+    \label{fig:dualdecomposition-stepsize}%
+    \caption{The rate of convergence in subgradient dual decomposition depends on step size}
+\end{figure}
+
 
 \begin{algorithm}
   \DontPrintSemicolon
@@ -946,15 +953,6 @@ The simulated data is generated using \emph{Player/Stage} \cite{gerkey2003player
 project. We use multiple map bitmaps bundled along with player/stage library.
 The robot motion is generated using the wander driver. The robot is allowed to
 wander in the map for 2 minutes aggregating approximately 270,000 laser measurements.
-The qualitative results are shown in
-Fig.~\ref{fig:convergence-comparison-visuals} for several simulated dataset. To
-evaluate the convergence rate of each algorithm, we plot total energy of the
-graph with respect CPU ticks taken by the algorithm. The plot of energy
-convergence with respect to time for cave dataset is shown in
-Fig.~\ref{fig:convergence-comparison}.  These data clearly show the improvement 
-from moving to belief propagation and dual decomposition, which, in all cases, 
-lead to lower energies faster than our baselines.  DD outperforms BP in typical 
-cases.
 
 For real data, we have used the \emph{albert-b-laser} dataset provided by
 Cyrill Stachniss from University of Freiburg. The dataset was captured by a
@@ -962,6 +960,16 @@ B21r robot with a SICK PLS moving through a lab at University of Freiburg.
 This data set was obtained from the Robotics Data Set Repository
 (Radish)~\cite{howard2003radish}. Thanks go to Cyrill Stachniss for providing
 this data.
+
+The qualitative results are shown in
+Fig.~\ref{fig:convergence-comparison-visuals} for several datasets. To
+evaluate the convergence rate of each algorithm, we plot total energy of the
+graph with respect CPU ticks taken by the algorithm. The plots of energy
+convergence with respect to time for cave dataset is shown in
+Fig.~\ref{fig:convergence-comparison}. These data clearly show the improvement 
+from moving to belief propagation and dual decomposition, which, in all cases, 
+lead to lower energies faster than our baselines.  DD outperforms BP in typical 
+cases.
 
 In all our experiments we do not use any occupancy prior, although Merali et
 al. \cite{merali2013icra} suggest using an occupancy prior of 0.3 for better
@@ -1007,41 +1015,63 @@ when computation time is not a limiting factor.
   \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/SICKDDMCMC.png}%
   \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/run_belief_propagation.png}%
   \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/dualdecomposition.png}\\
-  %\includegraphics[width=0.16\textwidth]{../../Data/hospital_section_player/gt-final.png}%
-  % \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/TwoAssumptionAlgo.png}%
-  % \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/SICKSlowMetropolis.png}%
-  % \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/SICKDDMCMC.png}%
-  % \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/run_belief_propagation.png}%
-  % \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/dualdecomposition.png}\\
+  \includegraphics[width=0.16\textwidth]{../../Data/hospital_section_player/gt-final.png}%
+  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/TwoAssumptionAlgo.png}%
+  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/SICKSlowMetropolis.png}%
+  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/SICKDDMCMC.png}%
+  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/run_belief_propagation.png}%
+  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/dualdecomposition.png}\\
   \includegraphics[height=0.16\textwidth,                                   angle=90]{../../Data/albertb.sm/path.png}%
   \includegraphics[height=0.16\textwidth, trim=65px 125px 20px 175px, clip, angle=90]{../../Data/albertb.sm/TwoAssumptionAlgo.png}%
   \includegraphics[height=0.16\textwidth, trim=65px 126px 20px 175px, clip, angle=90]{../../Data/albertb.sm/SICKSlowMetropolis.png}%
   \includegraphics[height=0.16\textwidth, trim=65px 125px 20px 175px, clip, angle=90]{../../Data/albertb.sm/SICKDDMCMC.png}%
   \includegraphics[height=0.16\textwidth, trim=65px 125px 20px 175px, clip, angle=90]{../../Data/albertb.sm/run_belief_propagation.png}%
   \includegraphics[height=0.16\textwidth, trim=65px 125px 20px 175px, clip, angle=90]{../../Data/albertb.sm/dualdecomposition.png}%
-  \caption{Qualitative results (from left to right) a) Ground truth with the trajectory of the robot b) Two assumption algorithm c) Metropolis Hastings without heat map d) Metropolis Hastings with heat map e) Belief Propagation  f) Dual decomposition. Each row represent a different simulated dataset.}
+  \caption{Qualitative results on different datasets. Each row represents a
+    different dataset while each column represents a different algorithm. The
+    columns correspond to the following algorithms (from left to right): a)
+    Ground truth with the trajectory of the robot b) Two assumption algorithm
+  c) Metropolis Hastings without heat map d) Metropolis Hastings with heat map
+e) Belief Propagation  f) Dual decomposition. The rows correspond to the
+following datasets (from top to bottom): a) cave b) hospital c) hospital section d) albert-b
+\cite{howard2003radish}.}
   \label{fig:convergence-comparison-visuals}
 \end{figure*}
 
+\providecommand{\mysubfloatwidth}{0.25\textwidth}
 \begin{figure*}
-  % TODO: Fix graph to converge at the same time
-  \subfloat[Convergence on cave dataset]{%
-  \includegraphics[width=0.30\textwidth]{../../Data/cave_player/plot-time-energy.pdf}}%
-  \subfloat[Convergence on hospital section dataset]{%
-  \includegraphics[width=0.30\textwidth]{../../Data/hospital_section_player/plot-time-energy.pdf}}%
-  \subfloat[Convergence on :TODO: dataset]{%
-  \includegraphics[width=0.30\textwidth]{../../Data/hospital_player/plot-time-energy.pdf}}\\
-  \subfloat[Convergence on hospital dataset]{%
-  \includegraphics[width=0.30\textwidth]{../../Data/hospital_player/plot-time-energy.pdf}}%
-  \subfloat[Convergence on albert-b dataset]{%
-  \includegraphics[width=0.30\textwidth]{../../Data/albertb.sm/plot-time-energy.pdf}}%
-  \subfloat[Convergence with different step size in dual decomposition]{%
-    \label{fig:dualdecomposition-stepsize}%
-  \includegraphics[width=0.30\textwidth]{../../Data/plot-time-energy-step.pdf}}
-  \caption{Comparison of convergence of different algorithms on occupancy grid graph. While sampling methods like Metropolis hastings converge quickly they stay far from optimum energy. On the other hand modern minimization algorithms reach closer to an optimum value.}
+%  \subfloat[Convergence on cave dataset]{%
+%    \label{subfig:convCave}%
+  \includegraphics[width=\mysubfloatwidth]{../../Data/cave_player/plot-time-energy.pdf}%
+%}%
+%  \subfloat[Convergence on hospital section dataset]{%
+%    \label{subfig:convHospitalSection}%
+  \includegraphics[width=\mysubfloatwidth]{../../Data/hospital_section_player/plot-time-energy.pdf}%
+%}%
+  %\subfloat[Convergence on :TODO: dataset]{%
+  %  \label{subfig:convTODO}%
+  %\includegraphics[width=0.30\textwidth]{../../Data/hospital_player/plot-time-energy.pdf}}%
+%  \subfloat[Convergence on hospital dataset]{%
+%    \label{subfig:convHospital}%
+  \includegraphics[width=\mysubfloatwidth]{../../Data/hospital_player/plot-time-energy.pdf}%
+%}%
+%  \subfloat[Convergence on albert-b dataset]{%
+%    \label{subfig:convAlbert-b}%
+  \includegraphics[width=\mysubfloatwidth]{../../Data/albertb.sm/plot-time-energy.pdf}%
+%}%
+  \caption{Comparison of convergence rate of different algorithms on occupancy
+    grid mapping.  While sampling methods like Metropolis hastings converge
+    quickly they stay far from optimum energy.  On the other hand modern
+    inference algorithms like belief propagation and dual decomposition reach
+    closer to an optimum value. The legends are listed only once for clarity.
+    % While
+    % \subref{subfig:convCave}-\subref{subfig:convAlbert-b} show convergence on different
+    % datasets, \subref{fig:dualdecomposition-stepsize} shows the effect of step size on
+    % convergence of dual decomposition algorithm.
+  }
   \label{fig:convergence-comparison}
 \end{figure*}
-  %\caption{The rate of convergence in dual decomposition depends on step size}
+  %\caption{}
   %\label{fig:dualdecomposition-stepsize}
 
 \bibliographystyle{IEEEtran}
