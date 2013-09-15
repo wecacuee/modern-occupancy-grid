@@ -365,7 +365,8 @@ void iterate_dualdecomposition(
     const Graph& g_, 
     Functor& func,
     DisagreementMap& disagreement_tracker_,
-    size_t max_iter
+    size_t max_iter,
+    double max_clock
     )
 {
   typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex_descriptor;
@@ -373,8 +374,10 @@ void iterate_dualdecomposition(
 
   // main loop
   clock_t st = clock();
-  for (size_t i = 0; (i < max_iter) && (not converged); ++i) {
-    clock_t et = clock(); 
+  for (size_t i = 0; 
+      (i < max_iter) && (not converged) && clock() < (max_clock - st); 
+      ++i) 
+  {
     converged = func(i);
 
     // Debugging logistics
@@ -389,6 +392,7 @@ void iterate_dualdecomposition(
       marg[x] = std::exp(-func.marginal(x, 1));
     }
     double energy = g_.g_(best_assign);
+    clock_t et = clock(); 
     std::cout << "<Energy>\t" << ((float)(et - st)) / CLOCKS_PER_SEC << "\t" << energy << std::endl;
 
     global_vis_.setMarginals(marg);

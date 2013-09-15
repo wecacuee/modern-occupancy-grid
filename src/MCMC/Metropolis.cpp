@@ -20,7 +20,7 @@ using namespace gtsam;
  * @return  vector of marginal probabilities.
  */
 OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
-    size_t iterations) {
+    size_t iterations, double max_clock) {
 
   // Create a data structure to hold the estimated marginal occupancy probabilities
   // and initialize to zero.
@@ -62,7 +62,7 @@ OccupancyGrid::Marginals runSlowMetropolis(const OccupancyGrid &occupancyGrid,
   //Index x_;// = random_cell(rng);
 
   // run Metropolis for the requested number of operations
-  for (size_t it = 0; it < iterations; it++) {
+  for (size_t it = 0; it < iterations && clock() < (max_clock - st); it++) {
 
     // Log and print
     energy.push_back(Ex);

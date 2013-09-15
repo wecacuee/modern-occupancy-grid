@@ -17,7 +17,7 @@ using namespace gtsam;
  * @param iterations defines the number of iterations to run.
  * @return  vector of marginal probabilities.
  */
-OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t iterations){
+OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t iterations, double max_clock){
   clock_t st = clock();
 	LaserFactor::Occupancy occupancy = occupancyGrid.emptyOccupancy();
   std::vector<double> two_energy(occupancyGrid.cellCount());
@@ -55,7 +55,7 @@ OccupancyGrid::Marginals runDDMCMC(const OccupancyGrid &occupancyGrid, size_t it
 
 	vector<double> energy;
 
-	for(size_t it = 0; it < iterations; it++){
+	for(size_t it = 0; it < iterations && clock() < (max_clock - st); it++){
 		energy.push_back(Ex);
     if (it % 2000 == 0) {
       printf("%lf\n", (double)it/(double)iterations);
