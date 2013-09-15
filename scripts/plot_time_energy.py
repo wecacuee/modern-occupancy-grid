@@ -10,9 +10,9 @@ rc('font',**{'family':'serif','serif':['Times']})
 rc('text', usetex=True) 
 
 def _plot_time_energy_two_assumption(times, energy):
-    times = np.hstack((times, [200]))
-    energy = np.hstack((energy, energy[-1]))
-    return plt.plot(times, energy)
+    # times = np.hstack((times, [200]))
+    # energy = np.hstack((energy, energy[-1]))
+    return plt.plot(times, energy, '-o')
 
 if __name__ == '__main__':
     conf = sys.argv[1]
@@ -23,6 +23,10 @@ if __name__ == '__main__':
     config = imp.load_source('config', conf)
     for exe in config.executables():
         times, energy = load_time_energy( open( exe.plotdatafname()))
+        if ("abertb" in exe.dir()):
+            before20 = (times < 20000)
+            times = times[before20]
+            energy = energy[before20]
         if exe.exe() == "bin/TwoAssumptionAlgorithm":
             p, = _plot_time_energy_two_assumption(times, energy)
         else:

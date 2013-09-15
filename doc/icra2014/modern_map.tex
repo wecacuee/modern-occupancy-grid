@@ -11,6 +11,7 @@
 \usepackage{verbatim} % For begin{comment} end{comment}
 \usepackage{authblk} % useful for multiple authors with different affiliations
 \usepackage{cite} % useful to show multiple citations in single square bracket
+\usepackage{subfig}
 \providecommand{\DontPrintSemicolon}{\dontprintsemicolon} % difference in versions
 
 \DeclareMathOperator*{\argmin}{arg\,min}
@@ -689,11 +690,6 @@ only solves the MAP problem \eqref{eq:mapgeneric}, but not the marginal problem
 \eqref{eq:marginalgeneric}.
 
 %\subsection{Selection of step size}
-\begin{figure}
-  \includegraphics[width=\columnwidth]{../figures/dualdecomposition-stepsize-inc500.pdf}
-  \caption{The rate of convergence in dual decomposition depends on step size}
-  \label{fig:dualdecomposition-stepsize}
-\end{figure}
 % \section{Belief propagation with disagreement tracking}
 % Intuitively, dual decomposition converges faster because it focuses on the disagreeing 
 
@@ -987,48 +983,48 @@ better performance than sampling methods. This only serves to prove our
 assertion that modern inference methods should be used occupancy grid mapping 
 when computation time is not a limiting factor.
 
+
+\showcaptionsetup{subfloat}
 \begin{figure*}
   % TODO: Fix graph to converge at the same time
-  \includegraphics[width=0.24\textwidth]{../figures/relativeconvergence.pdf}%
-  \includegraphics[width=0.24\textwidth]{../../Data/hospital_section_player/plot-time-energy.pdf}%
-  \includegraphics[width=0.24\textwidth]{../../Data/hospital_player/plot-time-energy.pdf}%
-  \includegraphics[width=0.24\textwidth]{../figures/convergence-albert-b.pdf}%
+  \subfloat[Convergence on cave dataset]{\includegraphics[width=0.30\textwidth]{../figures/relativeconvergence.pdf}}%
+  \subfloat[Convergence on hospital section dataset]{\includegraphics[width=0.30\textwidth]{../../Data/hospital_section_player/plot-time-energy.pdf}}\\
+  \subfloat[Convergence on hospital dataset]{\includegraphics[width=0.30\textwidth]{../../Data/hospital_player/plot-time-energy.pdf}}%
+  \subfloat[Convergence on albert-b dataset]{\includegraphics[width=0.30\textwidth]{../figures/convergence-albert-b.pdf}}%
+  \subfloat[Convergence with different step size in dual decomposition]{\includegraphics[width=0.30\textwidth]{../figures/dualdecomposition-stepsize-inc500.pdf}}
   \caption{Comparison of convergence of different algorithms on occupancy grid graph. While sampling methods like Metropolis hastings converge quickly they stay far from optimum energy. On the other hand modern minimization algorithms reach closer to an optimum value.}
   \label{fig:convergence-comparison}
 \end{figure*}
+  %\caption{The rate of convergence in dual decomposition depends on step size}
+  %\label{fig:dualdecomposition-stepsize}
 \begin{figure*}
   %\includegraphics[width=0.2\textwidth]{../figures/cave_trajectory.png}%
-  \includegraphics[width=0.16\textwidth]{../figures/cave_gt.png}%
-  \includegraphics[width=0.16\textwidth]{../figures/cave_TwoAssumptionAlgo.png}%
-  \includegraphics[width=0.16\textwidth]{../figures/cave_SICKSlowMetropolis.png}%
-  \includegraphics[width=0.16\textwidth]{../figures/cave_SICKDDMCMC.png}%
-  \includegraphics[width=0.16\textwidth]{../figures/cave_run_belief_propagation.png}%
-  \includegraphics[width=0.16\textwidth]{../figures/cave_dualdecomposition.png}\\
+  \includegraphics[width=0.16\textwidth]{../../Data/cave_player/gt-final.png}%
+  \includegraphics[width=0.16\textwidth]{../../Data/cave_player/TwoAssumptionAlgo.png}%
+  \includegraphics[width=0.16\textwidth]{../../Data/cave_player/SICKSlowMetropolis.png}%
+  \includegraphics[width=0.16\textwidth]{../../Data/cave_player/SICKDDMCMC.png}%
+  \includegraphics[width=0.16\textwidth]{../../Data/cave_player/run_belief_propagation.png}%
+  \includegraphics[width=0.16\textwidth]{../../Data/cave_player/dualdecomposition.png}\\
   \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/gt-final.png}%
   \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/TwoAssumptionAlgo.png}%
   \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/SICKSlowMetropolis.png}%
   \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/SICKDDMCMC.png}%
   \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/run_belief_propagation.png}%
   \includegraphics[width=0.16\textwidth]{../../Data/hospital_player/dualdecomposition.png}\\
-  \includegraphics[width=0.16\textwidth]{../../Data/hospital_section_player/gt-final.png}%
-  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/TwoAssumptionAlgo.png}%
-  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/SICKSlowMetropolis.png}%
-  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/SICKDDMCMC.png}%
-  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/run_belief_propagation.png}%
-  \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/dualdecomposition.png}%
+  %\includegraphics[width=0.16\textwidth]{../../Data/hospital_section_player/gt-final.png}%
+  % \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/TwoAssumptionAlgo.png}%
+  % \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/SICKSlowMetropolis.png}%
+  % \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/SICKDDMCMC.png}%
+  % \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/run_belief_propagation.png}%
+  % \includegraphics[width=0.16\textwidth, trim=0 0 0 3px, clip]{../../Data/hospital_section_player/dualdecomposition.png}\\
+  \includegraphics[height=0.16\textwidth,                                   angle=90]{../../Data/albertb.sm/path.png}%
+  \includegraphics[height=0.16\textwidth, trim=65px 125px 20px 175px, clip, angle=90]{../../Data/albertb.sm/TwoAssumptionAlgo.png}%
+  \includegraphics[height=0.16\textwidth, trim=65px 125px 20px 175px, clip, angle=90]{../../Data/albertb.sm/SICKSlowMetropolis.png}%
+  \includegraphics[height=0.16\textwidth, trim=65px 125px 20px 175px, clip, angle=90]{../../Data/albertb.sm/SICKDDMCMC.png}%
+  \includegraphics[height=0.16\textwidth, trim=65px 125px 20px 175px, clip, angle=90]{../../Data/albertb.sm/run_belief_propagation.png}%
+  \includegraphics[height=0.16\textwidth, trim=65px 125px 20px 175px, clip, angle=90]{../../Data/albertb.sm/dualdecomposition.png}%
   \caption{Qualitative results (from left to right) a) Ground truth with the trajectory of the robot b) Two assumption algorithm c) Metropolis Hastings without heat map d) Metropolis Hastings with heat map e) Belief Propagation  f) Dual decomposition. Each row represent a different simulated dataset.}
   \label{fig:convergence-comparison-visuals}
-\end{figure*}
-
-\begin{figure*}
-  \includegraphics[width=0.33\textwidth]{../../Data/albertb.sm/path.png}%
-  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/TwoAssumptionAlgo.png}%
-  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/SICKSlowMetropolis.png}\\
-  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/SICKDDMCMC.png}%
-  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/run_belief_propagation.png}%
-  \includegraphics[width=0.33\textwidth, trim=65px 125px 20px 175px, clip]{../../Data/albertb.sm/dualdecomposition.png}%
-  \caption{Qualitative results at the end of 200sec for each algorithm (from left to right) a) Ground truth with the trajectory of the robot b) Two assumption algorithm c) Metropolis Hastings without heat map d) Metropolis Hastings with heat map e) Belief Propagation  f) Dual decomposition}
-  \label{fig:convergence-comparison-visuals-albertb}
 \end{figure*}
 
 \bibliographystyle{IEEEtran}
