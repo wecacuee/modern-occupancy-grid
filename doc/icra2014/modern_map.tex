@@ -78,7 +78,7 @@ with range sensors, like sonar \cite{thrun2003learning}, laser scanners
 \cite{thrun2003learning} and RGBD \cite{newcombe2011kinectfusion}, or 
 bearing-only sensors \cite{davison2007monoslam,kundu2011realtime}---metric 
 mapping with range sensors is the most common.  Bearing-only sensors provide 
-estimates up to a scale factor; topological maps still require local metric 
+estimates up to scale; topological maps still require local metric 
 estimates for certain problems like navigation.  We hence focus on metric 
 mapping with range sensors, specifically, laser scanners.
 
@@ -91,7 +91,7 @@ variable with each cell that represents the probability of the cell being
 occupied or free.  
 
 OGM methods vary in how cell occupancy is estimated (see Sec.  
-\ref{sec:related}), but most of the occupancy grid mapping algorithms make use 
+\ref{sec:related}), but most methods make use 
 of an inverse sensor model by assuming that the occupancy of each cell can be 
 estimated independently of the other cells in the map 
 \cite{elfes1989using,moravec1988sensor,newcombe2011kinectfusion}.  The main 
