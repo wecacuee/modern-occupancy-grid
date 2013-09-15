@@ -20,17 +20,6 @@
      id="defs4">
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3947">
-      <rect
-         style="fill:none;stroke:#ff0000;stroke-width:3;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
-         id="rect3949"
-         width="474.7717"
-         height="290.92392"
-         x="150.52803"
-         y="237.15378" />
-    </clipPath>
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
        id="clipPath3947-8">
       <rect
          style="fill:none;stroke:#ff0000;stroke-width:3;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
@@ -51,6 +40,17 @@
          x="521.25403"
          y="386.65637" />
     </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2995">
+      <rect
+         y="228.63251"
+         x="132.94881"
+         height="299.44519"
+         width="492.35092"
+         id="rect2997"
+         style="fill:none;stroke:#ff0000;stroke-width:3.09945369;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -60,8 +60,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
-     inkscape:cx="130.33891"
-     inkscape:cy="-1.46097"
+     inkscape:cx="255.51828"
+     inkscape:cy="169.9676"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -71,8 +71,8 @@
      fit-margin-bottom="0"
      inkscape:window-width="1340"
      inkscape:window-height="881"
-     inkscape:window-x="135"
-     inkscape:window-y="180"
+     inkscape:window-x="1990"
+     inkscape:window-y="119"
      inkscape:window-maximized="0" />
   <metadata
      id="metadata7">
@@ -95,10 +95,10 @@
        y="39.194489"
        x="49.512783"
        id="image3028"
-       xlink:href="file:///home/vikasdhi/wrk/OccupancyGrid/Data/albertb.sm/dualdecomposition.png"
+       xlink:href="file:///home/vikasdhi/wrk/OccupancyGrid/Data/albertb.sm/run_belief_propagation.png"
        height="600"
        width="600"
-       clip-path="url(#clipPath3947)" />
+       clip-path="url(#clipPath2995)" />
     <rect
        style="fill:none;stroke:#ff0000;stroke-width:3;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect3044-3"
@@ -107,22 +107,12 @@
        x="521.25403"
        y="386.65637" />
     <rect
-       y="420.46936"
-       x="173.2673"
-       height="99.071815"
-       width="93.244064"
+       y="436.89844"
+       x="536.45264"
+       height="83.954811"
+       width="79.016296"
        id="rect3093"
-       style="fill:#808080;fill-opacity:1;fill-rule:nonzero;stroke:#ff0000;stroke-width:14.42333508;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
-    <path
-       style="fill:none;stroke:#ff0000;stroke-width:3.44509459;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       d="M 277.11247,525.41645 552.3462,421.22409"
-       id="path3095"
-       inkscape:connector-curvature="0" />
-    <path
-       style="fill:none;stroke:#ff0000;stroke-width:3.53337359;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       d="M 236.80488,416.22506 520.98733,387.93319"
-       id="path3097"
-       inkscape:connector-curvature="0" />
+       style="fill:#808080;fill-opacity:1;fill-rule:nonzero;stroke:#ff0000;stroke-width:12.22253132;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
     <image
        y="39.194489"
        x="49.512783"
@@ -131,6 +121,18 @@
        height="600"
        width="600"
        clip-path="url(#clipPath3020)"
-       transform="matrix(3.1757052,0,0,3.1757052,-1486.3042,-812.71565)" />
+       transform="matrix(2.6791706,0,0,2.6791706,-863.66001,-602.95956)" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m 371.42857,185.20963 9.28572,101.42858"
+       id="path2999"
+       inkscape:connector-curvature="0"
+       transform="translate(150.52803,237.15378)" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m 402.85714,151.63821 66.42857,42.85714"
+       id="path3001"
+       inkscape:connector-curvature="0"
+       transform="translate(150.52803,237.15378)" />
   </g>
 </svg>
