@@ -358,10 +358,11 @@ random_edge(G& g, RandomNumGen& gen) {
 
 /** @brief Random edge traversal with visitors */
 template<typename FactorGraph, typename Visitors>
-void random_edge_traversal(const FactorGraph& g, Visitors& visitor, std::size_t max_iter) {
+void random_edge_traversal(const FactorGraph& g, Visitors& visitor, std::size_t max_iter, double max_clock) {
   boost::mt19937 gen;
   //std::cout << "n:" << n << std::endl;
-  for (std::size_t i = 0; i < max_iter; ++i)
+  clock_t st = clock();
+  for (std::size_t i = 0; i < max_iter && clock() < (max_clock - st); ++i)
     invoke_visitors(visitor, occgrid::random_edge(g, gen), g, boost::on_examine_edge());
 }
 

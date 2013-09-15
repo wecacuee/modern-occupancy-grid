@@ -8,6 +8,7 @@ def executables():
         dir_ = "Data/albertb.sm/"
         conf['dir'] = dir_
         conf['args'] = [.05, "--width=30", "--height=30",
-                        "--dir=%s" % dir_]
+                        "--dir=%s" % dir_,
+                        "--clock=20000" ]
     return [ExecutableConfig(*args) for args in args]
 

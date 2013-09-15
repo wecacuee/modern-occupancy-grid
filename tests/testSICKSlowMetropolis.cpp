@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
     ("height", po::value<double>(), "Height")
     ("resolution", po::value<double>()->required(), "Size of square cell in the map")
     ("dir", po::value<std::string>()->default_value("Data/player_sim_with_reflectance"), "Data directory")
+    ("clock", po::value<double>()->default_value(400), "Max clock")
 ;
 
   po::positional_options_description pos;
@@ -39,6 +40,7 @@ int main(int argc, char *argv[]) {
   po::notify(vm);    
 
   std::string directory = vm["dir"].as<std::string>();
+  double max_clock = CLOCKS_PER_SEC * vm["clock"].as<double>();
   // end of parse arguments ////////////////////////////////////
   OccupancyGrid occupancyGrid = loadOccupancyGrid(vm);
 
@@ -46,7 +48,7 @@ int main(int argc, char *argv[]) {
 
   //run metropolis
   OccupancyGrid::Marginals occupancyMarginals = runSlowMetropolis(occupancyGrid,
-      150000);
+      300000, max_clock);
 
   // write the result
   char marginalsOutput[1000];
