@@ -419,7 +419,7 @@ Hastings \cite{mackay1998introduction}.
 % of iterations, it is expected to yield samples from high probability region of the 
 % distribution.
 
-Metropolis hastings algorithm requires a \emph{transition probability} $Q(\map'|
+Metropolis Hastings requires a \emph{transition probability} $Q(\map'|
 \map^r)$, that depends on current sample $\map^r$ and guides
 the random walk in the high-dimensional space. We randomly sample a point
 $\map'$ from from $Q(.)$ and it is either accepted or rejected based on the
@@ -437,9 +437,9 @@ If $a \ge 1$, then the new point $\map'$ is accepted otherwise it is accepted wi
 %     \map^r & \text{ otherwise}\\
 %   \end{cases}
 % \end{align}
-Interested reader is referred to \cite{mackay1998introduction} for further details about the Metropolis Hastings algorithm.
+The interested reader is referred to \cite{mackay1998introduction,LiBOOK2002} for further details about Metropolis Hastings.
 
-For our experiments, we chose a symmetric uniform transition probability
+For our experiments, we chose a symmetric uniform transition 
 probability.  We uniformly sample a cell from the map and flip the state of the
 sampled cell to get the proposal point $\map'$. This is equivalent to sampling
 from the probability density:
@@ -453,7 +453,7 @@ from the probability density:
 where $N$ is the number of cells in the map and $\|.\|_1$ is the L1-norm. The
 first case in \eqref{eq:transitionprob} enforces that only one cell (or dimension)
 in the map can change its state. Since this is a symmetric transition
-probability, the acceptance ratio is just the ration of target probabilities.
+probability, the acceptance ratio is just the ratio of target probabilities.
 %We will see this choice is one of the reasons of poor performance of Metropolis Hastings.
 Also note that the ratio of probability distributions can be efficiently
 computed because of the factorization obtained in
@@ -511,16 +511,18 @@ Hastings algorithm.
 \end{algorithm}
 
 \subsection{Heat map}
-As we uniformly sampled cells from the map, we noticed that not all
-cells are equally important in mapping. There are three kinds of region any
-occupancy map, occupied, free and unexplored. Sampling and analyzing a cell in
-unexplored region is not much helpful as we do not have any evidence for the
+As we uniformly sample cells from the map, we notice that not all
+cells are equally important in mapping. There are three kinds of regions in an 
+occupancy map: occupied, free and unexplored. Sampling and analyzing a cell in 
+an
+unexplored region is not very helpful as we do not have any evidence for the
 region. On the other hand, the central regions of free areas are not very
-interesting as all factors usually agree on their state. The uncertainty lies
-usually lies along the boundaries of free and occupied regions. This is the
+interesting as all factors usually agree on their state. The uncertainty tends 
+to lie
+along the boundaries of free and occupied regions. This is the
 region we want to focus on.
 
-We employ a \emph{heat map} to bias our sampling along the boundaries of free
+We hence employ a \emph{heat map} to bias our sampling along the boundaries of free
 and occupied regions. We maintain a vector of cells $\map_h$ that form the
 ``interesting'' region of the map. In our experiments, we take the last cell
 spanned by each laser measurement as an ``interesting'' cell and add it to the
