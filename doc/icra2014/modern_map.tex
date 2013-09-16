@@ -69,7 +69,7 @@ efficiently than previously used methods.
 Mobile robot problems like navigation, path planning, localization and collision 
 avoidance require an estimate of the robot's spatial environment; this 
 underlying problem is called robot mapping\cite{thrun2002robotic}.  Even in 
-environments where maps are available, the environment may change over time 
+environments in which maps are available, the environment may change over time 
 necessitating a mapping ability on the mobile robot.  Robot mapping hence 
 remains an active field of research 
 \cite{meyer2012occupancy,nagla2012improved,merali2013icra} as it is an important 
@@ -157,13 +157,13 @@ dual decomposition.
 
 A main contribution of our paper is the application of modern MAP algorithms to 
 occupancy grid mapping. Although there are many MAP inference algorithms 
-\cite{kappes2013comparative} that work well for various problem, in this paper, 
+\cite{kappes2013comparative} that work well for various problems, in this paper, 
 we focus on belief propagation \cite{kschischang2001factor} and dual 
 decomposition \cite{sontag2011introduction} mainly because of their ability to 
 handle higher order factors. % and ease of implementation.
 
 Belief propagation (BP) \cite{pearl1986fusion} was introduced as an algorithm to 
-compute marginals over trees.  Surprisingly, it was found to work well on graph 
+compute marginals over trees.  Surprisingly, it was found to work well on graphs 
 with loops. Later it was found 
 that the convergent solution to belief propagation corresponds to the minima of 
 so-called Bethe free energy \cite{yedidia2000generalized}, which not only 
@@ -216,9 +216,9 @@ pattern-based potentials of \cite{komodakis2009beyond} allowing for
 %\newcommand{\pastobs}{\sigma_{\prevtime}}
 \newcommand{\pastobs}{\measurements_{1:t\unaryminus1}, \poses_{1:t\unaryminus1}}
 Consider a robot---equipped with a laser scanner---moving in a static
-environment, and assume the position of robot associated with each laser
+environment, and assume the position of the robot associated with each laser
 measurement is given. Our task is to estimate occupied regions and free
-regions, so that robot can avoid collisions with occupied regions and plan its
+regions, so that the robot can avoid collisions with occupied regions and plan its
 movement in free regions.
 %For the purpose of indoor ground robots 2D maps are often enough for path planning and exploration.
 We divide the area to be mapped into $N$ discrete cells. Let $x_i$ denote the
@@ -233,7 +233,7 @@ Let $\meas_f$ denote the $f$\textsuperscript{th} laser range measurement when
 captured from (known) pose $\pose_f$. 
 %We assume that the probability of observation $p(\meas_f| \pose_f, \map)$ 
 %(forward sensor model) be given.
-The problem is to find the probability of all cells of the map being occupied
+The problem is to find the probability of all cells of in the map being occupied
 given all $t$ observations, $\measurements = [\meas_f]^\top_{1 \le f \le t}$ and
 $\poses = [\pose_f]^\top_{1 \le f \le t}$:
 %
@@ -260,7 +260,7 @@ exponential in the number of cells. We hence focus on an approximate solution to
 
 \subsection{Mapping by inverse sensor model}
 Commonly used occupancy grid mapping algorithms
-\cite{elfes1989using,moravec1988sensor,newcombe2011kinectfusion} make
+\cite{elfes1989using,moravec1988sensor,newcombe2011kinectfusion} make the
 simplifying assumption that each grid cell is independent of all other map
 cells. 
 \newcommand{\remaining}{\measurements_{\prevtime}, \poses_{\prevtime}}
@@ -323,7 +323,7 @@ Static world assumption, $p(\meas_t|\map, \remaining, \pose_t) = p(\meas_t|\map,
                       {p(\meas_t|\remaining, \pose_t)p(\pose_t|\remaining)}
 \end{align}
 
-Another common assumption is that the pose of robot $g_t$ being independent of map $\map$:
+Another common assumption is that the pose $g_t$ of the robot being independent of map $\map$:
 \begin{align}
  p(g_t|\map, \remaining) = p(g_t|\remaining)
 \end{align}
@@ -353,7 +353,7 @@ constant $Z$.
 The problem of estimating occupancy map is intractable with the above
 formulation, as it still depends on the entire map, which has an exponential
 sample space. However, we can make use of the fact that
-a laser measurement $f$ depends only a small portion of the map $\map_f
+a laser measurement $f$ depends only on a small portion of the map $\map_f
 \subseteq \map$, hence simplifying the formulation to
 \begin{align}
  p(\map | \measurements, \poses) &= \frac{1}{Z} \prod_{1 \le f \le t}
@@ -362,9 +362,8 @@ a laser measurement $f$ depends only a small portion of the map $\map_f
 \end{align}
 The term $p(z_f|\map_f, p_f)$ is called the \emph{forward sensor model}.
 With this formulation, we are in a position to describe the problem as
-\emph{factor graph}. As we will in the next section, the above
-simplification is necessary to keep the factor graph sparsely connected
-and hence tractable.
+\emph{factor graph}. The above simplification is necessary to keep the factor
+graph sparsely connected and hence tractable.
 
 \subsection{Representation as factor graph}
 \label{sec:notation}
@@ -382,9 +381,10 @@ Let $E$ be set of all such edges:
 \end{align}
 The bipartite graph $G = (V, F, E)$ 
 represents the structure of factorization in \eqref{eq:modernmap} and hence
-called a factor graph \cite{kschischang2001factor}.  Note that any
-neighborhood $n(i)$ of variable node only consists of factors, $n(i)\subseteq
-F \, \forall i \in V$ and vice versa. Fig.~\ref{fig:factor-graph} shows factor
+called a factor graph \cite{kschischang2001factor}.  
+Note that neighborhood $n(i)$ of any variable node $i$ only consists of only
+factors nodes, $n(i)\subseteq F \, \forall i \in V$ and vice versa.
+Fig.~\ref{fig:factor-graph} shows factor
 graph diagrammatically. Note that observed nodes form the part of factor and
 are not part of the factor graph.
 
@@ -449,7 +449,9 @@ $\map'$ from from $Q(.)$ and it is either accepted or rejected based on the
   {P(\map^r)Q(\map'| \map^r)}
 \end{align}
 
-If $a \ge 1$, then the new point $\map'$ is accepted otherwise it is accepted with probability $a$. Here acceptance means that the point in next iteration is taken as the sampled point otherwise the older point is retained.
+If $a \ge 1$, then the new point $\map'$ is accepted otherwise it is accepted
+with probability $a$. Here acceptance means that the point in the next
+iteration is taken as the sampled point otherwise the earlier point is retained.
 % Mathematically
 % \begin{align}
 %   \map^{r+1} = \begin{cases}
@@ -564,12 +566,12 @@ Sum product algorithm over factor graphs \cite{kschischang2001factor} is a
 powerful yet simple algorithm to compute marginals of
 expression (of the form \eqref{eq:fullsolution}) that can be decomposed into
 factors of the form \eqref{eq:modernmap}. The algorithm provides exact
-marginals in the case when the graphs have no loops. For general case the
+marginals in the case when the graphs have no loops. For graphs with loops the
 algorithm has been shown %TODO: cite?  
 to converge in most of the practical problems.
  
 %The sum product algorithm is one of the easiest algorithm to implement. 
-The sum product algorithm works by sending messages along the edges of factor
+The sum product algorithm works by sending messages along the edges of the factor
 graph. The messages can be understood as a belief of the source node
 considering all other neighbors except the destination. These messages are
 defined on a directed edge, with a different message value for each state of
@@ -578,8 +580,9 @@ the variable node involved.
 Let $\bpmsg{f}{i}{l_i}{r}$ represent the message from
 node $i \in V$ to node $f \in F$ for state $x_i = l_i$ at any iteration $r$ of the
 algorithm. With a similar convention we take $\bpmsg{i}{f}{l_i}{r}$ to denote
-an update in the opposite direction. We use the following equations to update 
-the messages depending on whether the direction of edge is from variable node to factor node or vice versa:
+an update in the opposite direction. We use the following equations to update
+the messages on an edge depending on whether the direction of the edge is from
+variable node to factor node or vice versa:
 \begin{align}
   \bpmsg{f}{i}{l_i}{r+1} &= \sum_{\map_f \in \Omega_f: x_i = l_i}P_f(\map_f)\prod_{j \in n(f) \setminus i}\bpmsg{j}{f}{x_j}{r}
   \label{eq:factor2node}
@@ -613,7 +616,7 @@ a node can be ``triggered'' to pass on the messages when messages from all
 but one neighbors are available. However, for graphs with loops various update
 sequences have been suggested that vary from problem to problem. For example,
 in vision problems, where the factor graph is a 2D grid, horizontal and then
-vertical sweeps has been shown to produce good results.
+vertical sweeps have been shown to produce good results.
 For our implementation, we choose random update sequence i.e. a random edge is
 selected from the graph for each iteration of message update.
 
@@ -622,9 +625,8 @@ selected from the graph for each iteration of message update.
 \newcommand{\assign}{\leftarrow}
 \newcommand{\Sx}{L_i}
 
-The dual decomposition algorithm employs theory of Lagrangian duals to find an
+The dual decomposition algorithm employs theory of Lagrangian duals to find a
 convex upper bound of the original combinatorial optimization problem.
-%technique from integer programming to minimize the energy.
 Here we explain the implementation of the
 algorithm without going into mathematical proofs. The interested reader is
 referred to
@@ -655,22 +657,23 @@ likelihood corresponding to the factor.
 
 In each iteration of the algorithm all slave problems are allowed to choose
 their optimum assignment independently. If all the factors agree on the
-assignments, then we have reached the global optima. Often this is
+assignments, then we have reached the global optimum. Often this is
 not the case. In case of disagreement, we decrease the belief of all the
 disagreeing slave problems about their respective optimums by sending
-appropriate messages. It can be shown that as long as we can increase the
-messages by decreasing the step size in each iteration, the algorithm is guaranteed
-to converge to an approximate solution of the original problem
+appropriate messages. It can be shown that as long as we can increment the
+messages by decreasing step size in each iteration, the algorithm is
+guaranteed to converge to an approximate solution of the original problem
 \cite{sontag2011introduction}.
 
 Pseudo code for dual decomposition (DD) is provided in
 Alg~\ref{alg:dualdecomposition}. Apart from input factor graph $G = (V, F, E)$
 and label set $\{\Sx\}_{i \in V}$ introduced in Sec~\ref{sec:notation}, dual
 decomposition depends on a step size $\alpha$.
-We note that step size is important attribute and affects the speed of the algorithm. 
-To illustrate that we show the convergence of dual decomposition with different
+We note that step size is an important attribute and affects the speed of the algorithm. 
+To illustrate that, we show the convergence of dual decomposition with different
 step size on \emph{cave} dataset in Fig.~\ref{fig:dualdecomposition-stepsize}. 
-Note that erring on higher side causes oscillations, while erring lower side can cause convergence to be too slow.
+Note that erring on the higher side causes oscillations, while erring on the
+lower side can cause convergence to be too slow.
 
   %\subfloat[Convergence with different step size in dual decomposition]{%
 \begin{figure}
@@ -712,7 +715,7 @@ Note that erring on higher side causes oscillations, while erring lower side can
   \label{alg:dualdecomposition}
 \end{algorithm}
 Upon convergence or completing a maximum number of iterations, we can compute the
-optimal assignment for variable nodes with disagreeing \emph{slave} from the
+optimal assignment for variable nodes with disagreeing \emph{slaves} from the
 messages:
 \begin{align}
   x_i &= \argmax\limits_{x_i \in \Sx} \sum\limits_{f \in n(i)}\msg{i}{f}{x_i}.
@@ -766,7 +769,7 @@ here are computed from log odds values provided by Merali et al.
 \label{sec:forward}
 Forward sensor models estimate the sensor reading given the environment.
 %Hence, these models can be more close the actual behaviour of the sensors.
-In this section we describe consider two commonly used sensor models a)
+In this section, we describe two commonly used sensor models a)
 Gaussian and b) Piecewise constant sensor models.
 
 \subsubsection{Gaussian sensor model (GSM)}
@@ -852,19 +855,19 @@ can take any value from the label set.
 %and they do not affect factor value $P_f(\map_f)$.
 A configuration
 $\map_f$ ``matches'' pattern $\vect{R}_m$ if the state of \emph{fixed}
-nodes in same as desired values, $x_i = r^m_i \forall i \in n^m_0(f)$.
+nodes is the same as desired values, $x_i = r^m_i \forall i \in n^m_0(f)$.
 %For efficient computation we assume that number of patterns $M$ is much
 %smaller than the sample space $\Omega_f$.
 
 It is clear that PCSM \eqref{eq:piecewiseconstant} is an instance of pattern
 based factors. It is also possible to represent GSM
 \eqref{eq:gaussiansensormodel} as a pattern based factor. We use the fact that
-the term $\bar{z}_f(\map_f, g_f)$, just depends on first occupied cell. We
+the term $\bar{z}_f(\map_f, g_f)$, just depends on the first occupied cell. We
 define pattern $\vect{R}_m$ such that the first occupied cell is
 $m$\textsuperscript{th} cell in $n(f)$:
 \begin{align}
   n^m_0(f) &= n(f)_{1:m}\\
-\vect{r}^m &= \{ r^m_{i} = 0 \}_{i \in n(f)_{1:m-1}} \text{ and } r^m_{n(f)_m} = 0\\
+\vect{r}^m &= \{ r^m_{i} = 0 \}_{i \in n(f)_{1:m-1}} \text{ and } r^m_{n(f)_m} = 1\\
        R_m &= (n^m_0, \vect{r}^m)
 \end{align}
 where $n(f)_{k}$ is the $k$\textsuperscript{th} cell that is traced by laser. With
@@ -873,7 +876,7 @@ in the form \eqref{eq:patternfunction} with $\psi_m$ given by
 \begin{align}
   \psi_m &= \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(\delta(m)- z_f)^2}{2\sigma^2}\right)
 \end{align}
-where $\delta(m)$ is the distance of $m$\textsuperscript{th} cell from robot
+where $\delta(m)$ is the distance of $m$\textsuperscript{th} cell from the robot
 starting point $g_f$. Also note that in this formulation the only case for
 \emph{otherwise} is the one when all cells are $0$ (or free).
 
@@ -897,8 +900,8 @@ normalized. We assume that the messages $\bpmsg{i}{f}{l_i}{r}$ are normalized
 over the label set $L_i$ to sum up to one, $ \sum_{l_i \in L_i}
 \bpmsg{i}{f}{l_i}{r} = 1$.
 %Thus, the messages are a valid probability measure for source variable node.
-Using the messages as probability measure for the state of source nodes, we
-%can efficiently compute \eqref{eq:factor2node}. 
+Using the messages as probability measure for the state of source nodes, 
+%we can efficiently compute \eqref{eq:factor2node}. 
 we can compute the probability of each pattern being true:
 %as beliefs $\bpmsg{i}{f}{x_i}{r}$
 % \begin{align}
@@ -1027,28 +1030,28 @@ For real data, we have used the \emph{albert-b-laser} dataset provided by
 Cyrill Stachniss from University of Freiburg. The dataset was captured by a
 B21r robot with a SICK PLS moving through a lab at University of Freiburg.
 This data set was obtained from the Robotics Data Set Repository
-(Radish)~\cite{howard2003radish}. Thanks go to Cyrill Stachniss for providing
+(Radish)~\cite{howard2003radish}. We thank Cyrill Stachniss for providing
 this data.
 
 To evaluate the convergence rate of each algorithm, we plot total energy
-(negative log likelihood) of the graph with respect to CPU ticks taken by the
+(negative log likelihood) of the graph with respect to CPU ticks used by the
 algorithm. The plots of energy convergence with respect to time for cave
-dataset is shown in Fig.~\ref{fig:convergence-comparison}. These data clearly
+dataset is shown in Fig.~\ref{fig:convergence-comparison}. This data clearly
 show the improvement from moving to belief propagation and dual decomposition,
-which, in all cases, lead to lower energies faster than our baselines.  DD
+which, in all cases, leads to lower energies faster than our baselines.  DD
 outperforms BP in typical cases.
 
 In all our experiments we do not use any occupancy prior, although Merali et
 al. \cite{merali2013icra} suggest using an occupancy prior of 0.3 for better
 convergence. We use a step size of 50 for dual decomposition and piecewise
 constant sensor model. Also, we prefer piecewise constant sensor model over
-gaussian sensor model because of former being faster which is a consequence of
-having fewer patterns in the pattern based factor formulation.
+Gaussian sensor model because of the former being faster which is a consequence
+of having fewer patterns in the pattern based factor formulation.
 We have implemented the algorithms in C++ and the code will be released upon
 the acceptance of the paper.
 
 \subsection{Discussion}
-As evident from convergence comparison in
+As is evident from convergence comparison in
 Fig.~\ref{fig:convergence-comparison}, sampling algorithms (Metropolis
 Hastings with/without heatmap) are liable to getting stuck in a local minima.
 This is also an artifact of the simple transition probability where we flip
@@ -1063,7 +1066,7 @@ walls for sampling algorithms.
 
 \section{Conclusion and Future work}
 Dual decomposition is faster because it focuses on disagreeing
-nodes. However, step size is crucial parameter that affects speed of
+nodes. However, step size is a crucial parameter that affects speed of
 convergence. On the other hand sum product belief propagation does not depend
 on any parameter, but has no preference for the disagreeing nodes.
 This combination obviously hints towards an algorithm where we perform 
