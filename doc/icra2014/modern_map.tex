@@ -47,14 +47,14 @@ and Brian Peasley for discussions and early efforts in this work. } }
 \begin{abstract}
 Using the inverse sensor model has been popular in occupancy grid mapping. 
 However, it is widely known that applying the inverse sensor model to mapping 
-requires certain assumptions that are not necessarily true. Even work that uses 
-forward sensor models have relied on methods like expectation maximization or 
-Gibbs sampling which have been succeeded by more effective methods of maximum a 
-posteriori (MAP) inference over graphical models. In this paper, we propose the 
-use of modern MAP inference methods along with the forward sensor model.  Our 
-implementation and experimental results demonstrate that these modern inference 
-methods deliver more accurate maps more efficiently than previously used 
-methods.
+requires certain assumptions that are not necessarily true. Even the works
+that use forward sensor models have relied on methods like expectation
+maximization or Gibbs sampling which have been succeeded by more effective
+methods of maximum a posteriori (MAP) inference over graphical models. In this
+paper, we propose the use of modern MAP inference methods along with the
+forward sensor model. Our implementation and experimental results demonstrate
+that these modern inference methods deliver more accurate maps, more
+efficiently than previously used methods.
 \end{abstract}
 \section{Introduction}
 % % Outline
@@ -79,7 +79,7 @@ reconstruction and augmented reality.
 % This paragraph just provides some information that should be widely known; I'm 
 % not sure it should be included.  At the least, it can be removed if space is 
 % an issue.
-Although robot mapping can be performed in a many ways---metric or topological; 
+Although robot mapping can be performed in many ways---metric or topological; 
 with range sensors, like sonar \cite{thrun2003learning}, laser scanners 
 \cite{thrun2003learning} and RGBD \cite{newcombe2011kinectfusion}, or 
 bearing-only sensors \cite{davison2007monoslam,kundu2011realtime}---metric 
@@ -88,7 +88,7 @@ estimates up to scale; topological maps still require local metric
 estimates for certain problems like navigation.  We hence focus on metric 
 mapping with range sensors, specifically, laser scanners.
 
-Occupancy grid mapping (OGM) is a popular and useful range-based mapping methods 
+Occupancy grid mapping (OGM) is a popular and useful range-based mapping method 
 \cite{elfes1989using,moravec1988sensor}.  It affords a simple implementation and 
 avoids a need to explicitly seek and match landmarks in the environment 
 \cite{sugihara1988some,betke1997landmarks}. In contrast, it discretizes the
@@ -103,9 +103,9 @@ reason for using this independence assumption is computational efficiency.
 However, the assumption is inaccurate and can lead to overconfident estimates of 
 occupancy in noisy observations \cite{thrun2003learning,merali2013icra}. 
 
-To overcome this limitation, Thrun \cite{thrun2003learning} proposes a forward 
-sensor model and uses expectation maximization to estimate occupancy.  Following 
-in this line of work, more recently, Merali et al. \cite{merali2013icra} defines 
+To overcome this limitation, Thrun \cite{thrun2003learning} proposes use of forward 
+sensor model and expectation maximization to estimate occupancy.  Following 
+this line of work, more recently, Merali et al. \cite{merali2013icra} defines 
 a Gibbs sampling algorithm based on a conditional estimate of cell occupancy 
 given the rest of the map.   Although these methods have relaxed the assumptions 
 of independence, they remain computationally expensive and hence limited in 
@@ -115,7 +115,7 @@ computationally expensive and can get caught in local maxima \cite{LiBOOK2002}.
 In contrast, in this paper, we explore the use of modern inference algorithms 
 for more effective occupancy grid mapping with forward sensor models.
 Our contribution in this paper is two fold. Firstly, we introduce the factor
-graph approach of approaching occupancy grid mapping problem, which, to the
+graph approach to occupancy grid mapping problem, which, to the
 best of our knowledge, has not been applied to this problem.   This factor graph 
 formalism makes it plausible to apply modern fast inference algorithms, such as 
 loopy belief propagation \cite{kschischang2001factor} and dual decomposition 
@@ -128,7 +128,7 @@ as the linear constraint-nodes \cite{potetz2007efficient} or pattern-based
 factors \cite{komodakis2009beyond}.  We extend the pattern-based factors, 
 which explicitly computes the potential only for certain factors matching a 
 given set of patterns and otherwise assigns a constant.  Whereas the 
-pattern-based factors in \cite{komodakis2009beyond} define each pattern with 
+pattern-based factors in \cite{komodakis2009beyond} defines each pattern with 
 a fixed value for each node, we generalize these pattern-based factors by 
 allowing for \textit{free} nodes whose value does not impact the computed 
 marginal.  
@@ -156,7 +156,7 @@ dual decomposition.
 %sampling algorithm for OGM.
 
 A main contribution of our paper is the application of modern MAP algorithms to 
-occupancy grid mapping. Although they are many MAP inference algorithms 
+occupancy grid mapping. Although there are many MAP inference algorithms 
 \cite{kappes2013comparative} that work well for various problem, in this paper, 
 we focus on belief propagation \cite{kschischang2001factor} and dual 
 decomposition \cite{sontag2011introduction} mainly because of their ability to 
@@ -164,15 +164,16 @@ handle higher order factors. % and ease of implementation.
 
 Belief propagation (BP) \cite{pearl1986fusion} was introduced as an algorithm to 
 compute marginals over trees.  Surprisingly, it was found to work well on graph 
-with loops even though it is not guaranteed to converge. Later it was found 
+with loops. Later it was found 
 that the convergent solution to belief propagation corresponds to the minima of 
 so-called Bethe free energy \cite{yedidia2000generalized}, which not only 
 provided a theoretical justification for application of belief propagation to 
-graphs with loops, but also solves the convergence problem by the existence of 
-an objective function which can be minimized directly.  Later, Fractional BP 
-\cite{wiegerinck2003fractional} was introduced.  Inspired by the Bethe free 
-energy formulation of BP, it suggested using a better free energy approximation 
-by scaling the terms appropriately in the message update equation.  
+graphs with loops, but also solves the convergence problem by providing an 
+objective function which can be minimized directly.  Later, Fractional BP
+\cite{wiegerinck2003fractional} was introduced. Inspired by the Bethe free
+energy formulation of BP, it suggested using a better free energy
+approximation by scaling the terms appropriately in the message update
+equation.  
 
 In an 
 independent work, Wainwright et al.  \cite{wainwright2005map} introduce Tree 
@@ -192,7 +193,7 @@ bound faster than earlier approaches by smoothing the Lagrangian dual of the
 problem. 
 
 % Work on higher order potentials
-Another contribution of our paper how we perform efficient inference with 
+Another contribution of our paper is how we perform efficient inference with 
 higher order factors (or potentials). Many researchers approach this problem
 by considering a class of functions for which higher order factors can used
 efficiently, for example, Potetz et al. introduce a class of potentials called
@@ -350,7 +351,7 @@ the maps, hence prior is a constant and included in the normalizing
 constant $Z$. 
 
 The problem of estimating occupancy map is intractable with the above
-formulation as it still depends on the entire map, which has an exponential
+formulation, as it still depends on the entire map, which has an exponential
 sample space. However, we can make use of the fact that
 a laser measurement $f$ depends only a small portion of the map $\map_f
 \subseteq \map$, hence simplifying the formulation to
@@ -418,7 +419,7 @@ In terms of factor graph $G$ the problems \eqref{eq:fullsolution} and
    P(\map) &= \frac{1}{Z}\prod_{f \in F} P_f(\map_f)
   \label{eq:factorizationgeneric}
 \end{align}
-where  $l_i \in L_i$ denote an element from the label set $L_i$ of node $i \in V$.
+where  $l_i \in L_i$ denotes an element from the label set $L_i$ of node $i \in V$.
 By representation of occupancy grid mapping as factor graph the following
 equivalence holds true, $P_i(x_i = l_i) \equiv p(x_i
 = l_i|\measurements, \poses)$, $P(\map) \equiv p(\map|\measurements, \poses)$ and 
@@ -621,8 +622,10 @@ selected from the graph for each iteration of message update.
 \newcommand{\assign}{\leftarrow}
 \newcommand{\Sx}{L_i}
 
-The dual decomposition algorithm employs Lagrangian relaxation from
-integer programming to minimize the energy. Here we explain the implementation of the
+The dual decomposition algorithm employs theory of Lagrangian duals to find an
+convex upper bound of the original combinatorial optimization problem.
+%technique from integer programming to minimize the energy.
+Here we explain the implementation of the
 algorithm without going into mathematical proofs. The interested reader is
 referred to
 \cite{sontag2011introduction,jojic2010accelerated,komodakis2009beyond} for
@@ -805,7 +808,7 @@ states.
 %
 % However, we chose to prefer free space over occupied ones.
 Hence, we come with
-the following energy function that we use in all our experiments.
+the following factor that we use in all our experiments.
 \begin{align}
   p(z_f|\map_f, g_f) &= \frac{1}{Z}\begin{cases}
                        1 & \text{ if } \map_f = \vect{R}_{f1}\\
@@ -825,7 +828,7 @@ compared to estimating it away from it.
 
 % We can efficiently compute \eqref{eq:factor2node} for certain class of
 % $P_f(.)$. 
-We define a consider a class of \emph{pattern-based} higher order factors that
+We define a class of \emph{pattern-based} higher order factors that
 are a generalization of those discussed by Komodakis et al.
 \cite{komodakis2009beyond}. These are factors of the form:
 \begin{align}
@@ -841,9 +844,9 @@ expression $\map_f \sim \vect{R}_m$ denotes that vector $\map_f$
 %Usually $M$ is either a constant or linear in the size of neighborhood $n(f)$.
 %We further constrain the class of functions by requring each pattern
 A pattern, $\vect{R}_m = (n^m_0(f), \vect{r}^m)$, is defined by a non empty set
-of \emph{fixed} nodes $n^m_0(f) \subseteq n(f)$ that are supposed to have
-desired values $\vect{r}^m$.
-%, while the state of remaining \emph{free} nodes
+of \emph{fixed} nodes $n^m_0(f) \subseteq n(f)$ that are expected to have
+desired values $\vect{r}^m$, while the state of remaining \emph{free} nodes
+can take any value from the label set.
 % $n^m_*(f) = n(f) \setminus n^m_0(f)$
 %can have any values from the label set 
 %and they do not affect factor value $P_f(\map_f)$.
@@ -956,7 +959,7 @@ terms, the factor itself and the messages.
 % all patterns. 
 While minimizing for each pattern we can make use of the fact that the value
 of $\theta_f$ is constant for a pattern and hence we need to focus only on
-minimizing the messages. Minimizing messages is trivial by as each term can be
+minimizing the messages. Minimizing messages is trivial as each term can be
 minimized independently.
 
 While minimizing the \emph{otherwise} case of patterns, we have to ensure the
@@ -965,12 +968,12 @@ exclusivity from explicit patterns.
 % Depending on how big we expect the space of \emph{otherwise} case to be, we
 % can approach it in two different ways. 
 If the space for \emph{otherwise} case
-is small (like in the gaussian sensor model), we simply go over all the entire
-sample space to find minimum value. Otherwise,
+is small (like in the gaussian sensor model), we simply go over the entire
+space to find minimum value. Otherwise,
 %we depend on the sample space covered by patterns being small.  In this case 
 we keep finding n-best minimizations of messages until we get a minimization
-that does not match any of the patterns already considered.  For example, in
-case of piecewise constant sensor model, there are only two patterns that need
+that does not match any of the patterns already considered.  For example, 
+for piecewise constant sensor model, there are only two patterns that need
 to be checked for exclusion. The otherwise term can be easily minimized by
 finding three best assignments that minimize the messages term. Note that
 message update for max-product BP \eqref{eq:maxproduct}, can be done by
@@ -1027,13 +1030,13 @@ This data set was obtained from the Robotics Data Set Repository
 (Radish)~\cite{howard2003radish}. Thanks go to Cyrill Stachniss for providing
 this data.
 
-To evaluate the convergence rate of each algorithm, we plot total energy of the
-graph with respect CPU ticks taken by the algorithm. The plots of energy
-convergence with respect to time for cave dataset is shown in
-Fig.~\ref{fig:convergence-comparison}. These data clearly show the improvement 
-from moving to belief propagation and dual decomposition, which, in all cases, 
-lead to lower energies faster than our baselines.  DD outperforms BP in typical 
-cases.
+To evaluate the convergence rate of each algorithm, we plot total energy
+(negative log likelihood) of the graph with respect to CPU ticks taken by the
+algorithm. The plots of energy convergence with respect to time for cave
+dataset is shown in Fig.~\ref{fig:convergence-comparison}. These data clearly
+show the improvement from moving to belief propagation and dual decomposition,
+which, in all cases, lead to lower energies faster than our baselines.  DD
+outperforms BP in typical cases.
 
 In all our experiments we do not use any occupancy prior, although Merali et
 al. \cite{merali2013icra} suggest using an occupancy prior of 0.3 for better
@@ -1061,19 +1064,19 @@ walls for sampling algorithms.
 \section{Conclusion and Future work}
 Dual decomposition is faster because it focuses on disagreeing
 nodes. However, step size is crucial parameter that affects speed of
-convergence. On the other hand sum product belief propagation do not depends
-on any parameter factor, but has no preference for the disagreeing nodes.
+convergence. On the other hand sum product belief propagation does not depend
+on any parameter, but has no preference for the disagreeing nodes.
 This combination obviously hints towards an algorithm where we perform 
 belief propagation over disagreeing nodes only. The state of art variations 
 of these algorithms like Sequential Tree Re-Weighted (TRW-S) belief
 propagation \cite{kolmogorov2006convergent}, accelerated dual Decomposition
-\cite{jojic2010accelerated} are step in this direction. Also, recent
+\cite{jojic2010accelerated} are steps in this direction. Also, recent
 comparative study \cite{kappes2013comparative} points towards other candidate
 methods, e.g. polyhedra based methodsa, that work better than dual
-decomposition class of methods.  However, even without using the state of art
-optimum algorithms since we get better performance than sampling methods. This
+decomposition class of methods.  Even without using the state of art
+inference algorithms, we get better performance than methods used so far. This
 only serves to prove our assertion that modern inference methods should be
-used occupancy grid mapping when computation time is not a limiting factor. 
+used for occupancy grid mapping.
 
 \begin{figure*}
   %\includegraphics[width=0.2\textwidth]{../figures/cave_trajectory.png}%
