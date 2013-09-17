@@ -50,6 +50,12 @@ class ExecutableConfig(object):
     def plotdatafname(self):
         return "%s/%s-plot-time-energy.npy" % (self._conf['dir'], self.key())
 
+    def dir(self):
+        return self._conf['dir']
+
+    def plotfigurefname(self):
+        return "%s/plot-time-energy.pdf" % self._conf['dir']
+
     def cmd(self):
         return [self._exe] + self._conf["args"]
 

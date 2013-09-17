@@ -19,6 +19,7 @@ int main(int argc, char *argv[]){
     ("height", po::value<double>(), "Height")
     ("resolution", po::value<double>()->required(), "Size of square cell in the map")
     ("dir", po::value<std::string>()->default_value("Data/player_sim_with_reflectance"), "Data directory")
+    ("clock", po::value<double>()->default_value(400), "Max clock")
 ;
 
   po::positional_options_description pos;
@@ -29,13 +30,14 @@ int main(int argc, char *argv[]){
   po::notify(vm);    
 
   std::string directory = vm["dir"].as<std::string>();
+  double max_clock = CLOCKS_PER_SEC * vm["clock"].as<double>();
   // end of parse arguments ////////////////////////////////////
   OccupancyGrid occupancyGrid = loadOccupancyGrid(vm);
   global_vis_.init(occupancyGrid.height(), occupancyGrid.width());
   occupancyGrid.saveHeatMap("Data/HeatMap.ppm");
 
 	//run metropolis
-	OccupancyGrid::Marginals occupancyMarginals = runDDMCMC(occupancyGrid, 70000);
+	OccupancyGrid::Marginals occupancyMarginals = runDDMCMC(occupancyGrid, 700000, max_clock);
 
 	char marginalsOutput[1000];
 			sprintf(marginalsOutput, "Data/DDMCMC_Marginals.txt");

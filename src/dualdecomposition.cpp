@@ -36,6 +36,7 @@ int main(int argc, const char *argv[])
     ("resolution", po::value<double>()->required(), "Size of square cell in the map")
     ("step", po::value<EnergyType>()->default_value(50), "step size for algorithm")
     ("dir", po::value<std::string>()->default_value("Data/player_sim_with_reflectance"), "Data directory")
+    ("clock", po::value<double>()->default_value(400), "Max clock")
 ;
 
   po::positional_options_description pos;
@@ -47,6 +48,7 @@ int main(int argc, const char *argv[])
 
   EnergyType step = vm["step"].as<EnergyType>();
   std::string directory = vm["dir"].as<std::string>();
+  double max_clock = CLOCKS_PER_SEC * vm["clock"].as<double>();
   // end of parse arguments ////////////////////////////////////
   OccupancyGrid occupancyGrid = loadOccupancyGrid(vm);
 
@@ -71,7 +73,7 @@ int main(int argc, const char *argv[])
   typedef SubgradientDualDecomposition<OccupancyGridGraph, SlaveMinimizer_,
           SampleSpaceMap, DisagreementMap, Messages, SampleSpaceType, EnergyType> SubgradientDualDecompositionType;
   SubgradientDualDecompositionType subg_dd(ogg, slvmin, ssm, disagreement_map, messages, step);
-  iterate_dualdecomposition<OccupancyGridGraph, SubgradientDualDecompositionType, DisagreementMap, SampleSpaceType>(ogg, subg_dd, disagreement_map, 70);
+  iterate_dualdecomposition<OccupancyGridGraph, SubgradientDualDecompositionType, DisagreementMap, SampleSpaceType>(ogg, subg_dd, disagreement_map, 70, max_clock);
   std::stringstream ss;
   ss << directory << "/dualdecomposition.png";
   global_vis_.save(ss.str());

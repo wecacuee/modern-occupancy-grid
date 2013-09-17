@@ -105,6 +105,7 @@ int main(int argc, const char *argv[])
     ("width", po::value<double>(), "Width")
     ("height", po::value<double>(), "Height")
     ("dir", po::value<std::string>()->default_value("Data/player_sim_with_reflectance"), "Data directory")
+    ("clock", po::value<double>()->default_value(400), "Max clock")
 ;
 
   po::positional_options_description pos;
@@ -115,6 +116,7 @@ int main(int argc, const char *argv[])
   po::notify(vm);    
 
   std::string directory = vm["dir"].as<std::string>();
+  double max_clock = CLOCKS_PER_SEC * vm["clock"].as<double>();
   // end of parse arguments ////////////////////////////////////
 
   // Create the occupancy grid data structure
@@ -159,9 +161,9 @@ int main(int argc, const char *argv[])
 
   BOOST_AUTO(vistor_list, std::make_pair(spvis, display_vis));
   // getting num_edges(ogg)
-  BOOST_AUTO(n_iter, num_edges(ogg) * 0.7);
+  BOOST_AUTO(n_iter, num_edges(ogg) * 1.0);
   std::cout << "Number of iterations:" << n_iter << std::endl;
-  random_edge_traversal(ogg, vistor_list, n_iter);
+  random_edge_traversal(ogg, vistor_list, n_iter, max_clock);
   display_vis.display(ogg);
   std::stringstream ss;
   ss << directory << "/run_belief_propagation.png";

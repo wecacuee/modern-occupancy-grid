@@ -8,17 +8,17 @@ def exec_config():
         ("bin/SICK_DDMCMC", 
          {"legend" : "Metropolis Hastings with heatmap"}),
         ("bin/SICKSlowMetropolis",
-         {"legend" : "Metropolis Hastings"}),
+         {"legend" : "Metropolis Hastings [4]"}),
         ("bin/dualdecomposition",
          {"legend" : "Dual Decomposition"}),
         ("bin/TwoAssumptionAlgorithm",
-         {"legend" : "Two Assumption Algorithm"})
+         {"legend" : "Inverse sensor model"})
     ] 
     return args
-def executables(dir_):
+def executables(dir_, max_clock):
     args = exec_config()
     for k, conf in args:
         conf['dir'] = dir_
-        conf['args'] = [.18, "--dir=%s" % dir_]
+        conf['args'] = [.18, "--dir=%s" % dir_, "--clock=%f" % max_clock]
     return [ExecutableConfig(*args) for args in args]
 

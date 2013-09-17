@@ -661,7 +661,7 @@
 %
 %
 %
-\ProvidesClass{ieeeconf}[2004/1/15 revision V1.6b by Pradeep Misra]
+\ProvidesClass{cssconf}[2004/1/15 revision V1.6b by Pradeep Misra]
 %\ProvidesClass{IEEEtran}[2002/11/18 revision V1.6b by Michael Shell]
 %\typeout{-- See the "IEEEtran_HOWTO" manual for usage information.}
 %\typeout{-- The source comments contain changelog notes.}
@@ -732,13 +732,15 @@
 \DeclareOption{letterpaper}{\setlength{\paperheight}{11in}%
                             \setlength{\paperwidth}{8.5in}%
 %			    \setlength{\topmargin}{0in}%
+			    \setlength{\topmargin}{-22pt}% HK May 15 2013
                             \def\@IEEEmarginE{0.75in}%
                             \def\@IEEEmarginW{0.75in}}
 
 
 \DeclareOption{a4paper}{\setlength{\paperheight}{297mm}%
                         \setlength{\paperwidth}{210mm}%
-			\setlength{\topmargin}{-0.69in}%
+%			\setlength{\topmargin}{-0.69in}% HK May 15 2013
+			\setlength{\topmargin}{+32pt}% HK May 15 2013
                         \def\@IEEEmarginE{13.15mm}%
                         \def\@IEEEmarginW{0.75in}}
 
@@ -1140,7 +1142,7 @@
 % V1.6 conference mode margins
 \if@confmode
   % [2004/10/15 revision V1.6c by Pradeep Misra]
- \topmargin        -0.25in
+ %\topmargin        -0.25in % HK May 15 2013
  \textheight        9.5in % The standard for conferences
   % However, we will adjust this a  tad so that an integer number
   % of lines will always fit on each page
