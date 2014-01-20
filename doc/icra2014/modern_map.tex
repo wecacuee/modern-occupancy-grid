@@ -727,7 +727,7 @@ messages:
 \begin{align}
   x_i &= \argmax\limits_{x_i \in \Sx} \sum\limits_{f \in n(i)}\msg{i}{f}{x_i}.
 \end{align}
-Note that the above equation is only valid for disagreeing \emph{slaves}. When the 
+Note that the above equation is only valid for disagreeing \emph{slaves}. When 
 the \emph{slaves} agree, we can simply pick the agreed upon value.
 
 Dual decomposition is an optimization algorithm; hence it
@@ -1115,7 +1115,7 @@ used for occupancy grid mapping.
   \includegraphics[height=0.16\textwidth, angle=90]{../figures/zoomAndShow/zoomAndShowBP.pdf}%
   \includegraphics[height=0.16\textwidth, angle=90]{../figures/zoomAndShow/zoomAndShowDD.pdf}%
   \caption{Qualitative results on different datasets. Each row represents a
-    different dataset while each column represents a different algorithm. Th.e
+    different dataset while each column represents a different algorithm. The
     columns correspond to the following algorithms (from left to right): 1)
     Ground truth with the trajectory of the robot 2) Inverse sensor model
   3) Metropolis Hastings without heat map 4) Metropolis Hastings with heat map
@@ -1123,8 +1123,8 @@ used for occupancy grid mapping.
   the following datasets (from top to bottom): 
   1) cave 
   %2) hospital 
-  %2) hospital section 
-  2) albert-b. The grainy-ness in columns (3) and (4) is an artifact of
+  2) hospital section 
+  3) albert-b. The grainy-ness in columns (3) and (4) is an artifact of
   sampling algorithms, when we sample over finite number of sample to compute 
   expected state of a cell. Also note the missing or ragged walls in first 3
   algorithms, while BP and DD are able to converge to thick solid walls.
