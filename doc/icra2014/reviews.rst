@@ -3,7 +3,7 @@ Points Raised by Reviewers
 ##########################
 
 
-[ ] Are thicker walls really better?
+[X] Are thicker walls really better?
 ====================================
 
 -Walls in maps are shown to be thicker than in the ground
@@ -15,8 +15,15 @@ becoming impassable in a practical (robot navigation)
 setting. It thus is not clear that thicker walls always
 have to be an improvement.
 
+Rebuttal: Nothing to do
+~~~~~~~~~~~~~~~~~~~~~~~
 
-[ ] Show experiments on applications like navigation
+Qualitative results do not show this improvement. But lower energy is
+a quantitative measure of the map being closer to the desired objective
+function.
+
+
+[X] Show experiments on applications like navigation
 =====================================================
 
 -A very convincing demonstration of the improvements
@@ -32,7 +39,13 @@ research to evaluate potential improvements to SLAM
 approaches (i.e. using the proposed system online) by using
 the presented techniques.
 
-[ ] Corrections about Figure 4
+Rebuttal : TODO Journal
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Good ideas for journal version of the paper.
+
+
+[X] Corrections about Figure 4
 ==============================
 
 Some remarks regarding Fig. 4:
@@ -44,7 +57,13 @@ to unkown in all islands in the ground truth map.
 the lowest row of the illustration for most of the
 presented approaches.
 
-[ ] How about performance on RGBD sensor and sonar?
+Rebuttal : Addressed
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The resizing of original floorplan was causing walls to be invisible in the
+resized ground truth. Fixed that.
+
+[X] How about performance on RGBD sensor and sonar?
 ===================================================
 
 However, I believe that the authors could have provided a
@@ -66,8 +85,13 @@ proposed approach, I think it is worth referencing, and
 potentially
 comparing to it.
 
+Rebuttal : TODO Journal
+~~~~~~~~~~~~~~~~~~~~~~~
 
-[ ] No experiments on computational efficiency
+Good idea for journal version of the paper.
+
+
+[X] No experiments on computational efficiency
 ==============================================
 
 Also the authors have put efforts into the computational
@@ -78,7 +102,14 @@ of sensor measurements it would be nice to supplement the
 final version of the paper supporting the computational
 efficiency.	
 
-[ ] Compare with gmapping
+Rebuttal: Nothing to do
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The results shown in Fig. 3 are about computational efficiency.
+The inverse sensor model is starting point of all the attempted
+algorithms.
+
+[X] Compare with gmapping
 =========================
 
 1. In general, the problem of grid mapping is considered a
@@ -89,10 +120,15 @@ seems rather complex. On this point, this paper provides
 the impression that an old problem is studied again using a
 much more complex new technique.
 
-[ ] More datasets
+Rebuttal: Nothing to do
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Gmapping uses inverse sensor model.
+
+[X] More datasets
 =================
 
-[ ] Do we really need complex techniques
+[X] Do we really need complex techniques
 ========================================
 
 2. The experimental results shown in this paper are
@@ -109,6 +145,10 @@ in column no. 5 and 6. This leads back to the above
 question, why do we need this new technique for solving the
 problem of grid mapping?
 
+Rebuttal: TODO Journal
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Interesting questions. Should be addressed in the journal version.
 
 ####################
 CommentsToAuthor.txt
@@ -121,6 +161,9 @@ validation in the experiments could be improved.
 ----------------------------------------
 Comments on Video Attachment:
 
+####################
+Full text of reviews
+####################
 
 #############
 Review645.txt

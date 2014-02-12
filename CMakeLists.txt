@@ -15,6 +15,7 @@ include_directories(${GTSAM_INCLUDE_DIR})
 
 find_package( OpenCV 2.4 REQUIRED core imgproc highgui)
 include_directories(${OpenCV_INCLUDE_DIR})
+SET(OpenCV_USED_LIBS opencv_core opencv_imgproc opencv_highgui)
 
 find_package( Boost 1.40 COMPONENTS date_time serialization-mt filesystem
 	system program_options REQUIRED)
@@ -32,12 +33,12 @@ add_library(occupancy_grid_graph SHARED
 			src/LaserFactor.cpp
 			src/utility.cpp
 			)
-target_link_libraries (occupancy_grid_graph gtsam-shared ${OpenCV_LIBS})
+target_link_libraries (occupancy_grid_graph gtsam-shared ${OpenCV_USED_LIBS})
 add_library(occupancy_grid_io SHARED
 	src/cvmat_serialization.cpp
 	src/loadData.cpp
 	src/loadOccupancyGrid.cpp)
-target_link_libraries(occupancy_grid_io occupancy_grid_graph gtsam-shared ${Boost_LIBRARIES} ${OpenCV_LIBS})
+target_link_libraries(occupancy_grid_io occupancy_grid_graph gtsam-shared ${Boost_LIBRARIES} ${OpenCV_USED_LIBS})
 
 add_executable(SICKSlowMetropolis
 	src/MCMC/Metropolis.cpp
@@ -45,7 +46,7 @@ add_executable(SICKSlowMetropolis
 	tests/testSICKSlowMetropolis.cpp
 	)
 target_link_libraries (SICKSlowMetropolis occupancy_grid_graph occupancy_grid_io
-	${Boost_LIBRARIES} ${OpenCV_LIBS})
+	${Boost_LIBRARIES} ${OpenCV_USED_LIBS})
 
 add_executable(SICK_DDMCMC
 	src/MCMC/DDMCMC.cpp
@@ -53,7 +54,7 @@ add_executable(SICK_DDMCMC
 	tests/testSICKDDMCMC.cpp
 	)
 target_link_libraries (SICK_DDMCMC occupancy_grid_graph gtsam-shared
-	occupancy_grid_io ${Boost_LIBRARIES} ${OpenCV_LIBS})
+	occupancy_grid_io ${Boost_LIBRARIES} ${OpenCV_USED_LIBS})
 
 ###################################################################################
 # Vikas' code with merali13icra implementation
@@ -69,30 +70,30 @@ include_directories(${GTEST_INCLUDE_DIR})
 add_library(merali13icra SHARED
 	src/occgrid.cpp
 	src/forward_sensor_model.cpp)
-target_link_libraries(merali13icra ${OpenCV_LIBS} ${Boost_LIBRARIES}
+target_link_libraries(merali13icra ${OpenCV_USED_LIBS} ${Boost_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
 
 add_executable(convert_albert_log
 	src/convert_albert_log.cpp)
 target_link_libraries(convert_albert_log
-	occupancy_grid_graph occupancy_grid_io ${OpenCV_LIBS})
+	occupancy_grid_graph occupancy_grid_io ${OpenCV_USED_LIBS})
 
 add_executable(convert_stanford_log
 	src/convert_stanford_log.cpp)
 target_link_libraries(convert_stanford_log
-	occupancy_grid_graph occupancy_grid_io ${OpenCV_LIBS})
+	occupancy_grid_graph occupancy_grid_io ${OpenCV_USED_LIBS})
 
 add_executable(TwoAssumptionAlgorithm
 	src/TwoAssumptionAlgorithm.cpp
 	src/run_TwoAssumptionAlgorithm.cpp)
 target_link_libraries(TwoAssumptionAlgorithm occupancy_grid_graph
 	occupancy_grid_io
-	${Boost_LIBRARIES} ${OpenCV_LIBS})
+	${Boost_LIBRARIES} ${OpenCV_USED_LIBS})
 
 add_executable(simulateddata
 	src/simulateddata.cpp)
 target_link_libraries(simulateddata merali13icra occupancy_grid_io
-	${OpenCV_LIBS} ${Boost_LIBRARIES})
+	${OpenCV_USED_LIBS} ${Boost_LIBRARIES})
 add_executable(test_raytrace
 	tests/test_raytrace.cpp)
 target_link_libraries(test_raytrace 
@@ -101,17 +102,17 @@ target_link_libraries(test_raytrace
 add_executable(dualdecomposition
 	src/dualdecomposition.cpp)
 target_link_libraries(dualdecomposition occupancy_grid_graph
-	occupancy_grid_io ${Boost_LIBRARIES} ${OpenCV_LIBS})
+	occupancy_grid_io ${Boost_LIBRARIES} ${OpenCV_USED_LIBS})
 
 add_executable(test_slaveminimizer
 	tests/test_slaveminimizer.cpp)
-target_link_libraries(test_slaveminimizer occupancy_grid_graph ${Boost_LIBRARIES} ${OpenCV_LIBS})
+target_link_libraries(test_slaveminimizer occupancy_grid_graph ${Boost_LIBRARIES} ${OpenCV_USED_LIBS})
 
 add_executable(run_belief_propagation
 	src/TwoAssumptionAlgorithm.cpp
 	src/run_belief_propagation.cpp)
 target_link_libraries(run_belief_propagation occupancy_grid_graph
-	occupancy_grid_io ${Boost_LIBRARIES} ${OpenCV_LIBS})
+	occupancy_grid_io ${Boost_LIBRARIES} ${OpenCV_USED_LIBS})
 
 add_executable(test_utility
 	src/utility.cpp
@@ -142,19 +143,19 @@ target_link_libraries(test_occgrid  merali13icra
 
 add_executable(inference_gibbs_sampling 
 	src/inference_gibbs_sampling.cpp)
-target_link_libraries(inference_gibbs_sampling occupancy_grid_io merali13icra ${OpenCV_LIBS})
+target_link_libraries(inference_gibbs_sampling occupancy_grid_io merali13icra ${OpenCV_USED_LIBS})
 
 add_executable(visualize_ground_truth 
 	src/visualize_ground_truth.cpp)
-target_link_libraries(visualize_ground_truth occupancy_grid_io merali13icra ${OpenCV_LIBS})
+target_link_libraries(visualize_ground_truth occupancy_grid_io merali13icra ${OpenCV_USED_LIBS})
 
 add_executable(two_assumption_alg 
 	src/two_assumption_alg.cpp)
-target_link_libraries(two_assumption_alg merali13icra occupancy_grid_io ${OpenCV_LIBS} ${Boost_LIBRARIES})
+target_link_libraries(two_assumption_alg merali13icra occupancy_grid_io ${OpenCV_USED_LIBS} ${Boost_LIBRARIES})
 
 add_executable(displayMarginals
 	src/displayMarginals.cpp)
-target_link_libraries(displayMarginals ${OpenCV_LIBS})
+target_link_libraries(displayMarginals ${OpenCV_USED_LIBS})
 
 # find pkgconfig modules
 include(FindPkgConfig)
@@ -166,7 +167,7 @@ IF( PLAYER_FOUND )
   add_executable(captureplayerdata
 	  src/captureplayerdata.cpp 
 	  src/cvmat_serialization.cpp)
-  target_link_libraries(captureplayerdata ${OpenCV_LIBS} ${PLAYER_LIBRARIES}
+  target_link_libraries(captureplayerdata ${OpenCV_USED_LIBS} ${PLAYER_LIBRARIES}
 	  ${Boost_LIBRARIES})
 ELSE( PLAYER_FOUND )
   MESSAGE( ${INDENT} "Player not detected. If Player is installed but not detected, check your PKG_CONFIG_PATH." )

@@ -71,6 +71,7 @@ int main(int argc, char** argv) {
     ("height", po::value<double>()->required(), "Height ")
     ("resolution", po::value<double>()->required(), "Resolution ")
     ("dir", po::value<std::string>()->default_value("."), "Data directory")
+    ("erode", po::value<bool>()->default_value(true), "Erode the image before resizing")
 ;
 
   po::positional_options_description pos;
@@ -87,6 +88,7 @@ int main(int argc, char** argv) {
   double height = vm["height"].as<double>();
   double resolution = vm["resolution"].as<double>();
   std::string datadirectory = vm["dir"].as<std::string>();
+  bool do_erode = vm["erode"].as<bool>();
   // end of parse arguments ////////////////////////////////////
   cv::Mat laser_pose, laser_ranges, scan_angles, laser_reflectance;
   loadMat(laser_pose, datadirectory + "/laser_pose_all.bin");
@@ -102,8 +104,15 @@ int main(int argc, char** argv) {
   cv::Vec2d cellsize(resolution, resolution); 
   //cv::divide(original_size, gridsize, cellsize); // cellsize = in meters per pixel
   cv::divide(original_size, cellsize, gridsize);
+  if (do_erode) {
+    int kernel_rows = ceil(floorplan.cols / gridsize(0));
+    int kernel_cols = ceil(floorplan.rows / gridsize(1));
+    // Thickens the map walls before resizing
+    cv::erode(floorplan, floorplan, cv::Mat::ones(kernel_rows, kernel_cols, CV_8U));
+  }
+
   cv::resize(floorplan, floorplan, cv::Size(gridsize(0), gridsize(1)),
-      0, 0, cv::INTER_AREA);
+      0, 0, cv::INTER_LINEAR);
 
   double origin_x = 0, origin_y = 0;
   double size_x = width, size_y = height;
@@ -160,14 +169,14 @@ int main(int argc, char** argv) {
         *it = 127;
     }
     
-    double MAX_RANGE = 8;
+    double MAX_RANGE = 8.0;
 
     std::vector<double> ranges(scan_angles.cols, MAX_RANGE);
     int r;
-    boost::format in_fmter("inputstream/%d.png");
-    bfs::create_directory("inputstream");
-    boost::format gt_fmter("groundtruth/%d.png");
-    bfs::create_directory("groundtruth");
+    boost::format in_fmter(datadirectory + "/inputstream/%d.png");
+    bfs::create_directory(datadirectory + "/inputstream");
+    boost::format gt_fmter(datadirectory + "/groundtruth/%d.png");
+    bfs::create_directory(datadirectory + "/groundtruth");
 
     // trajectory map
     cv::Mat trajectory;
@@ -230,7 +239,7 @@ int main(int argc, char** argv) {
     }
     cv::transpose(trajectory, trajectory);
     cv::flip(trajectory, trajectory, 0);
-    cv::imwrite("trajectory.png", trajectory);
+    cv::imwrite(datadirectory + "/trajectory.png", trajectory);
 
     cv::Mat visgt;
     cv::cvtColor(map.gt_, visgt, cv::COLOR_GRAY2BGR);
@@ -262,7 +271,7 @@ int main(int argc, char** argv) {
         }
     }
     std::stringstream ss;
-    ss << "gt-final.png";
+    ss << datadirectory << "/gt-final.png";
     cv::transpose(visgt, visgt);
     cv::flip(visgt, visgt, 0);
     cv::imwrite(ss.str(), visgt);

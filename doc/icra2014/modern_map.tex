@@ -101,7 +101,10 @@ avoids a need to explicitly seek and match landmarks in the environment
 \cite{sugihara1988some,betke1997landmarks}. In contrast, it discretizes the
 environment into cells, squares (2D) or cubes (3D), and associates a random
 variable with each cell that represents the probability of the cell being
-occupied or free.  
+occupied or free. Also, unlike surface based
+approaches \cite{ruhnke2011highly,ryde2013voxel}, OGM makes it easier to query 
+obstacles, hence collisions, which is critical for applications like robot
+navigation.
 
 OGM methods vary in how cell occupancy is estimated, but most methods make use 
 of an inverse sensor model by assuming that the occupancy of each cell can be 
@@ -1012,8 +1015,8 @@ following exactly the same logic.
   \includegraphics[width=\mysubfloatwidth]{../../Data/albertb.sm/plot-time-energy.pdf}%
 %}%
   \caption{Comparison of convergence rate of different algorithms on occupancy
-    grid mapping. The left graph shows the convergence on simulated dataset
-    \emph{cave}, while the right shows for \emph{albert-b}
+    grid mapping. From left to right, convergence rate on three datasets is 
+    shown: 1) \emph{cave}, 2) \emph{hospital section} and 3) \emph{albert-b}
     \cite{howard2003radish} dataset.  While sampling methods like Metropolis
     hastings converge quickly they stay far from optimum energy.  On the other
     hand modern inference algorithms like belief propagation and dual
