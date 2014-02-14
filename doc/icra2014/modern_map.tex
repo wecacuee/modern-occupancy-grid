@@ -47,6 +47,7 @@ and Jason J. Corso%
     College of Computing, Georgia Tech, GA, USA
     {{\tt\small\{abhijit.kundu,frank\}@gatech.edu}}
   }
+  \thanks{We thank C. Stachniss for providing \emph{albert-b-laser} dataset \cite{howard2003radish}.}
 }
 
 \begin{document}
@@ -578,18 +579,23 @@ and dual decomposition in the problem of occupancy grid mapping.
 \subsection{Belief Propagation}
 \newcommand{\bpmsg}[4]{\mu^{#4}_{#1\rightarrow#2}(#3)}
 % TODO: Use introduction section of \cite{potetz2007efficient} to introduct belief propagation specifically 
-Sum product algorithm over factor graphs \cite{kschischang2001factor} is a
+The sum product algorithm over factor graphs \cite{kschischang2001factor} is a
 powerful yet simple algorithm to compute marginals of
-expression (of the form \eqref{eq:fullsolution}) that can be decomposed into
+expression, of the form \eqref{eq:fullsolution}, that can be decomposed into
 factors of the form \eqref{eq:modernmap}. The algorithm provides exact
 marginals in the case when the graphs have no loops. For graphs with loops the
 algorithm has been shown %TODO: cite?  
-to converge in most of the practical problems.
+to converge in most of practical problems.
  
 %The sum product algorithm is one of the easiest algorithm to implement. 
 The sum product algorithm works by sending messages along the edges of the factor
-graph. The messages can be understood as a belief of the source node
-considering all other neighbors except the destination. These messages are
+graph. 
+The messages can be understood as the \emph{beliefs} of the source node about
+destination states. Mathematically, these beliefs are the probabilities of the
+destination states marginalized over the neighbours of the source except the
+destination itself.
+%A message over a directed edge can be understood as a \emph{belief} of the source node, which is itself the probability of a state of destination node marginalized over all neighbors of the source except the destination.
+These messages are
 defined on a directed edge, with a different message value for each state of
 the variable node involved. 
 
@@ -614,10 +620,10 @@ nodes can be computed by the product of incoming messages:
   P(x_i = l_i) &= \prod_{f \in n(i)}\bpmsg{f}{i}{l_i}{r}
   \enspace.
 \end{align}
-This is called the \emph{sum-product} belief propagation (BP) algorithm.
+This is called the sum product belief propagation (BP) algorithm.
 
 One can compute the maximizing assignment instead of marginals by computing
-the max-product instead of sum product in \eqref{eq:factor2node} and finally 
+the max product instead of sum product in \eqref{eq:factor2node} and finally 
 choosing the maximizing assignment of incoming messages:
 \begin{align}
   \bpmsg{f}{i}{l_i}{r+1} &= \max_{\map_f \in \Omega_f: x_i =
@@ -627,7 +633,7 @@ l_i}P_f(\map_f)\prod_{j \in n(f) \setminus i}\bpmsg{j}{f}{x_j}{r}
 x_i^* &= \argmax_{x_i \in L_i} \prod_{f \in n(i)}\bpmsg{f}{i}{l_i}{r}.
 \enspace.
 \end{align}
-This form of the algorithm is called \emph{max-product} BP.
+This form of the algorithm is called max product BP.
 
 Belief propagation was initially designed to work on factor graphs without
 loops. In such a case one can start message updates from the leaf nodes and
@@ -636,7 +642,7 @@ but one neighbors are available. However, for graphs with loops various update
 sequences have been suggested that vary from problem to problem. For example,
 in vision problems, where the factor graph is a 2D grid, horizontal and then
 vertical sweeps have been shown to produce good results.
-For our implementation, we choose random update sequence i.e. a random edge is
+For our implementation, we choose random update sequence, i.e., a random edge is
 selected from the graph for each iteration of message update.
 
 \subsection{Subgradient Dual decomposition}
@@ -644,7 +650,7 @@ selected from the graph for each iteration of message update.
 \newcommand{\assign}{\leftarrow}
 \newcommand{\Sx}{L_i}
 
-The dual decomposition algorithm employs theory of Lagrangian duals to find a
+The dual decomposition algorithm employs the theory of Lagrangian duals to find a
 convex upper bound of the original combinatorial optimization problem.
 Here we explain the implementation of the
 algorithm without going into mathematical proofs. The interested reader is
@@ -654,7 +660,7 @@ proofs and more variations of the algorithm.
 
 The underlying idea for dual decomposition is to split the maximization
 problem into \emph{slave} problems that can be efficiently maximized. In a
-factor graph formulation the natural \emph{slave} problem is one corresponding
+factor graph formulation the natural slave problem is one corresponding
 to each factor:
 \begin{align}
   \map^f &= \argmax\limits_{\map^f} P_f(\map^f)
@@ -662,7 +668,7 @@ to each factor:
   \enspace,
 \end{align}
 where $\map^f = \{x_i^f\}_{i \in n(f)}$ is the optimum assignment 
-as determined by the corresponding \emph{slave}
+as determined by the corresponding slave
 problem. And $\msg{i}{f}{x^f_i}$ is the message (also the Lagrangian
 multiplier) from node $i$ to $f$ about state $x^f_i$. 
 The above slave problem is usually written in the form of 
@@ -686,21 +692,21 @@ messages by decreasing step size in each iteration, the algorithm is
 guaranteed to converge to an approximate solution of the original problem
 \cite{sontag2011introduction}.
 
-Pseudo code for dual decomposition (DD) is provided in
-Alg~\ref{alg:dualdecomposition}. Apart from input factor graph $G = (V, F, E)$
+Pseudocode for dual decomposition (DD) is provided in
+Alg.~\ref{alg:dualdecomposition}. Apart from input factor graph $G = (V, F, E)$
 and label set $\{\Sx\}_{i \in V}$ introduced in Sec~\ref{sec:notation}, dual
 decomposition depends on a step size $\alpha$.
 We note that step size is an important attribute and affects the speed of the algorithm. 
-To illustrate that, we show the convergence of dual decomposition with different
-step size on \emph{cave} dataset in Fig.~\ref{fig:dualdecomposition-stepsize}. 
+For illustration, we show the convergence of dual decomposition with different
+step sizes on \emph{cave} dataset in Fig.~\ref{fig:dualdecomposition-stepsize}. 
 Note that erring on the higher side causes oscillations, while erring on the
 lower side can cause convergence to be too slow.
 
   %\subfloat[Convergence with different step size in dual decomposition]{%
 \begin{figure}
   \includegraphics[width=\columnwidth]{../../Data/plot-time-energy-step.pdf}%
-    \label{fig:dualdecomposition-stepsize}%
     \caption{The rate of convergence in subgradient dual decomposition depends on step size}
+    \label{fig:dualdecomposition-stepsize}%
 \end{figure}
 
 
@@ -736,13 +742,13 @@ lower side can cause convergence to be too slow.
   \label{alg:dualdecomposition}
 \end{algorithm}
 Upon convergence or completing a maximum number of iterations, we can compute the
-optimal assignment for variable nodes with disagreeing \emph{slaves} from the
+optimal assignment for variable nodes with disagreeing slaves from the
 messages:
 \begin{align}
   x_i &= \argmax\limits_{x_i \in \Sx} \sum\limits_{f \in n(i)}\msg{i}{f}{x_i}.
 \end{align}
-Note that the above equation is only valid for disagreeing \emph{slaves}. When 
-the \emph{slaves} agree, we can simply pick the agreed upon value.
+Note that the above equation is only valid for disagreeing slaves. When 
+the slaves agree, we can simply pick the agreed upon value.
 
 Dual decomposition is an optimization algorithm; hence it
 only solves the MAP problem \eqref{eq:mapgeneric}, but not the marginal problem
@@ -754,13 +760,13 @@ only solves the MAP problem \eqref{eq:mapgeneric}, but not the marginal problem
 
 \section{Higher order factors and efficiency}
 
-The message update equation \eqref{eq:factor2node} in BP algorithm and
-the slave minimization \eqref{eq:slavemin} in DD algorithm are, in general,
+The message update equation \eqref{eq:factor2node} in the BP algorithm and
+the slave minimization \eqref{eq:slavemin} in the DD algorithm are, in general,
 exponential in the size of neighborhood of factor $f$, which is
 computationally expensive for higher order factor graphs. 
 This motivates us to seek a generic class of factors that can be efficiently
 applied to the belief propagation (BP) and dual decomposition (DD) algorithms.
-We begin by introducing common forward sensor models, that need to fit our
+We begin by introducing common forward sensor models that need to fit our
 class of factors followed by their generalization and then their application
 to the BP and DD algorithms.
 
@@ -791,7 +797,7 @@ here are computed from log odds values provided by Merali et al.
 Forward sensor models estimate the sensor reading given the environment.
 %Hence, these models can be more close the actual behaviour of the sensors.
 In this section, we describe two commonly used sensor models a)
-Gaussian and b) Piecewise constant sensor models.
+Gaussian and b) piecewise constant sensor models.
 
 \subsubsection{Gaussian sensor model (GSM)}
 \newcommand{\actz}{\bar{z}_f(\map_f, g_f)}
@@ -815,8 +821,8 @@ from pose $g_f$.
 % \end{align}
 
 \subsubsection{Piecewise constant sensor model (PCSM)}
-It is common in graphical models to have very simple factors that assign high
-probability to expected configuration and very low probability to all other
+It is common in graphical models to have simple factors that assign high
+probability to expected configurations and low probability to all other
 states. 
 % A sensor model on these lines would look like
 % \begin{align}
@@ -832,8 +838,8 @@ states.
 %measurement $f$ passes.
 %
 % However, we chose to prefer free space over occupied ones.
-Hence, we come with
-the following factor that we use in all our experiments.
+Hence, we propose
+the following factor, which we use in all our experiments,
 \begin{align}
   p(z_f|\map_f, g_f) &= \frac{1}{Z}\begin{cases}
                        1 & \text{ if } \map_f = \vect{R}_{f1}\\
@@ -844,12 +850,12 @@ the following factor that we use in all our experiments.
   \label{eq:piecewiseconstant}
 \end{align}
 where $Z$ is the normalization constant, $\vect{R}_{f1} = [0, 0 \dots 0,
-1]^\top$ denotes all free but last occupied cell pattern and $\vect{R}_{f2} =
+1]^\top$ denotes the all-free-but-last-occupied cell pattern and $\vect{R}_{f2} =
 [0, 0 \dots 0, 0]^\top$ denotes all free cells. The second case indicates that
 we are more averse to estimating the reflecting cell closer to the robot as
-compared to estimating it away from it.
+compared to estimating it away from the robot.
 
-\subsection{Generalization to Pattern-based factors}
+\subsection{Generalization to pattern-based factors}
 \label{sec:patternfunctions}
 
 % We can efficiently compute \eqref{eq:factor2node} for certain class of
@@ -858,7 +864,7 @@ We define a class of \emph{pattern-based} higher order factors that
 are a generalization of those discussed by Komodakis et al.
 \cite{komodakis2009beyond}. These are factors of the form:
 \begin{align}
-  P'_f(\map_f) = \begin{cases}
+  p(z_f|\map_f, g_f) = \begin{cases}
     \psi_{m} & \text{ if $\map_f \sim \vect{R}_m$} \,\,\, \forall 1 \le m \le M\\
     \psi_{\text{min}} & \text{ otherwise}
   \end{cases}
@@ -870,7 +876,7 @@ expression $\map_f \sim \vect{R}_m$ denotes that vector $\map_f$
 ``matches'' pattern $\vect{R}_m$.  
 %Usually $M$ is either a constant or linear in the size of neighborhood $n(f)$.
 %We further constrain the class of functions by requring each pattern
-A pattern, $\vect{R}_m = (n^m_0(f), \vect{r}^m)$, is defined by a non empty set
+A pattern, $\vect{R}_m = (n^m_0(f), \vect{r}^m)$, is defined by a non-empty set
 of \emph{fixed} nodes $n^m_0(f) \subseteq n(f)$ that are expected to have
 desired values $\vect{r}^m$, while the state of remaining \emph{free} nodes
 can take any value from the label set.
@@ -879,23 +885,23 @@ can take any value from the label set.
 %and they do not affect factor value $P_f(\map_f)$.
 A configuration
 $\map_f$ ``matches'' pattern $\vect{R}_m$ if the state of \emph{fixed}
-nodes is the same as desired values, $x_i = r^m_i \forall i \in n^m_0(f)$.
+nodes is the same as the desired values, $x_i = r^m_i \forall i \in n^m_0(f)$.
 %For efficient computation we assume that number of patterns $M$ is much
 %smaller than the sample space $\Omega_f$.
 
-It is clear that PCSM \eqref{eq:piecewiseconstant} is an instance of pattern
-based factors. It is also possible to represent GSM
-\eqref{eq:gaussiansensormodel} as a pattern based factor. We use the fact that
+It is clear that PCSM \eqref{eq:piecewiseconstant} is an instance of 
+pattern-based factors. It is also possible to represent GSM
+\eqref{eq:gaussiansensormodel} as a pattern-based factor. We use the fact that
 the term $\bar{z}_f(\map_f, g_f)$, just depends on the first occupied cell. We
 define pattern $\vect{R}_m$ such that the first occupied cell is
-$m$\textsuperscript{th} cell in $n(f)$:
+the $m$\textsuperscript{th} cell in $n(f)$:
 \begin{align}
   n^m_0(f) &= n(f)_{1:m}\\
 \vect{r}^m &= \{ r^m_{i} = 0 \}_{i \in n(f)_{1:m-1}} \text{ and } r^m_{n(f)_m} = 1\\
        R_m &= (n^m_0, \vect{r}^m)
   \enspace,
 \end{align}
-where $n(f)_{k}$ is the $k$\textsuperscript{th} cell that is traced by laser. With
+where $n(f)_{k}$ is the $k$\textsuperscript{th} cell that is traced by the laser. With
 this formulation, we will have $M = n(f)$ patterns to describe the GSM
 in the form \eqref{eq:patternfunction} with $\psi_m$ given by
 \begin{align}
@@ -919,14 +925,14 @@ starting point $g_f$. Also note that in this formulation the only case for
 % example. This makes message update step in \eqref{eq:factor2node}
 % computationally expensive.
 
-To efficiently compute \eqref{eq:factor2node} for pattern-based factors
+To efficiently compute \eqref{eq:factor2node} for the pattern-based factors
 defined %Section~\ref{sec:patternfunctions},
 we need the messages to be
 normalized. We assume that the messages $\bpmsg{i}{f}{l_i}{r}$ are normalized
 over the label set $L_i$ to sum up to one, $ \sum_{l_i \in L_i}
 \bpmsg{i}{f}{l_i}{r} = 1$.
 %Thus, the messages are a valid probability measure for source variable node.
-Using the messages as probability measure for the state of source nodes, 
+Using the messages as a probability measure for the state of source nodes, 
 %we can efficiently compute \eqref{eq:factor2node}. 
 we can compute the probability of each pattern being true:
 %as beliefs $\bpmsg{i}{f}{x_i}{r}$
@@ -983,31 +989,31 @@ neighborhood size for GSM and linear for PCSM.
 \subsection{Efficient dual decomposition}
 % In similar lines of BP, slave minimization \eqref{eq:slavemin} in dual
 % decomposition can be done efficiently for \emph{pattern-based} factors.
-We note that \emph{slave} function \eqref{eq:slavemin} is composed of two
-terms, the factor itself and the messages. 
-% If factor is a pattern based function, we can address
+We note that slave function \eqref{eq:slavemin} is composed of two
+terms: the factor itself and the messages. 
+% If factor is a pattern-based function, we can address
 % the minimization for each pattern and later taking the minima of minimums for
 % all patterns. 
 While minimizing for each pattern we can make use of the fact that the value
 of $\theta_f$ is constant for a pattern and hence we need to focus only on
-minimizing the messages. Minimizing messages is trivial as each term can be
+minimizing the messages. Minimizing the messages is trivial as each term can be
 minimized independently.
 
-While minimizing the \emph{otherwise} case of patterns, we have to ensure the
+While minimizing the \emph{otherwise} case of patterns, we must ensure the
 exclusivity from explicit patterns.
 %can be tricky as naive minimization can result in values that matches one of the explicit patterns.
 % Depending on how big we expect the space of \emph{otherwise} case to be, we
 % can approach it in two different ways. 
-If the space for \emph{otherwise} case
-is small (like in the gaussian sensor model), we simply go over the entire
-space to find minimum value. Otherwise,
+If the space for the otherwise case
+is small (like in the Gaussian sensor model), we simply go over the entire
+space to find the minimum value. Otherwise,
 %we depend on the sample space covered by patterns being small.  In this case 
-we keep finding n-best minimizations of messages until we get a minimization
+we keep finding the $n$-best minimizations of messages until we get a minimization
 that does not match any of the patterns already considered.  For example, 
-for piecewise constant sensor model, there are only two patterns that need
-to be checked for exclusion. The otherwise term can be easily minimized by
-finding three best assignments that minimize the messages term. Note that
-message update for max-product BP \eqref{eq:maxproduct}, can be done by
+for the piecewise constant sensor model, there are only two patterns that need
+to be checked for exclusion. Hence, the otherwise term can be easily minimized by
+finding the three best assignments that minimize the messages term. Note that
+message update for max product BP \eqref{eq:maxproduct}, can be done by
 following exactly the same logic.
 
 \providecommand{\mysubfloatwidth}{0.33\textwidth}
@@ -1055,11 +1061,10 @@ The robot motion is generated using the wander driver. The robot is allowed to
 wander in the map for 2 minutes aggregating approximately 270,000 laser measurements.
 
 For real data, we have used the \emph{albert-b-laser} dataset provided by
-Cyrill Stachniss from University of Freiburg. The dataset was captured by a
+C. Stachniss from University of Freiburg. The dataset was captured by a
 B21r robot with a SICK PLS moving through a lab at University of Freiburg.
 This data set was obtained from the Robotics Data Set Repository
-(Radish)~\cite{howard2003radish}. We thank Cyrill Stachniss for providing
-this data.
+(Radish)~\cite{howard2003radish}.
 
 To evaluate the convergence rate of each algorithm, we plot total energy
 (negative log likelihood) of the graph with respect to CPU ticks used by the
@@ -1074,38 +1079,39 @@ al. \cite{merali2013icra} suggest using an occupancy prior of 0.3 for better
 convergence. We use a step size of 50 for dual decomposition and piecewise
 constant sensor model. Also, we prefer piecewise constant sensor model over
 Gaussian sensor model because of the former being faster which is a consequence
-of having fewer patterns in the pattern based factor formulation.
-We have implemented the algorithms in C++ and the code will be released upon
-the acceptance of the paper.
+of having fewer patterns in the pattern-based factor formulation.
+We have implemented the algorithms in C++ and the code is available at the 
+authors' websites.
 
 \subsection{Discussion}
-As is evident from convergence comparison in
+As is evident from the convergence comparison in
 Fig.~\ref{fig:convergence-comparison}, sampling algorithms (Metropolis
 Hastings with/without heatmap) are liable to getting stuck in a local minima.
 This is also an artifact of the simple transition probability where we flip
 only one cell at a time. Even from the qualitative results for sampling
-algorithms, we see that the walls are thinner than corresponding results in
-other algorithms which shows the inability of sampling based algorithms to
-form lower energy thicker walls for piecewise constant sensor model. The
+algorithms (Fig.~\ref{fig:convergence-comparison-visuals}),
+we see that the walls are thinner than the corresponding results in
+other algorithms which shows the inability of sampling-based algorithms to
+form lower energy and thicker walls for the piecewise constant sensor model. The
 downside of being biased towards thinner walls is evident in the
 \emph{albert-b} dataset (see
 Fig~\ref{fig:convergence-comparison-visuals}), as we get ragged
-walls for sampling algorithms.
+walls for the sampling algorithms.
 
 \section{Conclusion and Future work}
 Dual decomposition is faster because it focuses on disagreeing
-nodes. However, step size is a crucial parameter that affects speed of
-convergence. On the other hand sum product belief propagation does not depend
+nodes. However, step size is a crucial parameter that affects the speed of
+convergence. On the other hand, sum product belief propagation does not depend
 on any parameter, but has no preference for the disagreeing nodes.
 This combination obviously hints towards an algorithm where we perform 
 belief propagation over disagreeing nodes only. The state of art variations 
-of these algorithms like Sequential Tree Re-Weighted (TRW-S) belief
-propagation \cite{kolmogorov2006convergent}, accelerated dual Decomposition
-\cite{jojic2010accelerated} are steps in this direction. Also, recent
+of these algorithms, like Sequential Tree Re-Weighted (TRW-S) belief
+propagation \cite{kolmogorov2006convergent}, accelerated dual decomposition
+\cite{jojic2010accelerated}, are steps in this direction. Also, a recent
 comparative study \cite{kappes2013comparative} points towards other candidate
-methods, e.g. polyhedra based methods, that work better than dual
-decomposition class of methods.  Even without using the state of art
-inference algorithms, we get better performance than methods used so far. This
+methods, e.g. polyhedra based methods, that outperform than the dual
+decomposition class of methods.  Even without using these more recent 
+algorithmic developments, we get stronger performance than methods used so far. This
 only serves to prove our assertion that modern inference methods should be
 used for occupancy grid mapping.
 
