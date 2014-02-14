@@ -276,13 +276,14 @@ simplifying assumption that each grid cell is independent of all other map
 cells: 
 \newcommand{\remaining}{\measurements_{\prevtime}, \poses_{\prevtime}}
 \begin{align}
-  p(\map|\measurements, \poses) &= \prod_{1 \le i \le N} p(x_i|\measurements, \poses).
+  p(\map|\measurements, \poses) &= \prod_{1 \le i \le N} p(x_i|\measurements, \poses)
+  \enspace.
 \end{align}
 The probability of each cell can be easily computed independent of each other,
 by a simple Bayes formulation:
 \begin{align}
   p(x_i|\measurements, \poses) &= \frac{p(\meas_t, \pose_t|x_i, \remaining)p(x_i|\remaining)}
-                         {p(\meas_t, \pose_t|\remaining)}.
+                         {p(\meas_t, \pose_t|\remaining)}\enspace.
   \label{eq:assumeindependence}
 \end{align}
 %where
@@ -304,7 +305,7 @@ above equation (\ref{eq:assumeindependence}) can be simplified \cite{merali2013i
  % &= p(z_t, g_t|x_i)\frac{p(x_i|\remaining)} {p(z_t, g_t|\remaining)}\\
  % &= \frac{p(x_i|z_t, g_t)p(z_t,g_t)} {p(x_i)}\frac{p(x_i|\remaining)}{p(z_t, g_t|\remaining)}\\
  &= \frac{1}{Z'}\frac{p(x_i|\meas_t, \pose_t)}{p(x_i)}p(x_i|\remaining)\\
- &= \frac{1}{Z'p^{t-1}(x_i)}\prod_{1\le f \le t} p(x_i|\meas_f, \pose_f)
+ &= \frac{1}{Z'p^{t-1}(x_i)}\prod_{1\le f \le t} p(x_i|\meas_f, \pose_f)\enspace,
 \end{align}
 where $Z'$ is a normalizing factor that is independent of $x_i$, $p(x_i)$ is
 the prior probability for cell $x_i$ and $p(x_i|z_f, g_f)$ is called the
@@ -368,7 +369,7 @@ a laser measurement $f$ depends only on a small portion of the map $\map_f
 \subseteq \map$, hence simplifying the formulation to:
 \begin{align}
  p(\map | \measurements, \poses) &= \frac{1}{Z} \prod_{1 \le f \le t}
- p(z_f|\map_f, g_f).
+ p(z_f|\map_f, g_f)\enspace.
  \label{eq:modernmap}
 \end{align}
 The term $p(z_f|\map_f, p_f)$ is called the \emph{forward sensor model}.
@@ -388,7 +389,8 @@ those cells that the laser passes through for given pose $\pose_f$.
 Let $E$ be set of all such edges:
 % Mathematically,
 \begin{align}
-  E = \{(i, f) : i \in V, f \in F, \text{laser $f$ passes through cell $i$}\}.
+  E = \{(i, f) : i \in V, f \in F, \text{laser $f$ passes through cell $i$}\}
+  \enspace.
 \end{align}
 The bipartite graph $G = (V, F, E)$ 
 represents the structure of factorization in \eqref{eq:modernmap} and is hence
@@ -427,7 +429,8 @@ In terms of factor graph $G$ the problems \eqref{eq:fullsolution} and
      \map* &= \argmax_{\map \in \Omega} P(\map)
   \label{eq:mapgeneric}
   \\
-   P(\map) &= \frac{1}{Z}\prod_{f \in F} P_f(\map_f).
+   P(\map) &= \frac{1}{Z}\prod_{f \in F} P_f(\map_f)
+   \enspace,
   \label{eq:factorizationgeneric}
 \end{align}
 where  $l_i \in L_i$ denotes an element from the label set $L_i$ of node $i \in V$.
@@ -457,7 +460,8 @@ $\map'$ from from $Q(.)$ and it is either accepted or rejected based on the
 \emph{acceptance probability} $a$:
 \begin{align}
   a = \frac{P(\map')Q(\map^r| \map')}
-  {P(\map^r)Q(\map'| \map^r)}.
+  {P(\map^r)Q(\map'| \map^r)}
+  \enspace.
 \end{align}
 
 If $a \ge 1$, then the new point $\map'$ is accepted otherwise it is accepted
@@ -480,7 +484,7 @@ from the probability density:
   Q(\map'| \map^r) = \begin{cases}
     \frac{1}{N} & \text{if $\|\map' - \map^r\|_1 = 1$}\\
       0 & \text{ otherwise}
-  \end{cases}
+  \end{cases}\enspace,
   \label{eq:transitionprob}
 \end{align}
 where $N$ is the number of cells in the map and $\|.\|_1$ is the L1-norm. The
@@ -494,7 +498,8 @@ computed because of the factorization obtained in
 \begin{align}
   a &= \frac{P(\map')}{P(\map^r)}
     %&= \frac{\prod_{f \in F} P_f(\map'_f)}{\prod_{f \in F} P_f(\map^r_f)}\\
-    = \frac{\prod_{f \in n(i)} P_f(\map'_f)}{\prod_{f \in n(i)} P_f(\map^r_f)},
+    = \frac{\prod_{f \in n(i)} P_f(\map'_f)}{\prod_{f \in n(i)} P_f(\map^r_f)}
+    \enspace,
   \label{eq:acceptanceprob}
 \end{align}
 where $i$ is the (sampled) cell whose state is different in $\map'$ and $\map^r$,
@@ -599,6 +604,7 @@ variable node to factor node or vice versa:
   \label{eq:factor2node}
   \\
   \bpmsg{i}{f}{l_i}{r+1} &= \prod_{h \in n(i) \setminus f}\bpmsg{h}{i}{l_i}{r}
+  \enspace,
   \label{eq:node2factor}
 \end{align}
 where $\Omega_f = \prod_{i \in n(f)} L_i$ denotes the sample space of the
@@ -606,6 +612,7 @@ neighborhood of factor $f$ in graph $G$. On convergence, the belief of variable
 nodes can be computed by the product of incoming messages:
 \begin{align}
   P(x_i = l_i) &= \prod_{f \in n(i)}\bpmsg{f}{i}{l_i}{r}
+  \enspace.
 \end{align}
 This is called the \emph{sum-product} belief propagation (BP) algorithm.
 
@@ -618,6 +625,7 @@ l_i}P_f(\map_f)\prod_{j \in n(f) \setminus i}\bpmsg{j}{f}{x_j}{r}
 \label{eq:maxproduct}
 \\
 x_i^* &= \argmax_{x_i \in L_i} \prod_{f \in n(i)}\bpmsg{f}{i}{l_i}{r}.
+\enspace.
 \end{align}
 This form of the algorithm is called \emph{max-product} BP.
 
@@ -651,6 +659,7 @@ to each factor:
 \begin{align}
   \map^f &= \argmax\limits_{\map^f} P_f(\map^f)
   \prod\limits_{i \in n(f)}\exp\left(-\msg{i}{f}{x^f_i} \right)
+  \enspace,
 \end{align}
 where $\map^f = \{x_i^f\}_{i \in n(f)}$ is the optimum assignment 
 as determined by the corresponding \emph{slave}
@@ -661,6 +670,7 @@ negative log likelihood:
 \begin{align}
   \map^f &= \argmin\limits_{\map^f} \theta_f(\map^f)
   +\sum\limits_{i \in n(f)}\msg{i}{f}{x^f_i}
+  \enspace,
   \label{eq:slavemin}
 \end{align}
 where $\theta_f(\map^f) = -\log P_f(\map^f)$ is the negative log
@@ -789,6 +799,7 @@ Assuming Gaussian noise $\sigma$, the range measurement by a laser sensor is giv
 \begin{align}
   p(z_f|\map_f, g_f) &=
   \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(\actz - z_f)^2}{2\sigma^2}\right)
+  ,
   \label{eq:gaussiansensormodel}
 \end{align}
 where $\actz$ is the distance of first occupied cell in $\map_f$ starting
@@ -829,6 +840,7 @@ the following factor that we use in all our experiments.
               \exp(-900) & \text{ if } \map_f = \vect{R}_{f2}\\
            \exp(-1000) & \text{ otherwise}
   \end{cases}
+  \enspace,
   \label{eq:piecewiseconstant}
 \end{align}
 where $Z$ is the normalization constant, $\vect{R}_{f1} = [0, 0 \dots 0,
@@ -850,6 +862,7 @@ are a generalization of those discussed by Komodakis et al.
     \psi_{m} & \text{ if $\map_f \sim \vect{R}_m$} \,\,\, \forall 1 \le m \le M\\
     \psi_{\text{min}} & \text{ otherwise}
   \end{cases}
+  \enspace,
   \label{eq:patternfunction}
 \end{align}
 where $\vect{R}_m$ is one of the mutually exclusive $M$ patterns and
@@ -880,12 +893,14 @@ $m$\textsuperscript{th} cell in $n(f)$:
   n^m_0(f) &= n(f)_{1:m}\\
 \vect{r}^m &= \{ r^m_{i} = 0 \}_{i \in n(f)_{1:m-1}} \text{ and } r^m_{n(f)_m} = 1\\
        R_m &= (n^m_0, \vect{r}^m)
+  \enspace,
 \end{align}
 where $n(f)_{k}$ is the $k$\textsuperscript{th} cell that is traced by laser. With
 this formulation, we will have $M = n(f)$ patterns to describe the GSM
 in the form \eqref{eq:patternfunction} with $\psi_m$ given by
 \begin{align}
   \psi_m &= \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{(\delta(m)- z_f)^2}{2\sigma^2}\right)
+  \enspace,
 \end{align}
 where $\delta(m)$ is the distance of $m$\textsuperscript{th} cell from the robot
 starting point $g_f$. Also note that in this formulation the only case for
@@ -935,6 +950,7 @@ we can compute the probability of each pattern being true:
 0 & \text{if $i \in n^m_0(f)$ and $l_i \ne r^m_i$}\\
   \prod\limits_{j \in n^m_0(f) \setminus i}\bpmsg{j}{f}{r^m_j}{r} & \text{otherwise}
   \end{cases}
+  .
 \end{multline}
 
 % Note that we have not treated the node being marginalized specially.  Unlike
@@ -954,6 +970,7 @@ probability of patterns:
   \bpmsg{f}{i}{l_i}{r+1} = \sum_{m \le M} \psi_m p(\vect{x_f} \sim \vect{R}_m|x_i = l_i)
   + \psi_{\text{min}} p_{\text{otherwise}}
   \label{eq:efficientbp}
+  \enspace,
 \end{multline}
 where $p_{\text{otherwise}} = 1 - \sum_{m \le M}p(\vect{x_f} \sim \vect{R}_m|x_i = l_i)$.
 
