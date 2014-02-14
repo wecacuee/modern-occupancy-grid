@@ -24,11 +24,11 @@
 
 
 \title{\Large \bf
-Modern MAP inference methods for accurate and faster occupancy grid mapping on higher
+Modern MAP inference methods for accurate and fast occupancy grid mapping on higher
 order factor graphs
 }
-\author{Vikas Dhiman
-, Abhijit Kundu
+\author{Vikas Dhiman%
+, Abhijit Kundu%
 , Frank Dellaert
 and Jason J. Corso%
   \thanks{%
@@ -60,7 +60,7 @@ maximization or Gibbs sampling which have been succeeded by more effective
 methods of maximum a posteriori (MAP) inference over graphical models. In this
 paper, we propose the use of modern MAP inference methods along with the
 forward sensor model. Our implementation and experimental results demonstrate
-that these modern inference methods deliver more accurate maps, more
+that these modern inference methods deliver more accurate maps more
 efficiently than previously used methods.
 \end{abstract}
 \section{Introduction}
@@ -101,19 +101,19 @@ avoids a need to explicitly seek and match landmarks in the environment
 \cite{sugihara1988some,betke1997landmarks}. In contrast, it discretizes the
 environment into cells, squares (2D) or cubes (3D), and associates a random
 variable with each cell that represents the probability of the cell being
-occupied or free. Also, unlike surface based
+occupied or free. Also, unlike surface-based
 approaches \cite{ruhnke2011highly,ryde2013voxel}, OGM makes it easier to query 
 obstacles, hence collisions, which is critical for applications like robot
 navigation.
 
 OGM methods vary in how cell occupancy is estimated, but most methods make use 
-of an inverse sensor model by assuming that the occupancy of each cell can be 
+of an inverse sensor model that assumes the occupancy of each cell can be 
 estimated independently of the other cells in the map \cite{elfes1989using,moravec1988sensor,moravec1985high,newcombe2011kinectfusion}.  The main 
 reason for using this independence assumption is computational efficiency.  
 However, the assumption is inaccurate and can lead to overconfident estimates of 
 occupancy in noisy observations \cite{thrun2003learning,merali2013icra}. 
 
-To overcome this limitation, Thrun \cite{thrun2003learning} proposes use of forward 
+To overcome this limitation, Thrun \cite{thrun2003learning} proposes the use of a forward 
 sensor model and expectation maximization to estimate occupancy.  Following 
 this line of work, more recently, Merali et al. \cite{merali2013icra} defines 
 a Gibbs sampling algorithm based on a conditional estimate of cell occupancy 
@@ -125,7 +125,7 @@ computationally expensive and can get caught in local maxima \cite{LiBOOK2002}.
 In contrast, in this paper, we explore the use of modern inference algorithms 
 for more effective occupancy grid mapping with forward sensor models.
 Our contribution in this paper is two fold. Firstly, we introduce the factor
-graph approach to occupancy grid mapping problem, which, to the
+graph approach to the occupancy grid mapping problem, which, to the
 best of our knowledge, has not been applied to this problem.   This factor graph 
 formalism makes it plausible to apply modern fast inference algorithms, such as 
 loopy belief propagation \cite{kschischang2001factor} and dual decomposition 
@@ -136,15 +136,15 @@ approach.  Factor graph inference is exponential in neighborhood size, which
 requires us to focus on a certain sub-class of factors for tractability, such 
 as the linear constraint-nodes \cite{potetz2007efficient} or pattern-based 
 factors \cite{komodakis2009beyond}.  We extend the pattern-based factors, 
-which explicitly computes the potential only for certain factors matching a 
-given set of patterns and otherwise assigns a constant.  Whereas the 
-pattern-based factors in \cite{komodakis2009beyond} defines each pattern with 
+which explicitly compute the potential only for certain factors matching a 
+given set of patterns and otherwise assign a constant.  Whereas the 
+pattern-based factors in \cite{komodakis2009beyond} define each pattern with 
 a fixed value for each node, we generalize these pattern-based factors by 
 allowing for \textit{free} nodes whose value does not impact the computed 
 marginal.  
 
 We implement these contributions for effective occupancy grid mapping with a 
-forward sensor model and test our work on both simulated and real-data. Our 
+forward sensor model and test our work on both simulated and real data. Our 
 experiments demonstrate the effectiveness of our novel OGM approach, especially, 
 dual decomposition.  
 
@@ -176,7 +176,7 @@ Belief propagation (BP) \cite{pearl1986fusion} was introduced as an algorithm to
 compute marginals over trees.  Surprisingly, it was found to work well on graphs 
 with loops. Later it was found 
 that the convergent solution to belief propagation corresponds to the minima of 
-so-called Bethe free energy \cite{yedidia2000generalized}, which not only 
+the so-called Bethe free energy~\cite{yedidia2000generalized}, which not only 
 provided a theoretical justification for application of belief propagation to 
 graphs with loops, but also solves the convergence problem by providing an 
 objective function which can be minimized directly.  Later, Fractional BP
@@ -256,6 +256,7 @@ Alternatively, we can focus on the maximum posterior map:
 %
 \begin{align}
   \map^* &= \argmax_{\map \in \Omega } p(\map | \measurements, \poses)
+  .
   \label{eq:mapproblem}
 \end{align}
 %
@@ -268,17 +269,17 @@ occupancy configuration maximizing posterior probability.
 Clearly, a na\"{i}ve solution to either problem would have complexity that is 
 exponential in the number of cells. We hence focus on an approximate solution to this problem.
 
-\subsection{Mapping by inverse sensor model}
+\subsection{Mapping with an inverse sensor model}
 Commonly used occupancy grid mapping algorithms
 \cite{elfes1989using,moravec1988sensor,newcombe2011kinectfusion} make the
 simplifying assumption that each grid cell is independent of all other map
-cells. 
+cells: 
 \newcommand{\remaining}{\measurements_{\prevtime}, \poses_{\prevtime}}
 \begin{align}
-  p(\map|\measurements, \poses) &= \prod_{1 \le i \le N} p(x_i|\measurements, \poses)
+  p(\map|\measurements, \poses) &= \prod_{1 \le i \le N} p(x_i|\measurements, \poses).
 \end{align}
 The probability of each cell can be easily computed independent of each other,
-by simple Bayes formulation:
+by a simple Bayes formulation:
 \begin{align}
   p(x_i|\measurements, \poses) &= \frac{p(\meas_t, \pose_t|x_i, \remaining)p(x_i|\remaining)}
                          {p(\meas_t, \pose_t|\remaining)}.
@@ -309,12 +310,12 @@ where $Z'$ is a normalizing factor that is independent of $x_i$, $p(x_i)$ is
 the prior probability for cell $x_i$ and $p(x_i|z_f, g_f)$ is called the
 \textit{inverse sensor model}.
 
-\subsection{Mapping by forward sensor model}
+\subsection{Mapping with a forward sensor model}
 However, the independent cell assumption is inaccurate and can lead to
 overconfident estimates of occupancy in noisy observations
 \cite{thrun2003learning,merali2013icra}. In the absence of the independent cell
-assumption, we can still factorize the posterior probability in terms of the
-forward sensor models.
+assumption, we can still factorize the posterior probability in terms of a
+forward sensor model.
 
 \begin{comment} % Uncomment this for more detailed version
 For a given map $\map$, the conditional probability of map being correct is
@@ -357,14 +358,14 @@ the posterior evaluates \cite{merali2013icra} to
 \end{align}
 where $Z$ is a normalizing constant independent of $\map$ and $p(\map)$ is
 the prior. For the rest of the paper we assume no prior information about
-the maps, hence prior is a constant and included in the normalizing
+the maps, hence the prior is a constant and included in the normalizing
 constant $Z$. 
 
-The problem of estimating occupancy map is intractable with the above
+The problem of estimating the occupancy map is intractable with the above
 formulation, as it still depends on the entire map, which has an exponential
 sample space. However, we can make use of the fact that
 a laser measurement $f$ depends only on a small portion of the map $\map_f
-\subseteq \map$, hence simplifying the formulation to
+\subseteq \map$, hence simplifying the formulation to:
 \begin{align}
  p(\map | \measurements, \poses) &= \frac{1}{Z} \prod_{1 \le f \le t}
  p(z_f|\map_f, g_f).
@@ -375,26 +376,26 @@ With this formulation, we are in a position to describe the problem as
 \emph{factor graph}. The above simplification is necessary to keep the factor
 graph sparsely connected and hence tractable.
 
-\subsection{Representation as factor graph}
+\subsection{Representation as a factor graph}
 \label{sec:notation}
 The occupancy grid mapping problem can be expressed as energy minimization
 over a factor graph. Let all cells in the map be the variable nodes $V$ and all
 the laser measurements be factor nodes $F$. 
 There exists an undirected edge $(i, f)$, if and only if the laser
 range measurement $p(\meas_f|\map_f, \pose_f)$ depends on the cell occupancy 
-$x_i$. In this paper, we assume that laser range measurement depends on only
+$x_i$. In this paper, we assume that each laser range measurement depends on only
 those cells that the laser passes through for given pose $\pose_f$. 
 Let $E$ be set of all such edges:
 % Mathematically,
 \begin{align}
-  E = \{(i, f) : i \in V, f \in F, \text{laser $f$ passes through cell $i$}\}
+  E = \{(i, f) : i \in V, f \in F, \text{laser $f$ passes through cell $i$}\}.
 \end{align}
 The bipartite graph $G = (V, F, E)$ 
-represents the structure of factorization in \eqref{eq:modernmap} and hence
+represents the structure of factorization in \eqref{eq:modernmap} and is hence
 called a factor graph \cite{kschischang2001factor}.  
 Note that neighborhood $n(i)$ of any variable node $i$ only consists of
 the factors nodes, $n(i)\subseteq F \, \forall i \in V$ and vice versa.
-Fig.~\ref{fig:factor-graph} shows factor
+Fig.~\ref{fig:factor-graph} shows the factor
 graph diagrammatically. Note that observed nodes form the part of factor and
 are not part of the factor graph.
 
@@ -418,7 +419,7 @@ are not part of the factor graph.
 %to rewrite 
 In terms of factor graph $G$ the problems \eqref{eq:fullsolution} and
 \eqref{eq:mapproblem} along with factorization obtained in
-\eqref{eq:modernmap} can be written as
+\eqref{eq:modernmap} can be written as:
 \begin{align}
   P_i(x_i = l_i) &= \sum_{\map \in \Omega : x_i = l_i} P(\map) & \forall i \in V
   \label{eq:marginalgeneric}
@@ -426,7 +427,7 @@ In terms of factor graph $G$ the problems \eqref{eq:fullsolution} and
      \map* &= \argmax_{\map \in \Omega} P(\map)
   \label{eq:mapgeneric}
   \\
-   P(\map) &= \frac{1}{Z}\prod_{f \in F} P_f(\map_f)
+   P(\map) &= \frac{1}{Z}\prod_{f \in F} P_f(\map_f).
   \label{eq:factorizationgeneric}
 \end{align}
 where  $l_i \in L_i$ denotes an element from the label set $L_i$ of node $i \in V$.
@@ -456,7 +457,7 @@ $\map'$ from from $Q(.)$ and it is either accepted or rejected based on the
 \emph{acceptance probability} $a$:
 \begin{align}
   a = \frac{P(\map')Q(\map^r| \map')}
-  {P(\map^r)Q(\map'| \map^r)}
+  {P(\map^r)Q(\map'| \map^r)}.
 \end{align}
 
 If $a \ge 1$, then the new point $\map'$ is accepted otherwise it is accepted
@@ -471,7 +472,7 @@ iteration is taken as the sampled point otherwise the earlier point is retained.
 % \end{align}
 The interested reader is referred to \cite{mackay1998introduction,LiBOOK2002} for further details about Metropolis Hastings.
 
-For our experiments, we chose a symmetric uniform transition 
+For our experiments, we choose a symmetric uniform transition 
 probability.  We uniformly sample a cell from the map and flip the state of the
 sampled cell to get the proposal point $\map'$. This is equivalent to sampling
 from the probability density:
@@ -493,14 +494,14 @@ computed because of the factorization obtained in
 \begin{align}
   a &= \frac{P(\map')}{P(\map^r)}
     %&= \frac{\prod_{f \in F} P_f(\map'_f)}{\prod_{f \in F} P_f(\map^r_f)}\\
-    = \frac{\prod_{f \in n(i)} P_f(\map'_f)}{\prod_{f \in n(i)} P_f(\map^r_f)}
+    = \frac{\prod_{f \in n(i)} P_f(\map'_f)}{\prod_{f \in n(i)} P_f(\map^r_f)},
   \label{eq:acceptanceprob}
 \end{align}
 where $i$ is the (sampled) cell whose state is different in $\map'$ and $\map^r$,
 and $n(.)$ denotes the neighborhood of a vertex in graph $G$.  
 The above simplification uses the fact that only those terms  that depend on
-state of $i$\textsuperscript{th} cell need to be computed. By definition
-of graph $G$ only the neighboring factors $f \in n(i)$ depend on state of cell $i$.
+the state of $i$\textsuperscript{th} cell need to be computed. By definition
+of graph $G$, only the neighboring factors $f \in n(i)$ depend on the state of cell $i$.
 
 It is in general difficult to detect when the sampling algorithm has converged.
 In practice, we often run the sampling algorithm for a fixed number of
@@ -559,8 +560,8 @@ and occupied regions. We maintain a vector of cells $\map_h$ that form the
 ``interesting'' region of the map. In our experiments, we take the last cell
 spanned by each laser measurement as an ``interesting'' cell and add it to the
 \emph{heat map}, $\map_h$. We use a sampling bias of $1:4$ for cells
-outside heat map to cells within heat map. We compare both Metropolis Hastings
-with and without heat map in our experiments.
+outside the heat map to cells within the heat map. We compare both Metropolis Hastings
+with and without the heat map in our experiments.
 
 \section{Modern inference algorithms}
 As discussed in Sec.~\ref{sec:related}, last decade gave rise to faster and
