@@ -7,7 +7,7 @@
 \usepackage{graphicx}
 \usepackage[ruled,vlined]{algorithm2e}
 \usepackage{amsfonts} % for mathbf and mathbb
-\usepackage{hyperref} % required because bib generates \url{}
+%\usepackage{hyperref} % required because bib generates \url{}
 \usepackage{verbatim} % For begin{comment} end{comment}
 \usepackage{authblk} % useful for multiple authors with different affiliations
 \usepackage{cite} % useful to show multiple citations in single square bracket
@@ -973,7 +973,8 @@ we can compute the probability of each pattern being true:
 The message update equation \eqref{eq:factor2node} can be written in terms of
 probability of patterns:
 \begin{multline}
-  \bpmsg{f}{i}{l_i}{r+1} = \sum_{m \le M} \psi_m p(\vect{x_f} \sim \vect{R}_m|x_i = l_i)
+  \bpmsg{f}{i}{l_i}{r+1} =\\
+  \sum_{m \le M} \psi_m p(\vect{x_f} \sim \vect{R}_m|x_i = l_i)
   + \psi_{\text{min}} p_{\text{otherwise}}
   \label{eq:efficientbp}
   \enspace,

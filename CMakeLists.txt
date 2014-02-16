@@ -17,7 +17,7 @@ find_package( OpenCV 2.4 REQUIRED core imgproc highgui)
 include_directories(${OpenCV_INCLUDE_DIR})
 SET(OpenCV_USED_LIBS opencv_core opencv_imgproc opencv_highgui)
 
-find_package( Boost 1.40 COMPONENTS date_time serialization-mt filesystem
+find_package( Boost 1.48 COMPONENTS date_time serialization-mt filesystem
 	system program_options REQUIRED)
 include_directories( ${Boost_INCLUDE_DIR} )
 
