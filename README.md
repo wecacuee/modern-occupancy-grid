@@ -1,3 +1,17 @@
+============
+Introduction
+============
+
+This repository is the code for the paper titled:
+
+  Modern MAP inference methods for accurate and faster occupancy grid mapping on higher order factor graphs 
+  by V. Dhiman and A. Kundu and F. Dellaert and J. J. Corso 
+
+Please refer to the
+[paper](http://www.acsu.buffalo.edu/~vikasdhi/images/modern_map.pdf) for more
+details.
+
+
 ======================
 Repeatable experiments
 ======================
