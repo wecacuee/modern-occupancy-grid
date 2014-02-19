@@ -38,7 +38,7 @@ again, which is enclosed.
 
 
 Building
-~~~~~~~~
+--------
 1. All the development and testing has been done on Ubuntu 12.04. 
 
 2. Use standard cmake procedure for building binaries
@@ -56,7 +56,7 @@ Building
 
 
 Convergence Experiments
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 You can run the convergence experiment on "cave" dataset. The following
 scripts will run five algorithms on cave dataset:
@@ -79,7 +79,7 @@ directories. This data can be plotted by using the following scripts:
 	python scripts/plot_time_energy.py scripts/conv_exp_albertb.sm.py
 
 Step size comparison for dual decomposition
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------
 
 The following scripts will run and plot the dual decompositon
 
