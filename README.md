@@ -49,6 +49,12 @@ Building
 
 3. All executable binaries are created in "bin" folder in the root directory.
 
+4. The data required for the paper is available by running the python script
+   wgetdata.py in Data/ directory.
+
+    cd Data/; python wgetdata.py
+
+
 Convergence Experiments
 ~~~~~~~~~~~~~~~~~~~~~~~
 
