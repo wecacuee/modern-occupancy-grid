@@ -8,7 +8,7 @@ This repository is the code for the paper titled:
   by V. Dhiman and A. Kundu and F. Dellaert and J. J. Corso 
 
 Please refer to the
-[paper](http://www.acsu.buffalo.edu/~vikasdhi/images/modern_map.pdf) for more
+[paper](http://vikasdhiman.com/images/modern_map.pdf) for more
 details.
 
 
