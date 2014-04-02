@@ -85,3 +85,16 @@ The following scripts will run and plot the dual decompositon
 
 	python scripts/run_experiments.py scripts/dual_decomposition_stepsize.py
 	python scripts/plot_time_energy.py scripts/dual_decomposition_stepsize.py
+
+======================
+Acknowlegements
+======================
+
+
+Vikas Dhiman and Jason J. Corso were partially supported by FHWA
+DTFH61-07-H-00023. Jason J. Corso was partially supported by NSF
+CAREER IIS-0845282 and ARO YIP W911NF-11-1-0090. Frank Dellaert
+and Abhijit Kundu were partially supported by an ARO MURI W911NF-11-1-0046. We
+thank Stan Birchfield and Brian Peasley for discussions and early efforts in
+this work.
+
