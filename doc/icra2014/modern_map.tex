@@ -302,9 +302,9 @@ above equation (\ref{eq:assumeindependence}) can be simplified \cite{merali2013i
 % Using static world assumption, we get:
 \begin{align}
  p(x_i|\measurements, \poses) 
- % % We can uncomment this detail if we need full derivation.
- % &= p(z_t, g_t|x_i)\frac{p(x_i|\remaining)} {p(z_t, g_t|\remaining)}\\
- % &= \frac{p(x_i|z_t, g_t)p(z_t,g_t)} {p(x_i)}\frac{p(x_i|\remaining)}{p(z_t, g_t|\remaining)}\\
+ % We can uncomment this detail if we need full derivation.
+ &= p(z_t, g_t|x_i)\frac{p(x_i|\remaining)} {p(z_t, g_t|\remaining)}\\
+ &= \frac{p(x_i|z_t, g_t)p(z_t,g_t)} {p(x_i)}\frac{p(x_i|\remaining)}{p(z_t, g_t|\remaining)}\\
  &= \frac{1}{Z'}\frac{p(x_i|\meas_t, \pose_t)}{p(x_i)}p(x_i|\remaining)\\
  &= \frac{1}{Z'p^{t-1}(x_i)}\prod_{1\le f \le t} p(x_i|\meas_f, \pose_f)\enspace,
 \end{align}

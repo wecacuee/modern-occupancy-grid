@@ -87,8 +87,9 @@ class ray_trace_iterator
         // using the fact that ceil() = floor() + 1
         int_t floor_or_ceilx = (dirx_ > 0) ? 1 : 0;
         int_t floor_or_ceily = (diry_ > 0) ? 1 : 0;
+
 #ifdef DEBUG
-        printf("cell: (%i, %i), dxdy:(%f, %f)\n", i, j, dx, dy);
+        // printf("cell: (%i, %i), dxdy:(%f, %f)\n", i_, j_, dx, dy);
         //std::cout << "cell size:" << cell_size_ << "pos:" << position << std::endl;
 #endif
         // distance to nearest grid line
@@ -104,8 +105,8 @@ class ray_trace_iterator
         ty_ = (dy == 0) ? std::numeric_limits<real_t>::infinity() : ey_ / fabs(dy);
 
         if ( ! ((tx_ >= 0) && (ty_ >= 0))) {
-          printf("t:(%f, %f), direction:(%f, %f), position:(%f, %f), cell:(%d, %d), cellsize:(%f, %f)\n", 
-              tx_, ty_, dx, dy, px, py, i_, j_, cell_size_x, cell_size_y);
+          // printf("t:(%f, %f), direction:(%f, %f), position:(%f, %f), cell:(%d, %d), cellsize:(%f, %f)\n", 
+              // tx_, ty_, dx, dy, px, py, i_, j_, cell_size_x, cell_size_y);
           throw std::logic_error("tx < 0 or ty < 0");
         }
 

@@ -61,7 +61,10 @@ class logdouble :
 
   logdouble operator+=(const logdouble& ld) {
     double minlog = (neglog_ < ld.neglog_) ? neglog_ : ld.neglog_;
-    if (abs(neglog_ - ld.neglog_) < 10) {
+    // theoretically this can be of the range 299 but std::exp is
+    // expensive operation slows things down
+    double MAX_EXP = 10;
+    if (abs(neglog_ - ld.neglog_) < MAX_EXP) {
       double d1 = std::exp(-(neglog_ - minlog));
       double d2 = std::exp(-(ld.neglog_ - minlog));
       neglog_ = fromdouble(d1 + d2) + minlog;

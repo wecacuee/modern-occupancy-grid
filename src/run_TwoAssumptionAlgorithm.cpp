@@ -45,7 +45,7 @@ int main(int argc, const char *argv[])
   po::notify(vm);    
 
   std::string directory = vm["dir"].as<std::string>();
-  double max_clock = CLOCKS_PER_SEC * vm["clock"].as<double>();
+  // double max_clock = CLOCKS_PER_SEC * vm["clock"].as<double>();
   // end of parse arguments ////////////////////////////////////
   OccupancyGrid occupancyGrid = loadOccupancyGrid(vm);
   global_vis_.init(occupancyGrid.height(), occupancyGrid.width());

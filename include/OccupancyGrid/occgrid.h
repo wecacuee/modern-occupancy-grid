@@ -1,3 +1,4 @@
+#pragma once
 #ifndef OCCGRID_H
 #define OCCGRID_H
 // c

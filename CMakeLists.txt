@@ -4,12 +4,14 @@ cmake_policy(SET CMP0015 NEW)
 
 #set the default path for built executables to the "bin" directory
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 set(CMAKE_CXX_FLAGS_SYNTAX "-x c++ -fsyntax-only")
-set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Werror -O0 -ggdb")
+set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Werror -O0 -ggdb -rdynamic")
 set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE} -lprofiler")
 
 ###################################################################################
 # Find dependencies via installed packages
+
 find_package(GTSAM REQUIRED NO_MODULE) 
 include_directories(${GTSAM_INCLUDE_DIR})
 
@@ -17,10 +19,21 @@ find_package( OpenCV 2.4 REQUIRED core imgproc highgui)
 include_directories(${OpenCV_INCLUDE_DIR})
 SET(OpenCV_USED_LIBS opencv_core opencv_imgproc opencv_highgui)
 
-find_package( Boost 1.48 COMPONENTS date_time serialization-mt filesystem
-	system program_options REQUIRED)
+set(Boost_USE_MULTITHREADED OFF)
+find_package( Boost 1.48 COMPONENTS date_time serialization filesystem thread
+    signals system program_options REQUIRED)
 include_directories( ${Boost_INCLUDE_DIR} )
 
+find_package(HDF5 REQUIRED)
+include_directories(${HDF5_INCLUDE_DIR})
+
+
+# find opengm
+IF (NOT EXISTS "${PROJECT_SOURCE_DIR}/external/opengm")
+	MESSAGE ("opengm is not installed")
+ELSE(NOT EXISTS "${PROJECT_SOURCE_DIR}/external/opengm")
+	include_directories("${PROJECT_SOURCE_DIR}/external/opengm/include/")
+ENDIF(NOT EXISTS "${PROJECT_SOURCE_DIR}/external/opengm")
 
 ###################################################################################
 # Brian's code
@@ -33,7 +46,7 @@ add_library(occupancy_grid_graph SHARED
 			src/LaserFactor.cpp
 			src/utility.cpp
 			)
-target_link_libraries (occupancy_grid_graph gtsam-shared ${OpenCV_USED_LIBS})
+target_link_libraries (occupancy_grid_graph gtsam-shared ${Boost_LIBRARIES} ${OpenCV_USED_LIBS})
 add_library(occupancy_grid_io SHARED
 	src/cvmat_serialization.cpp
 	src/loadData.cpp
@@ -156,6 +169,12 @@ target_link_libraries(two_assumption_alg merali13icra occupancy_grid_io ${OpenCV
 add_executable(displayMarginals
 	src/displayMarginals.cpp)
 target_link_libraries(displayMarginals ${OpenCV_USED_LIBS})
+
+
+add_executable(generate_opengm_graph
+	src/generate_opengm_graph.cpp)
+target_link_libraries(generate_opengm_graph ${OpenCV_USED_LIBS}
+	${Boost_LIBRARIES} gtsam-shared occupancy_grid_io ${HDF5_LIBRARIES} rt)
 
 # find pkgconfig modules
 include(FindPkgConfig)
