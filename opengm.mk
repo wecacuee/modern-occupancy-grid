@@ -4,8 +4,13 @@ VER:=2.3.6
 SD:=$(TPD)/opengm-$(VER)
 IP:=$(TPD)/opengm-$(VER)-install
 
-$(SD)/install/include/opengm/opengm.hpp: $(SD)/build/Makefile
+
+$(TPD)/opengm/include/opengm/opengm.hxx: $(IP)/include/opengm/opengm.hxx
+	ln -fsT $(notdir $(IP)) $(TPD)/opengm
+
+$(IP)/include/opengm/opengm.hxx: $(SD)/build/Makefile
 	cd "$(<D)" && $(MAKE) install
+	[ -f $@ ] && touch $@
 
 $(SD)/build/Makefile: $(SD)/CMakeLists.txt
 	mkdir -p "$(@D)"

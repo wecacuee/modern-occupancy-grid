@@ -1,10 +1,13 @@
 CWD:=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 TPD:=$(CWD)external
-VER:=2.4.0
+VER?=2.4.0
 SD:=$(TPD)/gtsam-$(VER)
 IP:=$(TPD)/gtsam-$(VER)-install
 
-$(SD)/install/lib/libgtsam.so: $(SD)/build/Makefile
+$(TPD)/gtsam/lib/libgtsam.so: $(IP)/lib/libgtsam.so
+	ln -fsT gtsam-$(VER)-install $(TPD)/gtsam
+
+$(IP)/lib/libgtsam.so: $(SD)/build/Makefile
 	cd "$(<D)" && $(MAKE) install
 
 $(SD)/build/Makefile: $(SD)/CMakeLists.txt

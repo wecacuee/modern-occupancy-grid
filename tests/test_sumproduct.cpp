@@ -21,13 +21,17 @@ typedef std::pair<sample_space_iterator, sample_space_iterator> sample_space_ite
 /// Codomain functor
 //
 sample_space_iter_pair sample_space_static_function() {
-  const static std::size_t sample_space_vector[] = {0, 1};
-  return std::make_pair(sample_space_vector, sample_space_vector + 2);
+  static std::vector<std::size_t> sample_space_vector;
+  sample_space_vector.push_back(0);
+  sample_space_vector.push_back(1);
+  return std::make_pair(sample_space_vector.begin(), sample_space_vector.end());
 }
 struct sample_space_func : public std::unary_function<Vertex,  sample_space_iter_pair> {
   sample_space_iter_pair operator()(const Vertex& v) const {
-    const static std::size_t sample_space_vector[] = {0, 1};
-    return std::make_pair(sample_space_vector, sample_space_vector + 2);
+    static std::vector<std::size_t> sample_space_vector;
+    sample_space_vector.push_back(0);
+    sample_space_vector.push_back(1);
+    return std::make_pair(sample_space_vector.begin(), sample_space_vector.end());
   }
 };
 

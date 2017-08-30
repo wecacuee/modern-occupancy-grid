@@ -13,6 +13,7 @@
 static const cv::Vec3f GREEN(0, 255, 0);
 static const cv::Vec3f WHITE(255, 255, 255);
 static const cv::Vec3f BLACK(0, 0, 0);
+using std::isnan;
 
 /**
  * @brief: Visualize the occupancy of cells being affected by highlighed laser

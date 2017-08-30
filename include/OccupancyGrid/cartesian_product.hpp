@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <boost/typeof/typeof.hpp>
 #include <boost/function.hpp>
 #include <boost/iterator/filter_iterator.hpp>
 #include <boost/type_traits.hpp>

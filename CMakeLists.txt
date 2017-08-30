@@ -4,15 +4,17 @@ cmake_policy(SET CMP0015 NEW)
 
 #set the default path for built executables to the "bin" directory
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_CXX_FLAGS_SYNTAX "-x c++ -fsyntax-only")
 set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Werror -O0 -ggdb -rdynamic")
 set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE} -lprofiler")
+set(ENV{GTSAM_DIR} "${CMAKE_SOURCE_DIR}/external/gtsam/lib/cmake/GTSAM/" 
+    CACHE FILEPATH "Location of GTSAMConfig.cmake")
 
 ###################################################################################
 # Find dependencies via installed packages
 
-find_package(GTSAM REQUIRED NO_MODULE) 
+find_package(GTSAM 2.4 REQUIRED NO_MODULE) 
 include_directories(${GTSAM_INCLUDE_DIR})
 
 find_package( OpenCV 2.4 REQUIRED core imgproc highgui)
@@ -77,6 +79,7 @@ target_link_libraries (SICK_DDMCMC occupancy_grid_graph gtsam-shared
 
 find_package(Threads REQUIRED)
 
+enable_testing()
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIR})
 
