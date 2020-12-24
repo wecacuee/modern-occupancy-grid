@@ -1,4 +1,4 @@
-============
+
 Introduction
 ============
 
@@ -8,11 +8,10 @@ This repository is the code for the paper titled:
   by V. Dhiman and A. Kundu and F. Dellaert and J. J. Corso 
 
 Please refer to the
-[paper](http://vikasdhiman.com/images/modern_map.pdf) for more
+[paper](http://vikasdhiman.info/images/modern_map.pdf) for more
 details.
 
 
-======================
 Repeatable experiments
 ======================
 
@@ -86,7 +85,7 @@ The following scripts will run and plot the dual decompositon
 	python scripts/run_experiments.py scripts/dual_decomposition_stepsize.py
 	python scripts/plot_time_energy.py scripts/dual_decomposition_stepsize.py
 
-======================
+
 Acknowlegements
 ======================
 
